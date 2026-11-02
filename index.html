@@ -261,9 +261,16 @@ function audio(){if(!ac){ac=new (window.AudioContext||window.webkitAudioContext)
 function updateTail(){if(!wet||!ac)return;wet.gain.setTargetAtTime(.035+(+$('tail').value/100)*.23,ac.currentTime,.035)}
 $('tail').oninput=updateTail;
 const byteBuffer=s=>{const bin=atob(s),b=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);return b.buffer};
-async function loadOffline(){if(Object.keys(bufferMap).length===20)return;audio();if(!loadPromise){loadPromise=Promise.all(Object.entries(EMBED).map(async([m,data])=>[+m,await ac.decodeAudioData(byteBuffer(data))])).then(list=>{for(let [m,b] of list)bufferMap[m]=b})}return loadPromise}
+async function loadOffline(){if(Object.keys(bufferMap).length===20)return;audio();if(!loadPromise){loadPromise=Promise.all(Object.entries(EMBED).map(async([m,data])=>[+m,await ac.decodeAudioData(byteBuffer(data))])).then(list=>{for(let [m,b] of list)bufferMap[m]=b}).catch(err=>{loadPromise=null;throw err})}return loadPromise}
 async function loadSalamander(){audio();if(salPromise)return salPromise;salPromise=Promise.all(ROOTS.map(async([name,midi])=>{let resp=await fetch(CDN+name+'.mp3');if(!resp.ok)throw Error('HTTP '+resp.status);return [midi,await ac.decodeAudioData(await resp.arrayBuffer())]})).then(list=>{for(let [m,b] of list)salMap[m]=b}).catch(err=>{sourceMode='offline';$('instrument').value='offline';console.warn('录音钢琴音源不可用，使用离线钢琴',err);return loadOffline()});return salPromise}
-async function initAudio(){audio();await ac.resume();if(sourceMode==='salamander'){await loadSalamander()}else await loadOffline()}
+async function initAudio(){
+ // Request a media playback session on browsers that support it, so iOS silent mode does not mute the piano.
+ try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){console.warn('Audio session unavailable',e)}
+ audio();
+ await ac.resume();
+ if(ac.state!=='running')throw new Error('Audio context is not running');
+ if(sourceMode==='salamander'){await loadSalamander()}else await loadOffline();
+}
 $('instrument').onchange=async e=>{let was=playing;if(was)pause();sourceMode=e.target.value;setStatus('♫ 加载中');try{await initAudio()}catch(err){console.error(err);sourceMode='offline';$('instrument').value='offline';await loadOffline()}setStatus('▶ 播放');if(was)play()};
 function closestSample(m){let nearest=ROOTS.reduce((a,b)=>Math.abs(b[1]-m)<Math.abs(a[1]-m)?b:a);return nearest[1]}
 function playNote(n,when,preview=false,poly=1){if(!ac)return;const mm=midi(n),grand=sourceMode==='salamander'&&Object.keys(salMap).length>5;const ref=grand?closestSample(mm):mm;const sample=grand?salMap[ref]:bufferMap[ref];if(!sample)return;const s=ac.createBufferSource();s.buffer=sample;s.playbackRate.value=Math.pow(2,((mm-ref)/12)+(tuneCents()/1200)); // pitch is independent of playback tempo
