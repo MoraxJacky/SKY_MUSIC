@@ -19,6 +19,18 @@ const state={library:BUILTINS,project:null,mode:'home',isPlaying:false,position:
 const positionFmt=ms=>{let x=Math.max(0,Math.floor(ms));return String(Math.floor(x/60000)).padStart(2,'0')+':'+String(Math.floor(x/1000)%60).padStart(2,'0')+'.'+String(x%1000).padStart(3,'0')};
 const durationFmt=ms=>positionFmt(ms).slice(0,5);
 const scoreEvents=p=>p?.score?.events||[];
+// Only the suffix after the last sounding event is disposable; internal rests keep their timing.
+function trimTrailingRests(project){
+ const events=scoreEvents(project);let last=events.length-1;
+ while(last>=0&&!events[last].notes.length)last--;
+ // An entirely blank score is an editable new-song template, not a finished performance.
+ if(last<0||last===events.length-1)return project;
+ const boundary=events[last+1].timeMs;
+ events.splice(last+1);
+ let soundingEnd=0;for(const e of events)if(e.notes.length)soundingEnd=Math.max(soundingEnd,e.timeMs+Math.max(1,e.durationMs));
+ project.durationMs=Math.max(soundingEnd,Math.min(project.durationMs,boundary));
+ return project;
+}
 function normalize(raw){
  if(!raw||typeof raw!=='object')throw Error('项目内容不是有效对象');
  let source=raw;
@@ -37,7 +49,7 @@ function normalize(raw){
  const total=Number(source.durationMs??source.duration_ms??((normalEvents.at(-1)?.timeMs||0)+500));
  if(!Number.isFinite(total)||total<0||total>36000000)throw Error('歌曲时长不合法');
  const themeId=PRESETS[source.theme?.id]?source.theme.id:'starlight';
- return {
+ const project={
   format:'skymusic-project',schemaVersion:1,id:String(source.id||('import-'+Date.now())).slice(0,100),originKind:(source.originKind==='builtin'&&BUILTIN_IDS.has(source.id))?'builtin':(source.originKind==='imported'?'imported':'user'),author:String(source.author||'').slice(0,100),favorite:Boolean(source.favorite),lastOpened:Number(source.lastOpened)||0,createdAt:Number(source.createdAt)||Date.now(),
   title:String(source.title||'未命名乐曲').slice(0,120),subtitle:String(source.subtitle||'IMPORTED SCORE').slice(0,150),author:String(source.author||'').slice(0,100),favorite:Boolean(source.favorite),createdAt:Number(source.createdAt)||Date.now(),lastOpened:Number(source.lastOpened)||0,
   description:String(source.description||'').slice(0,600),durationMs:Math.max(total,normalEvents.at(-1)?.timeMs||0),keyCount:15,
@@ -48,6 +60,7 @@ function normalize(raw){
   _imageUrl:source._imageUrl||null,
   _imageBytes:source._imageBytes||null
  };
+ return trimTrailingRests(project);
 }
 const noteMidi=(n,tuning=state.tuning)=>(KEY_ROOTS[tuning]??60)+SCALE[n-1];
 const tuneCents=()=>0;

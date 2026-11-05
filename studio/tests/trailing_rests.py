@@ -1,0 +1,76 @@
+"""Verify suffix-only rest trimming across loaded songs, imports and saved edits."""
+import argparse
+import json
+from pathlib import Path
+from playwright.sync_api import sync_playwright
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--output', type=Path, required=True)
+out = parser.parse_args().output.resolve()
+out.mkdir(parents=True, exist_ok=False)
+root = Path(__file__).resolve().parents[1]
+with sync_playwright() as pw:
+    browser = pw.chromium.launch(channel='msedge', headless=True)
+    page = browser.new_page(viewport={'width': 1366, 'height': 768})
+    errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.goto((root / 'SkyMusicStudio_Standalone.html').as_uri())
+    report = page.evaluate('''() => {
+      const T=window.__SKY_STUDIO_TEST__;
+      const raw={durationMs:5000,score:{events:Array.from({length:10},(_,i)=>({timeMs:i*250,notes:[2,6].includes(i)?[1]:[],durationMs:i===2?2400:200}))}};
+      const original=JSON.stringify(raw), p=T.normalize(raw), twice=T.normalize(p);
+      if(p.score.events.length!==7 || p.durationMs!==2900)throw Error('Suffix or held-note duration lost');
+      if(JSON.stringify(p.score.events)!==JSON.stringify(raw.score.events.slice(0,7).map(e=>({...e,velocity:85,confidence:'imported'}))))throw Error('Preserved events changed');
+      if(JSON.stringify(raw)!==original)throw Error('Input mutated');
+      if(JSON.stringify(p)!==JSON.stringify(twice))throw Error('Trim is not idempotent');
+      if(T.normalize({durationMs:5000,score:{events:[{timeMs:0,notes:[1],durationMs:200}]}}).durationMs!==5000)throw Error('Unrelated duration changed');
+      const blank=T.normalize({durationMs:1000,score:{events:[{timeMs:0,notes:[],durationMs:0},{timeMs:250,notes:[],durationMs:0}]}});
+      if(blank.score.events.length!==2)throw Error('Blank editor template lost');
+      return T.state.library.map(p=>({id:p.id,events:p.score.events.length,notes:p.score.events.reduce((s,e)=>s+e.notes.length,0),durationMs:p.durationMs}));
+    }''')
+    canon = next(p for p in report if p['id'] == 'canon-christmas')
+    assert canon == {'id': 'canon-christmas', 'events': 1288, 'notes': 1399, 'durationMs': 214680}
+    # Import an actual JSON File, including many blank pages after the final note.
+    page.evaluate('''async () => {
+      const raw={id:'trim-case',title:'曲尾裁剪检查',durationMs:25000,score:{gridIntervalMs:250,events:Array.from({length:100},(_,i)=>({timeMs:i*250,notes:[0,32].includes(i)?[3]:[],durationMs:[0,32].includes(i)?200:0}))}};
+      await window.__SKY_STUDIO_TEST__.importFile(new File([JSON.stringify(raw)],'trim-case.json',{type:'application/json'}));
+    }''')
+    assert page.locator('#seekSlider').get_attribute('max') == '8250'
+    assert page.locator('#rollSeekSlider').get_attribute('max') == '8250'
+    assert page.locator('#pageLabel').inner_text() == '01 / 02'
+    page.locator('#pageNext').click()
+    assert page.locator('#beatGrid .beat').count() == 1
+    assert page.locator('.beat-name').inner_text() != '·'
+    page.locator('#rollSeekSlider').fill('8250')
+    assert page.evaluate('window.__SKY_STUDIO_TEST__.state.position') == 8250
+    page.screenshot(path=str(out / 'import-trimmed.png'), animations='disabled')
+    # Temporary empty insertions stay editable, then disappear on confirmed save.
+    page.locator('#scoreEditorBtn').click()
+    page.locator('#quickNewEvent').click()
+    assert page.evaluate('window.__SKY_STUDIO_TEST__.state.project.score.events.length') == 34
+    assert page.evaluate('window.__SKY_STUDIO_TEST__.state.editSource.score.events.length') == 33
+    page.locator('#scoreEditorBtn').click()
+    page.locator('#saveDirect').click()
+    assert page.evaluate('window.__SKY_STUDIO_TEST__.state.project.score.events.length') == 33
+    assert page.locator('#rollSeekSlider').get_attribute('max') == '8250'
+    # Clearing the last note also removes the newly trailing rests on save.
+    page.locator('#scoreEditorBtn').click()
+    page.locator('.key-tile[data-note="3"]').click()
+    page.locator('#scoreEditorBtn').click()
+    page.locator('#saveDirect').click()
+    assert page.evaluate('window.__SKY_STUDIO_TEST__.state.project.score.events.length') == 1
+    assert page.locator('#seekSlider').get_attribute('max') == '250'
+    assert page.locator('#rollSeekSlider').get_attribute('max') == '250'
+    assert page.evaluate('window.__SKY_STUDIO_TEST__.state.position') <= 250
+    assert page.locator('#pageLabel').inner_text() == '01 / 01'
+    # Refresh confirms that the same trimmed score is retained in the browser library.
+    page.reload()
+    assert page.evaluate('window.__SKY_STUDIO_TEST__.state.project.score.events.length') == 1
+    assert not errors, errors
+    browser.close()
+(out / 'results.json').write_text(json.dumps({'status': 'PASS', 'builtins': report,
+    'leadingAndInternalRestsPreserved': True, 'heldNotesPreserved': True,
+    'sourceUnchanged': True, 'importAndSaveTrimmed': True,
+    'rollAndGridSynchronized': True, 'reloadPersisted': True, 'pageErrors': errors},
+    ensure_ascii=False, indent=2), encoding='utf-8')
+print('PASS suffix-only trim, held-note durations, import/save/reload and roll/grid synchronization')

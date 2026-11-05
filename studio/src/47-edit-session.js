@@ -18,6 +18,7 @@ function completeEdit(kind){
  pauseSong();
  const action=state.pendingEditAction||'exit',working=state.project,original=state.editSource;
  let chosen=original;
+ if(kind==='direct'||kind==='new')trimTrailingRests(working);
  if(kind==='direct'){
   const idx=state.library.findIndex(p=>p.id===original.id);
   if(idx<0){toast('找不到原曲，无法直接保存');return}

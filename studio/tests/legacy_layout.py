@@ -53,9 +53,10 @@ with sync_playwright() as pw:
         page.wait_for_function('document.querySelector(".beat.active .beat-number")?.textContent==="033"')
         assert page.locator('#pageLabel').inner_text()=='02 / 41'
         page.locator('#playBtn').click()
-        page.locator('#seekSlider').fill('216000')
+        page.locator('#seekSlider').fill(page.locator('#seekSlider').get_attribute('max'))
         assert page.locator('#pageNext').is_disabled()
-        assert page.locator('.beat.uncertain').count()>=1
+        # The former uncertain suffix was empty; automatic trimming now ends on a note.
+        assert 'empty' not in page.locator('#beatGrid .beat').last.get_attribute('class').split()
         assert not errors,errors
         evidence.append({'viewport':[width,height],'grid':'4x8','squareCells':True,'playbackPageFollow':True,'restResonance':True,'pageErrors':errors})
         context.close()

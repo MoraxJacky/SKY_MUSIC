@@ -20,6 +20,18 @@ const state={library:BUILTINS,project:null,mode:'home',isPlaying:false,position:
 const positionFmt=ms=>{let x=Math.max(0,Math.floor(ms));return String(Math.floor(x/60000)).padStart(2,'0')+':'+String(Math.floor(x/1000)%60).padStart(2,'0')+'.'+String(x%1000).padStart(3,'0')};
 const durationFmt=ms=>positionFmt(ms).slice(0,5);
 const scoreEvents=p=>p?.score?.events||[];
+// Only the suffix after the last sounding event is disposable; internal rests keep their timing.
+function trimTrailingRests(project){
+ const events=scoreEvents(project);let last=events.length-1;
+ while(last>=0&&!events[last].notes.length)last--;
+ // An entirely blank score is an editable new-song template, not a finished performance.
+ if(last<0||last===events.length-1)return project;
+ const boundary=events[last+1].timeMs;
+ events.splice(last+1);
+ let soundingEnd=0;for(const e of events)if(e.notes.length)soundingEnd=Math.max(soundingEnd,e.timeMs+Math.max(1,e.durationMs));
+ project.durationMs=Math.max(soundingEnd,Math.min(project.durationMs,boundary));
+ return project;
+}
 function normalize(raw){
  if(!raw||typeof raw!=='object')throw Error('项目内容不是有效对象');
  let source=raw;
@@ -38,7 +50,7 @@ function normalize(raw){
  const total=Number(source.durationMs??source.duration_ms??((normalEvents.at(-1)?.timeMs||0)+500));
  if(!Number.isFinite(total)||total<0||total>36000000)throw Error('歌曲时长不合法');
  const themeId=PRESETS[source.theme?.id]?source.theme.id:'starlight';
- return {
+ const project={
   format:'skymusic-project',schemaVersion:1,id:String(source.id||('import-'+Date.now())).slice(0,100),originKind:(source.originKind==='builtin'&&BUILTIN_IDS.has(source.id))?'builtin':(source.originKind==='imported'?'imported':'user'),author:String(source.author||'').slice(0,100),favorite:Boolean(source.favorite),lastOpened:Number(source.lastOpened)||0,createdAt:Number(source.createdAt)||Date.now(),
   title:String(source.title||'未命名乐曲').slice(0,120),subtitle:String(source.subtitle||'IMPORTED SCORE').slice(0,150),author:String(source.author||'').slice(0,100),favorite:Boolean(source.favorite),createdAt:Number(source.createdAt)||Date.now(),lastOpened:Number(source.lastOpened)||0,
   description:String(source.description||'').slice(0,600),durationMs:Math.max(total,normalEvents.at(-1)?.timeMs||0),keyCount:15,
@@ -49,6 +61,7 @@ function normalize(raw){
   _imageUrl:source._imageUrl||null,
   _imageBytes:source._imageBytes||null
  };
+ return trimTrailingRests(project);
 }
 const noteMidi=(n,tuning=state.tuning)=>(KEY_ROOTS[tuning]??60)+SCALE[n-1];
 const tuneCents=()=>0;
@@ -323,7 +336,7 @@ function restoreSnapshot(p,s){let v=JSON.parse(s);for(let k of Object.keys(v))p[
 function undo(){let p=state.project;if(!p||!state.editMode)return;let stack=historyItems(state.history,p.id);if(!stack.length){toast('没有可撤销的修改');return}pauseSong();historyItems(state.future,p.id).push(snapshot(p));restoreSnapshot(p,stack.pop());toast('已撤销');saveLibrary()}
 function redo(){let p=state.project;if(!p||!state.editMode)return;let stack=historyItems(state.future,p.id);if(!stack.length){toast('没有可恢复的修改');return}pauseSong();historyItems(state.history,p.id).push(snapshot(p));restoreSnapshot(p,stack.pop());toast('已重做');saveLibrary()}
 function refreshHistoryButtons(){$('undoEdit').disabled=!state.project||!historyItems(state.history,state.project.id).length;$('redoEdit').disabled=!state.project||!historyItems(state.future,state.project.id).length}
-function refreshWorkspace(){if(!state.project)return;let p=state.project;state.selected=clamp(state.selected,0,Math.max(0,scoreEvents(p).length-1));$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs);$('speedSelect').value=String(state.rate);$('sustainSlider').value=Math.round(state.sustain*100);$('sustainValue').textContent=Math.round(state.sustain*100)+'%';$('keySelect').value=state.tuning;$('instrumentSelect').value=p.playback.instrument||'offline';setTuningButtons();applyTheme();renderBeatGrid(true);renderKeyBoard();updateVisual();refreshHistoryButtons();if(state.editMode)syncEditorFields()}
+function refreshWorkspace(){if(!state.project)return;let p=state.project;cancelRollFinish();state.position=clamp(state.position,0,p.durationMs);state.selected=clamp(state.selected,0,Math.max(0,scoreEvents(p).length-1));$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs);$('speedSelect').value=String(state.rate);$('sustainSlider').value=Math.round(state.sustain*100);$('sustainValue').textContent=Math.round(state.sustain*100)+'%';$('keySelect').value=state.tuning;$('instrumentSelect').value=p.playback.instrument||'offline';setTuningButtons();applyTheme();renderBeatGrid(true);renderKeyBoard();updateVisual();refreshHistoryButtons();if(state.editMode)syncEditorFields()}
 function openEditor(){if(state.mode!=='player')return;if(state.editMode){requestFinishEdit('exit');return}pauseSong();const src=state.project;state.editSource=src;state.project=normalize({...copy(src),_imageUrl:src._imageUrl,_imageBytes:src._imageBytes});state.editBaseline=snapshot(state.project);state.editDirty=false;state.editMode=true;state.history.set(src.id,[]);state.future.set(src.id,[]);updateEditButton();refreshWorkspace();syncEditorFields();toast('已进入编辑模式：修改后点击「保存」')}
 function switchEditTab(){/* 编辑台已迁移到右下角；批量操作单独以弹窗显示 */}
 function syncEditorFields(){let p=state.project;if(!p)return;let e=scoreEvents(p)[state.selected];if(!e)return;$('editorEventIndex').textContent=`第 ${String(state.selected+1).padStart(3,'0')} 事件`;$('editorEventNames').textContent=eventLabel(e);$('eventTime').value=e.timeMs;$('eventDuration').value=e.durationMs;$('eventVelocity').value=e.velocity||85;$('eventConfidence').value=e.confidence||'unknown';$('metaTitle').value=p.title;$('metaSubtitle').value=p.subtitle;$('metaDescription').value=p.description||''}
@@ -389,6 +402,7 @@ function completeEdit(kind){
  pauseSong();
  const action=state.pendingEditAction||'exit',working=state.project,original=state.editSource;
  let chosen=original;
+ if(kind==='direct'||kind==='new')trimTrailingRests(working);
  if(kind==='direct'){
   const idx=state.library.findIndex(p=>p.id===original.id);
   if(idx<0){toast('找不到原曲，无法直接保存');return}

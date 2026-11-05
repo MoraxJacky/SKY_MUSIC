@@ -20,7 +20,7 @@ T.renameSong('canon-christmas');check(elements.get('renameDialog').open,'重命�
 T.duplicateSong('canon-christmas');let copy=s.library[0];check(copy.id!=='canon-christmas'&&copy.originKind==='user','副本改为可删除的普通歌曲');
 T.deleteSong(copy.id);check(elements.get('deleteDialog').open,'删除显示站内确认');T.deleteConfirmed();check(!s.library.some(p=>p.id===copy.id),'副本成功删除');
 T.deleteSong('canon-christmas');check(!elements.get('deleteDialog').open,'内置歌曲防删除');
-T.openSong('canon-christmas');check(!s.editMode,'初始进入只读');const n=canon.score.events.length;
+T.openSong('canon-christmas');check(!s.editMode,'初始进入只读');const n=s.project.score.events.length;
 T.eventInsert();check(s.project.score.events.length===n,'只读模式禁止插入事件');
 T.openEditor();check(s.editMode&&s.project!==s.library.find(p=>p.id===s.project.id),'编辑使用隔离副本');
 T.eventInsert();check(s.project.score.events.length===n+1&&s.editDirty,'编辑插入后显示脏标记');check(s.library.find(p=>p.id==='canon-christmas').score.events.length===n,'保存前不覆盖内置原谱');
