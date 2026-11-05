@@ -366,3 +366,14 @@ body:has(dialog[open]){overflow:hidden}
 
 /* Empty end-of-score slots preserve the shared 8 by 4 score geometry. */
 .player-view .beat-placeholder{opacity:.38;pointer-events:none;box-shadow:none}
+
+/* One shared, left-opening range picker, with the original v7 gold selection. */
+.player-view .key-range-toggle{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:92px;padding:6px 8px;white-space:nowrap;border:1px solid #f3d29e;border-radius:9px;background:linear-gradient(125deg,#e1c78f,#b88c58);color:#203a2a;font-size:12px;font-weight:700;box-shadow:inset 0 1px #fff4d744,0 0 10px #f0c88222}
+.player-view .key-range-toggle:hover,.player-view .key-range-toggle[aria-expanded=true]{background:linear-gradient(125deg,#f1daa8,#d0aa70);box-shadow:0 0 13px #f0c88255;border-color:#fff0c4}
+.player-view .key-range-menu{position:fixed;z-index:100;display:flex;align-items:center;gap:5px;height:42px;padding:5px;overflow-x:auto;overscroll-behavior:contain;border:1px solid #e5c79788;border-radius:11px;background:var(--player-surface-end,#15372e);box-shadow:0 6px 22px #0007;scrollbar-width:none;transform-origin:right center;animation:range-open .16s ease-out}
+.player-view .key-range-menu::-webkit-scrollbar{display:none}
+.player-view .key-range-menu button{flex:0 0 44px;min-height:30px;padding:4px 9px;border-radius:7px;border:1px solid #8b9e8b55;background:var(--player-button,#204239);color:var(--player-text,#f7edcf);font-size:12px}
+.player-view .key-range-menu button:hover,.player-view .key-range-menu button:focus-visible{background:#715b37;color:#fff0c4;border-color:#f3d29e;box-shadow:inset 0 0 0 1px #f3d29e55;outline:none}
+.player-view .key-range-menu button[aria-selected=true]{background:linear-gradient(125deg,#e1c78f,#b88c58);color:#203a2a;border-color:#f3d29e;box-shadow:0 0 9px #f0c88244;font-weight:700}
+@keyframes range-open{from{opacity:0;transform:translateX(8px) scaleX(.94)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.player-view .key-range-menu{animation:none}}

@@ -14,9 +14,46 @@ function install(){state.library=BUILTINS.map(p=>normalize(p));loadLibrary();sno
  $('instrumentSelect').onchange=async ev=>{if(!state.project)return;let was=state.isPlaying;if(was)pauseSong();state.project.playback.instrument=ev.target.value;saveLibrary();toast('正在切换钢琴音色…',1100);try{await preloadPiano()}catch(err){console.warn(err);toast('音源加载异常：'+err.message,5000)}if(was)playPause()};
  document.addEventListener('keydown',e=>{if(state.mode!=='player'||e.target.closest('input,select,textarea,button'))return;if(e.code==='Space'){e.preventDefault();playPause()}else if(e.code==='ArrowRight'){e.preventDefault();stepEvent(1)}else if(e.code==='ArrowLeft'){e.preventDefault();stepEvent(-1)}});
  window.addEventListener('resize',()=>{if(state.mode==='player')requestAnimationFrame(()=>{drawRoll();if(!state.isPlaying)initializeScene()})});
- bindWorkspace();bindVideo();renderLibrary();if(location.hash.startsWith('#song=')){let id=decodeURIComponent(location.hash.slice(6));if(state.library.some(x=>x.id===id))openSong(id)}
+ bindRangePicker();bindWorkspace();bindVideo();renderLibrary();if(location.hash.startsWith('#song=')){let id=decodeURIComponent(location.hash.slice(6));if(state.library.some(x=>x.id===id))openSong(id)}
  }
-function setTuningButtons(){if($('keySelect'))$('keySelect').value=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C'}
+function setTuningButtons(){
+ const key=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';
+ $('keySelect').value=key;$('keyRangeValue').textContent=KEY_DEGREES[key][0]+' 大调';
+ for(const button of document.querySelectorAll('#keyRangeMenu [data-key]'))button.setAttribute('aria-selected',String(button.dataset.key===key));
+}
+function closeRangePicker(returnFocus=false){$('keyRangeMenu').hidden=true;$('keyRangeToggle').setAttribute('aria-expanded','false');if(returnFocus)$('keyRangeToggle').focus()}
+function positionRangePicker(){
+ const trigger=$('keyRangeToggle'),menu=$('keyRangeMenu'),rect=trigger.getBoundingClientRect();
+ let width=Math.min(252,Math.max(0,rect.left-20)),left=rect.left-width-8;
+ // Narrow screens retain one horizontal strip; never fall back to a downward menu.
+ if(width<120){width=Math.min(252,innerWidth-24);left=12}
+ menu.style.width=width+'px';menu.style.left=left+'px';menu.style.top=Math.max(8,Math.min(innerHeight-46,rect.top+(rect.height-42)/2))+'px';
+}
+function openRangePicker(){
+ setTuningButtons();$('keyRangeMenu').hidden=false;$('keyRangeToggle').setAttribute('aria-expanded','true');positionRangePicker();
+ const selected=$('keyRangeMenu').querySelector('[aria-selected="true"]');selected?.focus({preventScroll:true});selected?.scrollIntoView({block:'nearest',inline:'nearest'});
+}
+function bindRangePicker(){
+ const trigger=$('keyRangeToggle'),menu=$('keyRangeMenu');
+ trigger.onclick=()=>menu.hidden?openRangePicker():closeRangePicker();
+ menu.addEventListener('wheel',event=>{event.preventDefault();menu.scrollLeft+=event.deltaX+event.deltaY},{passive:false});
+ trigger.onkeydown=event=>{if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();openRangePicker()}};
+ for(const button of menu.querySelectorAll('[data-key]'))button.onclick=()=>{
+  $('keySelect').value=button.dataset.key;$('keySelect').onchange({target:$('keySelect')});closeRangePicker(true);
+ };
+ menu.onkeydown=event=>{
+  const options=[...menu.querySelectorAll('[data-key]')],index=options.indexOf(document.activeElement);let next;
+  if(event.key==='ArrowLeft')next=(index-1+options.length)%options.length;
+  if(event.key==='ArrowRight')next=(index+1)%options.length;
+  if(event.key==='Home')next=0;if(event.key==='End')next=options.length-1;
+  if(next!==undefined){event.preventDefault();options[next].focus({preventScroll:true});options[next].scrollIntoView({block:'nearest',inline:'nearest'})}
+  if(event.key==='Escape'){event.preventDefault();closeRangePicker(true)}
+  if(event.key==='Tab')closeRangePicker();
+ };
+ document.addEventListener('pointerdown',event=>{if(!menu.hidden&&!menu.contains(event.target)&&!trigger.contains(event.target))closeRangePicker()});
+ window.addEventListener('resize',()=>{if(!menu.hidden)positionRangePicker()});
+ window.addEventListener('scroll',event=>{if(!menu.hidden&&event.target!==menu&&!menu.contains(event.target))closeRangePicker()},true);
+}
 // Avoid editing the user-provided v7 backup: all transforms occur on copied score objects.
 const oldOpenSong=openSong;openSong=function(id){oldOpenSong(id);setTuningButtons();updateEditButton()};
 window.__SKY_STUDIO_TEST__={state,openSong,goHome,normalize,makeZip,readZip,unpackProject,parseMIDI,parseCSV,parseMusicXML,exportProject,exportMIDI,exportCSV,importFile,createProject,renameSong,renameConfirmed,duplicateSong,deleteSong,deleteConfirmed,completeEdit,openEditor,requestFinishEdit,KEY_ROOTS,noteMidi,noteName,rollFrame,undo,redo,eventInsert,eventRemove,applyThemeFields,analyseSkyGrid,applyPlayerTemplate,PLAYER_TEMPLATE_ID};
