@@ -29,12 +29,12 @@
   <div class="song-stats"><span id="durationHeader">03:36</span><small id="noteCountHeader">1399 NOTES</small></div>
   <div class="header-actions"><button class="info-action icon-btn" id="songInfoBtn" title="歌曲信息" aria-label="歌曲信息">!</button><button class="btn-quiet edit-only" id="sceneEditorBtn">◐ 场景设计</button><button class="btn-quiet" id="scoreEditorBtn">✎ 曲谱编辑</button><button class="btn-outline" id="exportProject">⇩ 导出</button></div>
  </header>
- <div class="play-controls"><div class="play-main"><button class="play-btn" id="playBtn">▶ 播放</button><button id="restartBtn" class="icon-btn" title="从头播放">↶</button><time id="timeClock">00:00.000</time></div>
+ <div class="play-controls"><div class="player-control-row"><div class="play-main"><button class="play-btn" id="playBtn">▶ 播放</button><button id="restartBtn" class="icon-btn" title="从头播放">↶</button><time id="timeClock">00:00.000</time></div>
   <label class="control-inline key-control">大调 <select id="keySelect" aria-label="选择大调"><option value="C">C 大调</option><option value="Db">D♭ 大调</option><option value="D">D 大调</option><option value="Eb">E♭ 大调</option><option value="E">E 大调</option><option value="F">F 大调</option><option value="Fs">F♯ 大调</option><option value="G">G 大调</option><option value="Ab">A♭ 大调</option><option value="A">A 大调</option><option value="Bb">B♭ 大调</option><option value="B">B 大调</option></select></label>
   <label class="control-inline instrument-control">音色 <select id="instrumentSelect"><option value="offline">离线钢琴</option><option value="salamander">Yamaha C5 · 在线</option></select></label>
   <label class="control-inline sustain-control"><span>延音</span><input type="range" id="sustainSlider" min="0" max="100" value="45"><output id="sustainValue">45%</output></label>
   <label class="control-inline">倍速 <select id="speedSelect"><option value="0.25">0.25×</option><option value="0.5">0.50×</option><option value="0.75">0.75×</option><option value="1" selected>1.00×</option><option value="1.25">1.25×</option><option value="1.5">1.50×</option><option value="1.75">1.75×</option><option value="2">2.00×</option></select></label>
-  <label class="seek-line"><input type="range" id="seekSlider" min="0" max="216000" step="1" value="0"><span id="seekMax">03:36</span></label>
+  </div><label class="seek-line"><input type="range" id="seekSlider" min="0" max="216000" step="1" value="0"><span id="seekMax">03:36</span></label>
  </div>
  <section class="workspace">
   <div class="workspace-left">

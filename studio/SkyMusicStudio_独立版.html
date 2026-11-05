@@ -276,6 +276,82 @@ body:has(dialog[open]){overflow:hidden}
 .player-view .note-poly{background:var(--player-poly)}
 .player-view .pane-actions>.icon-btn{width:28px;height:28px;min-width:28px}
 
+/* Measured against the original v7, rather than inherited v0.4 spacing. */
+.player-view{line-height:normal}
+.player-control-row{display:flex;align-items:center;gap:8px;min-width:0;width:100%}
+.player-view .player-header{padding:0 7px;gap:14px}
+.player-view .song-titles h1{text-shadow:0 4px 30px #d9b87933}
+.player-view .song-titles span{color:#e6ca90}
+.player-view .key-tile{padding:1px 2px;white-space:nowrap;overflow:hidden}
+.player-view[data-theme=christmas] .key-tile.active{background:linear-gradient(145deg,#806748,#d0a86b);border-color:#f1cb8d}
+.player-view[data-theme=christmas] .beat{border-color:#3b5a45}
+.player-view[data-theme=christmas] .beat-number{color:#9cbea5}
+.player-view[data-theme=christmas] .beat-name{color:#cae6ce}
+.player-view[data-theme=christmas] .beat.empty .beat-name{color:#5c7a6b}
+.player-view[data-theme=christmas] .beat.active{border-color:#ffe6ad;box-shadow:0 0 0 1px #f3d398,0 0 18px #e4ac5890}
+.player-view[data-theme=christmas] .beat.active .beat-number{color:#fff3cd}
+.player-view[data-theme=christmas] .beat.active .beat-name{color:#fff8e3}
+.player-view[data-theme=christmas] .beat:hover{border-color:#f2d69e}
+@media(min-width:901px){
+ .player-view .play-controls{display:grid;grid-template-rows:37px 12px;gap:9px;align-content:center;padding:11px 15px}
+ .player-view .seek-line{position:static;inset:auto;display:flex;height:12px;gap:13px;font:500 11px ui-monospace,monospace;color:#c8baa0}
+ .player-view .seek-line input{width:100%;height:12px;margin:0}
+ .player-view .pane,.player-view .workspace-right{padding:13px 16px}
+ .player-view .pane-top{height:auto;min-height:30px;padding:0;margin-bottom:10px}
+ .player-view .pane-top select,.player-view .pane-actions button,.player-view .page-actions button{font-size:12px;padding:5px 7px;height:auto;min-width:28px;line-height:normal}
+ .player-view .pane-top select{border-radius:9px}
+ .player-view .roll-body{margin:0;border:1px solid #405e4c;border-radius:11px;background:linear-gradient(140deg,#0b2522,#0b1c20);box-shadow:inset 0 0 30px #0005}
+ .player-view .roll-foot{height:auto;min-height:22px;gap:14px;padding:9px 0 0;color:#c1d1c2}
+ .player-view .roll-foot .dot{width:9px;height:9px;border-radius:3px;margin-right:5px}
+ .player-view .keys-pane .pane-top{height:auto;margin-bottom:7px}
+ .player-view .key-board{margin:0;gap:6px}
+ .player-view .workspace-right{position:relative;border:1px solid rgba(227,211,166,.25);border-radius:17px;background:linear-gradient(143deg,var(--player-surface-start),var(--player-surface-end));box-shadow:0 16px 60px #0006,inset 0 1px #ffffff1a;gap:0;overflow:hidden}
+ .player-view .workspace-right .grid-pane{padding:0;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible}
+ .player-view .grid-pane::before,.player-view .grid-pane::after{content:none}
+ .player-view .beat-grid{width:min(100%,655px);margin:7px auto 0}
+ .player-view .grid-foot{height:auto;min-height:21px;padding:0;margin-top:6px;gap:8px;font:16px 'Segoe UI','Microsoft YaHei',Arial,sans-serif}
+ .player-view #currentBeat{font-size:12px;color:#ead0a6}
+ .player-view #stagePane{margin-top:7px;border:0;border-top:1px solid #a8a36e45;border-radius:0;box-shadow:none;min-height:60px}
+ .player-view .workspace-right #inspectorPane{margin-top:7px;padding:0;border:0;border-top:1px solid var(--player-border);border-radius:0;box-shadow:none}
+ .player-view .stage-scenery{inset:0 4.5% 0}
+ .player-view[data-theme=christmas] .roll-pane{background:linear-gradient(147deg,#16382fdc,#0a2728f7 75%)}
+ .player-view[data-theme=christmas] .keys-pane{background:linear-gradient(120deg,#1d3e32f7,#2d2427eb)}
+ .player-view[data-theme=christmas] .workspace-right{background:radial-gradient(ellipse at 85% 90%,#36483d3d,transparent 43%),linear-gradient(140deg,#15372fe8,#102522f9)}
+ .player-view[data-theme=christmas] .play-controls{background:linear-gradient(113deg,#123a30e9,#172b29ed 58%,#302729df);border-color:#e0be8d55}
+ .player-view[data-theme=christmas] #stagePane{background:radial-gradient(ellipse 58% 67% at 53% 78%,#f4cb9440,transparent 84%),linear-gradient(180deg,#132e2c00,#193c3847 50%,#58705b23)}
+}
+@media(min-width:901px) and (max-width:1420px){
+ .player-view .pane{padding:11px 12px}
+ .player-view .workspace-right{padding:11px 14px}
+ .player-view .workspace-right .grid-pane,.player-view .workspace-right #inspectorPane{padding:0}
+ .player-view .play-controls{padding:8px 11px}
+ .player-view .pane-top{margin-bottom:7px}
+}
+@media(min-width:901px) and (max-height:790px){
+ .player-view .pane-top{min-height:25px;margin-bottom:6px}
+ .player-view .keys-pane .pane-top{margin-bottom:7px}
+ .player-view .beat-grid{margin-top:2px}
+ .player-view .roll-foot{padding-top:6px}
+ .player-view #stagePane{margin-top:3px}
+}
+@media(max-width:900px){.player-view .play-controls{display:block;padding:12px 11px 28px}.player-control-row{flex-wrap:wrap;gap:8px}}
+.player-view[data-theme=christmas]::before{background:radial-gradient(ellipse at 12% 0%,#32472c 0%,transparent 35%),radial-gradient(ellipse at 90% 88%,#492a2b 0%,transparent 42%),radial-gradient(ellipse at 84% 2%,#123b33 0%,transparent 44%),linear-gradient(135deg,#071b19 0%,#0a211b 52%,#1d1d20 100%)}
+.player-view[data-theme=christmas] .pane{border-color:rgba(227,211,166,.25)}
+.player-view[data-theme=christmas] .pane::after,.player-view[data-theme=christmas] .workspace-right::after{background:radial-gradient(circle,#bf4c58 0 2px,transparent 2.5px) 0 0/20px 4px;opacity:.65}
+.player-view:not(.editing) #gridHint{visibility:hidden}
+@media(min-width:901px){
+ .player-view .workspace-right{padding:14px 18px}
+ .player-view .workspace-right::before{content:'';position:absolute;top:0;left:16%;right:16%;height:1px;background:linear-gradient(90deg,transparent,#e6ca8e66,transparent);pointer-events:none}
+ .player-view .workspace-right::after{content:'';position:absolute;right:18px;top:0;width:100px;height:3px;pointer-events:none}
+ .player-view .grid-foot{color:var(--player-text)}
+ .player-view .key-tile{font:16px 'Segoe UI','Microsoft YaHei',Arial,sans-serif;color:var(--player-text)}
+}
+@media(min-width:901px) and (max-width:1420px){.player-view .workspace-right{padding:11px 14px}}
+@media(min-width:901px) and (max-height:790px){.player-view .keys-pane .pane-top{min-height:28px}}
+/* The original vignette uses an intrinsic 2:1 stage anchored at the panel floor. */
+@media(min-width:901px){.player-view[data-theme=christmas] .stage-pane:not(.has-custom-image) .stage-scenery{inset:auto;left:50%;bottom:0;height:94%;aspect-ratio:2/1;max-width:91%;width:auto;transform:translateX(-50%)}}
+@media(min-width:901px) and (max-height:790px){.player-view[data-theme=christmas] .stage-pane:not(.has-custom-image) .stage-scenery{height:92%}}
+
 </style>
 </head>
 <body>
@@ -302,12 +378,12 @@ body:has(dialog[open]){overflow:hidden}
   <div class="song-stats"><span id="durationHeader">03:36</span><small id="noteCountHeader">1399 NOTES</small></div>
   <div class="header-actions"><button class="info-action icon-btn" id="songInfoBtn" title="歌曲信息" aria-label="歌曲信息">!</button><button class="btn-quiet edit-only" id="sceneEditorBtn">◐ 场景设计</button><button class="btn-quiet" id="scoreEditorBtn">✎ 曲谱编辑</button><button class="btn-outline" id="exportProject">⇩ 导出</button></div>
  </header>
- <div class="play-controls"><div class="play-main"><button class="play-btn" id="playBtn">▶ 播放</button><button id="restartBtn" class="icon-btn" title="从头播放">↶</button><time id="timeClock">00:00.000</time></div>
+ <div class="play-controls"><div class="player-control-row"><div class="play-main"><button class="play-btn" id="playBtn">▶ 播放</button><button id="restartBtn" class="icon-btn" title="从头播放">↶</button><time id="timeClock">00:00.000</time></div>
   <label class="control-inline key-control">大调 <select id="keySelect" aria-label="选择大调"><option value="C">C 大调</option><option value="Db">D♭ 大调</option><option value="D">D 大调</option><option value="Eb">E♭ 大调</option><option value="E">E 大调</option><option value="F">F 大调</option><option value="Fs">F♯ 大调</option><option value="G">G 大调</option><option value="Ab">A♭ 大调</option><option value="A">A 大调</option><option value="Bb">B♭ 大调</option><option value="B">B 大调</option></select></label>
   <label class="control-inline instrument-control">音色 <select id="instrumentSelect"><option value="offline">离线钢琴</option><option value="salamander">Yamaha C5 · 在线</option></select></label>
   <label class="control-inline sustain-control"><span>延音</span><input type="range" id="sustainSlider" min="0" max="100" value="45"><output id="sustainValue">45%</output></label>
   <label class="control-inline">倍速 <select id="speedSelect"><option value="0.25">0.25×</option><option value="0.5">0.50×</option><option value="0.75">0.75×</option><option value="1" selected>1.00×</option><option value="1.25">1.25×</option><option value="1.5">1.50×</option><option value="1.75">1.75×</option><option value="2">2.00×</option></select></label>
-  <label class="seek-line"><input type="range" id="seekSlider" min="0" max="216000" step="1" value="0"><span id="seekMax">03:36</span></label>
+  </div><label class="seek-line"><input type="range" id="seekSlider" min="0" max="216000" step="1" value="0"><span id="seekMax">03:36</span></label>
  </div>
  <section class="workspace">
   <div class="workspace-left">
@@ -495,13 +571,13 @@ function isSounding(timeMs){if(!state.isPlaying)return false;let ev=scoreEvents(
 function activeNotes(timeMs){let ev=scoreEvents(state.project),i=lowerBound(ev,timeMs),set=new Set();for(let k=Math.max(0,i-12);k<i;k++){let e=ev[k];if(e.notes.length&&timeMs>=e.timeMs&&timeMs<e.timeMs+e.durationMs+state.sustain*570){for(let n of e.notes)set.add(n)}}return set}
 function animateScene(){const sounding=isSounding(state.position);$('stageStatus').textContent=state.isPlaying?(sounding?'♪ 演奏中':'休止'):'已暂停';if(sceneId(state.project)!=='christmas'||$('playerView').classList.contains('motion-off'))return;let now=performance.now();if(!state.stageImages?.length)return;if(sounding){if(!state.sceneTick)state.sceneTick=now;let dt=Math.min(65,now-state.sceneTick);state.sceneFrame=(state.sceneFrame+dt/6000*24)%24;}state.sceneTick=now;
  const a=state.stageImages[Math.floor(state.sceneFrame)%state.stageImages.length],b=state.stageImages[(Math.floor(state.sceneFrame)+1)%state.stageImages.length];const f=state.sceneFrame%1;
- const c=$('sceneCanvas'),ctx=c?.getContext('2d');if(!ctx)return;let box=c.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);let width=Math.max(1,Math.round(box.width*dpr)),height=Math.max(1,Math.round(box.height*dpr));if(c.width!==width||c.height!==height){c.width=width;c.height=height}ctx.clearRect(0,0,width,height);let scale=Math.min(width/a.width,height/a.height)*.96;let w=a.width*scale,h=a.height*scale,x=(width-w)/2,y=(height-h)/2;ctx.globalAlpha=1;ctx.drawImage(a,x,y,w,h);if(b&&f>0){ctx.globalAlpha=f;ctx.drawImage(b,x,y,w,h);ctx.globalAlpha=1}
+ const c=$('sceneCanvas'),ctx=c?.getContext('2d');if(!ctx)return;let box=c.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);let width=Math.max(1,Math.round(box.width*dpr)),height=Math.max(1,Math.round(box.height*dpr));if(c.width!==width||c.height!==height){c.width=width;c.height=height}ctx.clearRect(0,0,width,height);let scale=Math.min(width/a.width,height/a.height);let w=a.width*scale,h=a.height*scale,x=(width-w)/2,y=(height-h)/2;ctx.globalAlpha=1;ctx.drawImage(a,x,y,w,h);if(b&&f>0){ctx.globalAlpha=f;ctx.drawImage(b,x,y,w,h);ctx.globalAlpha=1}
 }
 function initializeScene(){let pane=$('stagePane');pane.classList.toggle('theme-starlight',sceneId(state.project)!=='christmas');pane.classList.toggle('theme-citylights',sceneId(state.project)==='citylights');pane.classList.toggle('has-custom-image',Boolean(state.project._imageUrl));$('sceneName').textContent=state.project.theme.name||PRESETS[sceneId(state.project)].name;
  let stage=$('stageArt');const extra=state.project._imageUrl;if(extra&&(sceneId(state.project)!=='christmas'||state.project.theme?.customStage)){stage.src=extra;stage.style.display='block';$('sceneCanvas')?.remove();return}
  if(sceneId(state.project)!=='christmas'){stage.style.display='none';$('sceneCanvas')?.remove();return}
  if(!state.stageImages.length){state.stageImages=Array.from({length:24},(_,i)=>{let im=new Image();im.src=window.SKY_STAGE_FRAMES?.[i]||`assets/christmas/stage_${String(i).padStart(2,'0')}.webp`;return im})}
- stage.style.display='none';if(!$('sceneCanvas')){let canvas=document.createElement('canvas');canvas.id='sceneCanvas';canvas.style.cssText='width:100%;height:100%;object-fit:contain;display:block';stage.parentNode.append(canvas)}state.sceneTick=performance.now();state.sceneFrame=0;const c=$('sceneCanvas');function firstDraw(){const img=state.stageImages[0];if(!img.complete||!img.naturalWidth){img.onload=firstDraw;return}let rect=c.getBoundingClientRect(),dpr=devicePixelRatio||1;c.width=rect.width*dpr;c.height=rect.height*dpr;let ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);let scale=Math.min(c.width/img.width,c.height/img.height)*.96;ctx.drawImage(img,(c.width-img.width*scale)/2,(c.height-img.height*scale)/2,img.width*scale,img.height*scale)}requestAnimationFrame(firstDraw)
+ stage.style.display='none';if(!$('sceneCanvas')){let canvas=document.createElement('canvas');canvas.id='sceneCanvas';canvas.style.cssText='width:100%;height:100%;object-fit:contain;display:block';stage.parentNode.append(canvas)}state.sceneTick=performance.now();state.sceneFrame=0;const c=$('sceneCanvas');function firstDraw(){const img=state.stageImages[0];if(!img.complete||!img.naturalWidth){img.onload=firstDraw;return}let rect=c.getBoundingClientRect(),dpr=devicePixelRatio||1;c.width=rect.width*dpr;c.height=rect.height*dpr;let ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);let scale=Math.min(c.width/img.width,c.height/img.height);ctx.drawImage(img,(c.width-img.width*scale)/2,(c.height-img.height*scale)/2,img.width*scale,img.height*scale)}requestAnimationFrame(firstDraw)
 }
 
 /* 30-import.js */
