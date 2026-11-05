@@ -88,6 +88,20 @@ with sync_playwright() as pw:
     # Refresh confirms that the same trimmed score is retained in the browser library.
     page.reload()
     assert page.evaluate('window.__SKY_STUDIO_TEST__.state.project.score.events.length') == 1
+    # A held note that starts on an earlier page must remain visible through the final page.
+    page.evaluate('''() => {
+      const T=window.__SKY_STUDIO_TEST__,p=T.normalize({id:'held-ending',durationMs:10000,score:{events:[{timeMs:0,notes:[1],durationMs:10000}]}});
+      T.state.library.push(p);T.openSong(p.id);
+    }''')
+    page.locator('#rollWindow').select_option('8')
+    page.locator('#seekSlider').fill('9500')
+    assert page.evaluate('''() => {
+      const T=window.__SKY_STUDIO_TEST__,cv=document.getElementById('rollCanvas'),r=cv.getBoundingClientRect(),scale=cv.width/r.width;
+      const x=r.width-23,y=25+(r.height-48)/15*14.5;
+      const pixel=cv.getContext('2d').getImageData(Math.floor(x*scale),Math.floor(y*scale),1,1).data;
+      const color=T.state.playerColors.note;
+      return [1,3,5].every((offset,i)=>Math.abs(pixel[i]-parseInt(color.slice(offset,offset+2),16))<3);
+    }''')
     page.evaluate('''() => {
       const T=window.__SKY_STUDIO_TEST__,p=T.normalize({id:'empty-layout',durationMs:0,score:{events:[]}});
       T.state.library.push(p);T.openSong(p.id);
