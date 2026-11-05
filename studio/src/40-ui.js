@@ -22,10 +22,10 @@ function drawRoll(){if(!state.project||state.mode!=='player')return;let cv=$('ro
  const colors=state.playerColors||PLAYER_APPEARANCE.christmas,legacy=sceneId(state.project)==='christmas';
  const paper=legacy?{base:'#0b2524',light:'#244438',medium:'#112e29',dark:'#0b2825',label:'#b0c8b6',anchor:'#eed09e'}:{base:colors.surfaceEnd,light:colors.surfaceStart,medium:colors.gridEnd,dark:colors.rest,label:colors.muted,anchor:colors.accent};
  c.clearRect(0,0,W,H);c.fillStyle=paper.base;c.fillRect(0,0,W,H);
- const cellGrid=sec===8||sec===10;
- // Exact v7 lane fills and label scale; the previous rounded note treatment is independent.
- for(let row=0;row<15;row++){let n=15-row,y=top+row*rowH,anchor=n===1||n===8||n===15;c.fillStyle=anchor?paper.light:row%2?paper.dark:paper.medium;c.fillRect(left,y,plotW,rowH);c.fillStyle=anchor?paper.anchor:paper.label;c.font=`600 ${Math.min(11,Math.max(9,rowH*.54))}px Georgia,serif`;c.textAlign='right';c.textBaseline='middle';c.fillText(n+' '+noteName(n),left-7,y+rowH/2)}
- // Draw subdivisions after the opaque row fills, so 8s/10s grids remain visible on every lane.
+ const cellGrid=true;
+ // Three five-lane groups: light, medium, dark, medium, light. Labels and rounded notes are independent.
+ for(let row=0;row<15;row++){let n=15-row,y=top+row*rowH,anchor=n===1||n===8||n===15;c.fillStyle=[paper.light,paper.medium,paper.dark,paper.medium,paper.light][row%5];c.fillRect(left,y,plotW,rowH);c.fillStyle=anchor?paper.anchor:paper.label;c.font=`600 ${Math.min(11,Math.max(9,rowH*.54))}px Georgia,serif`;c.textAlign='right';c.textBaseline='middle';c.fillText(n+' '+noteName(n),left-7,y+rowH/2)}
+ // Draw subdivisions after opaque lane fills in every supported window.
  if(cellGrid){const stepMs=1000/6;for(let i=Math.ceil(begin/stepMs);i*stepMs<=end;i++){if(i%6===0)continue;let x=left+(i*stepMs-begin)/windowMs*plotW;c.strokeStyle=i%3===0?'#55786872':'#43665932';c.lineWidth=.6;c.beginPath();c.moveTo(x,top);c.lineTo(x,H-bottom);c.stroke()}c.lineWidth=1;for(let row=0;row<=15;row++){let y=top+row*rowH;c.strokeStyle='#43665932';c.beginPath();c.moveTo(left,y);c.lineTo(left+plotW,y);c.stroke()}}
  for(let t=Math.ceil(begin/1000)*1000;t<=end;t+=1000){let x=left+(t-begin)/windowMs*plotW;c.strokeStyle=cellGrid?'#79927b88':'#cce2b725';c.beginPath();c.moveTo(x,top);c.lineTo(x,H-bottom);c.stroke();c.textAlign='left';c.textBaseline='middle';c.fillStyle='#d1c298';c.font='10px ui-monospace,monospace';c.fillText(Math.round(t/1000)+'s',x+3,12)}
  c.save();c.beginPath();c.rect(left,top,plotW,H-top-bottom);c.clip();const ev=scoreEvents(state.project),start=lowerBound(ev,begin-600);for(let i=start;i<ev.length;i++){let e=ev[i];if(e.timeMs>end)break;if(!e.notes.length)continue;let x=left+(e.timeMs-begin)/windowMs*plotW;let width=Math.max(3,Math.min(22,(e.durationMs||180)/windowMs*plotW));for(let n of e.notes){let tileWidth=Math.max(2,width-1.8),tileHeight=Math.max(3,rowH*.5),tileX=x+.8,y=top+(15-n)*rowH+(rowH-tileHeight)/2;
