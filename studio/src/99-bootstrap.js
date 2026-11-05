@@ -11,18 +11,18 @@ function install(){state.library=BUILTINS.map(p=>normalize(p));loadLibrary();sno
  $('pageNext').onclick=()=>{pauseSong();let pg=Math.floor(state.selected/32);let ev=scoreEvents(state.project),i=Math.min(ev.length-1,(pg+1)*32);seekTo(ev[i]?.timeMs||0)};
  $('resetKeyEdit').onclick=()=>{if(!state.editMode)return;let p=state.project;let original=BUILTINS.find(x=>x.id===(p.provenance?.derivedFrom||p.id));let e=scoreEvents(p)[state.selected],reference=original&&scoreEvents(original)[state.selected];if(!e)return;if(reference){rememberEdit();e.notes=[...reference.notes];e.durationMs=reference.durationMs;e.confidence='source';renderKeyBoard();renderBeatGrid(true);updateVisual();toast('已恢复此格的原始琴键')}else toast('导入曲目无内置原谱，请通过导入文件恢复')};
  $('keySelect').onchange=ev=>{if(!state.project)return;let was=state.isPlaying;if(was)pauseSong();state.tuning=ev.target.value;state.project.playback.tuning=state.tuning;saveLibrary();setTuningButtons();renderKeyBoard();renderBeatGrid(true);updateVisual();if(state.editMode)syncEditorFields();if(was)playPause()};
- $('instrumentSelect').onchange=async ev=>{if(!state.project)return;let was=state.isPlaying;if(was)pauseSong();state.project.playback.instrument=ev.target.value;saveLibrary();toast('正在切换钢琴音色…',1100);try{await preloadPiano()}catch(err){console.warn(err);toast('音源加载异常：'+err.message,5000)}if(was)playPause()};
+ $('instrumentSelect').onchange=ev=>chooseInstrument(ev.target.value);
  document.addEventListener('keydown',e=>{if(state.mode!=='player'||e.target.closest('input,select,textarea,button'))return;if(e.code==='Space'){e.preventDefault();playPause()}else if(e.code==='ArrowRight'){e.preventDefault();stepEvent(1)}else if(e.code==='ArrowLeft'){e.preventDefault();stepEvent(-1)}});
  window.addEventListener('resize',()=>{if(state.mode==='player')requestAnimationFrame(()=>{drawRoll();if(!state.isPlaying)initializeScene()})});
- bindRangePicker();bindWorkspace();bindVideo();renderLibrary();if(location.hash.startsWith('#song=')){let id=decodeURIComponent(location.hash.slice(6));if(state.library.some(x=>x.id===id))openSong(id)}
+ bindRangePicker();bindInstrumentPicker();bindWorkspace();bindVideo();renderLibrary();if(location.hash.startsWith('#song=')){let id=decodeURIComponent(location.hash.slice(6));if(state.library.some(x=>x.id===id))openSong(id)}
  }
 function setTuningButtons(){
  const key=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';
- $('keySelect').value=key;$('keyRangeValue').textContent=KEY_DEGREES[key][0]+' 大调';
+ $('keySelect').value=key;$('keyRangeValue').textContent=key==='sky-original'?'光遇原调':KEY_DEGREES[key][0]+' 大调';syncInstrumentPicker();
  for(const button of document.querySelectorAll('#keyRangeMenu [data-key]'))button.setAttribute('aria-selected',String(button.dataset.key===key));
 }
-const rangeScroll={target:0,position:0,raf:0,last:0};
-function cancelRangeScroll(){cancelAnimationFrame(rangeScroll.raf);rangeScroll.raf=0}
+let cancelRangeWheel=()=>{};
+function cancelRangeScroll(){cancelRangeWheel()}
 function closeRangePicker(returnFocus=false){cancelRangeScroll();$('keyRangeMenu').hidden=true;$('keyRangeToggle').setAttribute('aria-expanded','false');if(returnFocus)$('keyRangeToggle').focus()}
 function positionRangePicker(){
  const trigger=$('keyRangeToggle'),menu=$('keyRangeMenu'),rect=trigger.getBoundingClientRect();
@@ -32,31 +32,13 @@ function positionRangePicker(){
  menu.style.width=width+'px';menu.style.left=left+'px';menu.style.top=Math.max(8,Math.min(innerHeight-46,rect.top+(rect.height-42)/2))+'px';
 }
 function openRangePicker(){
- setTuningButtons();$('keyRangeMenu').hidden=false;$('keyRangeToggle').setAttribute('aria-expanded','true');positionRangePicker();
+ closeInstrumentPicker();setTuningButtons();$('keyRangeMenu').hidden=false;$('keyRangeToggle').setAttribute('aria-expanded','true');positionRangePicker();
  const selected=$('keyRangeMenu').querySelector('[aria-selected="true"]');selected?.focus({preventScroll:true});selected?.scrollIntoView({block:'nearest',inline:'nearest'});
 }
 function bindRangePicker(){
  const trigger=$('keyRangeToggle'),menu=$('keyRangeMenu'),track=$('keyRangeTrack');
  trigger.onclick=()=>menu.hidden?openRangePicker():closeRangePicker();
- menu.addEventListener('wheel',event=>{
-  event.preventDefault();let delta=event.deltaX+event.deltaY;
-  if(event.deltaMode===1)delta*=16;if(event.deltaMode===2)delta*=track.clientWidth;
-  if(!delta)return;
-  if(!rangeScroll.raf)rangeScroll.target=rangeScroll.position=track.scrollLeft;
-  // One wheel event travels at most half a cell; incoming deltas retarget the same animation.
-  rangeScroll.target=clamp(rangeScroll.target+Math.sign(delta)*Math.min(24,Math.abs(delta)*.22),0,track.scrollWidth-track.clientWidth);
-  if(rangeScroll.raf)return;
-  rangeScroll.last=performance.now();
-  const animate=now=>{
-   if(menu.hidden){cancelRangeScroll();return}
-   const dt=Math.min(40,now-rangeScroll.last);rangeScroll.last=now;
-   rangeScroll.position+=(rangeScroll.target-rangeScroll.position)*(1-Math.exp(-dt/65));
-   if(Math.abs(rangeScroll.target-rangeScroll.position)<.5){track.scrollLeft=rangeScroll.target;rangeScroll.raf=0;return}
-   track.scrollLeft=rangeScroll.position;rangeScroll.raf=requestAnimationFrame(animate);
-  };
-  rangeScroll.raf=requestAnimationFrame(animate);
- },{passive:false});
- menu.addEventListener('pointerdown',cancelRangeScroll);
+ cancelRangeWheel=bindSmoothWheel(track,menu,'x',24);
  trigger.onkeydown=event=>{if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();openRangePicker()}};
  for(const button of menu.querySelectorAll('[data-key]'))button.onclick=()=>{
   $('keySelect').value=button.dataset.key;$('keySelect').onchange({target:$('keySelect')});closeRangePicker(true);
@@ -77,6 +59,6 @@ function bindRangePicker(){
 }
 // Avoid editing the user-provided v7 backup: all transforms occur on copied score objects.
 const oldOpenSong=openSong;openSong=function(id){oldOpenSong(id);setTuningButtons();updateEditButton()};
-window.__SKY_STUDIO_TEST__={state,openSong,goHome,normalize,makeZip,readZip,unpackProject,parseMIDI,parseCSV,parseMusicXML,exportProject,exportMIDI,exportCSV,importFile,createProject,renameSong,renameConfirmed,duplicateSong,deleteSong,deleteConfirmed,completeEdit,openEditor,requestFinishEdit,KEY_ROOTS,noteMidi,noteName,rollFrame,undo,redo,eventInsert,eventRemove,applyThemeFields,analyseSkyGrid,applyPlayerTemplate,PLAYER_TEMPLATE_ID};
+window.__SKY_STUDIO_TEST__={state,openSong,goHome,normalize,makeZip,readZip,unpackProject,parseMIDI,parseCSV,parseMusicXML,exportProject,exportMIDI,exportCSV,importFile,createProject,renameSong,renameConfirmed,duplicateSong,deleteSong,deleteConfirmed,completeEdit,openEditor,requestFinishEdit,KEY_ROOTS,noteMidi,noteName,rollFrame,INSTRUMENTS,loadInstrumentBank,preloadPiano,triggerSample,chooseInstrument,undo,redo,eventInsert,eventRemove,applyThemeFields,analyseSkyGrid,applyPlayerTemplate,PLAYER_TEMPLATE_ID};
 install();startDbBackup();
 })();

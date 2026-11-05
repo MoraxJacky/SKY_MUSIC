@@ -6,6 +6,8 @@
 
 圣诞、星光、暮光及自定义主题共用一份播放器模板，更换主题不会复制布局与交互代码。详细说明见 [模板与主题配置](studio/docs/PLAYER_TEMPLATE.md)，可导入 [海边月夜主题示例](studio/samples/moonlight-template.skytheme)。
 
+提供 5 种离线、6 种在线音色，支持全部 12 大调及普通光遇钢琴 C4–C6 基准。音色面板固定显示当前项，下方限定区域平滑滚动。来源、许可和基准边界见 [音色说明](studio/docs/INSTRUMENTS_AND_SKY.md)。
+
 ## 工程
 
 - `index.html`：GitHub Pages 的完整独立网页。
@@ -27,4 +29,4 @@ node tests/v04-interactions.cjs
 
 构建后将 `studio/SkyMusicStudio_Standalone.html` 复制到根 `index.html`，提交推送 `main` 即由 GitHub Pages 发布。请先检查生成物和有关测试。构建不会自动重新生成 `builtins.js` 或钢琴嵌入数据，修改源数据时需保持一致。
 
-本地 Codex 项目使用 `SkyMusicStudio/current/` 开发，经过测试后同步到本仓库。仓库保留原网站提交历史。自动音频/视频识谱仍是需要人工校对的实验功能，在线 Yamaha 音源依赖网络。
+本地 Codex 项目使用 `SkyMusicStudio/current/` 开发，经过测试后同步到本仓库。仓库保留原网站提交历史。自动音频/视频识谱仍是需要人工校对的实验功能，在线音色依赖网络，失败时回退经典钢琴。

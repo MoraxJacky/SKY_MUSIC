@@ -7,6 +7,7 @@ const SCALE=[0,2,4,5,7,9,11,12,14,16,17,19,21,23,24];
 const SEMIS=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
 const KEY_ROOTS={C:60,Db:61,D:62,Eb:63,E:64,F:65,Fs:66,G:67,Ab:68,A:69,Bb:70,B:71};
 const KEY_DEGREES={C:['C','D','E','F','G','A','B'],Db:['D♭','E♭','F','G♭','A♭','B♭','C'],D:['D','E','F♯','G','A','B','C♯'],Eb:['E♭','F','G','A♭','B♭','C','D'],E:['E','F♯','G♯','A','B','C♯','D♯'],F:['F','G','A','B♭','C','D','E'],Fs:['F♯','G♯','A♯','B','C♯','D♯','E♯'],G:['G','A','B','C','D','E','F♯'],Ab:['A♭','B♭','C','D♭','E♭','F','G'],A:['A','B','C♯','D','E','F♯','G♯'],Bb:['B♭','C','D','E♭','F','G','A'],B:['B','C♯','D♯','E','F♯','G♯','A♯']};
+KEY_ROOTS['sky-original']=60;KEY_DEGREES['sky-original']=KEY_DEGREES.C;
 const BUILTINS=(window.SKY_BUILTINS||[]).map(p=>({...copy(p),originKind:'builtin'}));
 const BUILTIN_IDS=new Set(BUILTINS.map(p=>p.id));
 const SAMPLES=window.SKY_SAMPLES||{};
@@ -54,7 +55,7 @@ function normalize(raw){
   title:String(source.title||'未命名乐曲').slice(0,120),subtitle:String(source.subtitle||'IMPORTED SCORE').slice(0,150),author:String(source.author||'').slice(0,100),favorite:Boolean(source.favorite),createdAt:Number(source.createdAt)||Date.now(),lastOpened:Number(source.lastOpened)||0,
   description:String(source.description||'').slice(0,600),durationMs:Math.max(total,normalEvents.at(-1)?.timeMs||0),keyCount:15,
   score:{mode:source.score?.mode==='free'?'free':'grid',gridIntervalMs:clamp(Number(source.score?.gridIntervalMs)||166.6667,20,5000),events:normalEvents},
-  playback:{tuning:Object.hasOwn(KEY_ROOTS,source.playback?.tuning)?source.playback.tuning:'C',rate:clamp(Number(source.playback?.rate)||1,.25,2),sustain:clamp(Number(source.playback?.sustain ?? .45),0,1),instrument:source.playback?.instrument==='salamander'?'salamander':'offline'},
+  playback:{tuning:Object.hasOwn(KEY_ROOTS,source.playback?.tuning)?source.playback.tuning:'C',rate:clamp(Number(source.playback?.rate)||1,.25,2),sustain:clamp(Number(source.playback?.sustain ?? .45),0,1),instrument:instrumentSpec(source.playback?.instrument).id},
   theme:{id:themeId,accent:/^#[0-9a-fA-F]{6}$/.test(source.theme?.accent||'')?source.theme.accent:PRESETS[themeId].accent,stage:themeId,motion:source.theme?.motion||'ambient',name:String(source.theme?.name||PRESETS[themeId].name).slice(0,80),snow:clamp(Number(source.theme?.snow ?? (themeId==='christmas'?50:18)),0,100),glow:clamp(Number(source.theme?.glow ?? 58),0,100),backgroundColor:/^#[0-9a-fA-F]{6}$/.test(source.theme?.backgroundColor||'')?source.theme.backgroundColor:null,customStage:Boolean(source.theme?.customStage),appearance:sanitizePlayerAppearance(source.theme?.appearance)},
   provenance:copy(source.provenance||{source:'导入'}),
   _imageUrl:source._imageUrl||null,
@@ -120,6 +121,172 @@ async function unpackProject(bytes){let files=await readZip(bytes);for(let name 
 async function exportTheme(p){let t=copy(p.theme),files={'manifest.json':JSON.stringify({format:'skytheme',schemaVersion:1,name:t.name||PRESETS[t.id]?.name||'自定义主题'}),'scene.json':JSON.stringify(t,null,2)};if(p._imageBytes){files['assets/stage.webp']=p._imageBytes;t.image='assets/stage.webp';files['scene.json']=JSON.stringify(t,null,2)}else if(p._imageUrl?.startsWith('data:image/')){files['assets/stage.webp']=base64ToBytes(p._imageUrl.split(',')[1]);t.image='assets/stage.webp';files['scene.json']=JSON.stringify(t,null,2)}downloadBytes((p.title||'scene')+'.skytheme',makeZip(files),'application/zip');toast('主题已导出 .skytheme')}
 async function unpackTheme(bytes){let files=await readZip(bytes);if(!files['manifest.json']||!files['scene.json'])throw Error('主题包缺少配置文件');let man=JSON.parse(DECODER.decode(files['manifest.json']));if(man.format!=='skytheme'||man.schemaVersion!==1)throw Error('主题包版本不支持');let t=JSON.parse(DECODER.decode(files['scene.json']));let data=null;if(t.image&&files[t.image]&&files[t.image].length<4*1024*1024)data=files[t.image];return {theme:t,imageBytes:data}}
 
+/* 18-instruments.js */
+// Shared instrument catalogue. Every bank supports the 15-key range in all 12 major keys.
+const INSTRUMENTS=[
+ {id:'offline',name:'经典钢琴',mode:'offline',gain:.23},
+ {id:'offline-harp',name:'竖琴',mode:'offline',bank:'orchestral_harp',gain:.26},
+ {id:'offline-music-box',name:'八音盒',mode:'offline',bank:'music_box',gain:.20},
+ {id:'offline-flute',name:'长笛',mode:'offline',bank:'flute',gain:.16},
+ {id:'offline-nylon-guitar',name:'尼龙吉他',mode:'offline',bank:'acoustic_guitar_nylon',gain:.26},
+ {id:'salamander',name:'Yamaha C5',mode:'online',gain:.23},
+ {id:'online-electric-piano',name:'电钢琴',mode:'online',bank:'electric_piano_1',gain:.23},
+ {id:'online-violin',name:'小提琴',mode:'online',bank:'violin',gain:.16},
+ {id:'online-cello',name:'大提琴',mode:'online',bank:'cello',gain:.18},
+ {id:'online-strings',name:'弦乐合奏',mode:'online',bank:'string_ensemble_1',gain:.16},
+ {id:'online-choir',name:'合唱',mode:'online',bank:'choir_aahs',gain:.16}
+];
+const instrumentSpec=id=>INSTRUMENTS.find(x=>x.id===id)||INSTRUMENTS[0];
+const FLUID_REVISION='044fab8e1456bfafc5776e86dfd6bb8697149aef';
+const FLUID_BASE=`https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/${FLUID_REVISION}/FluidR3_GM/`;
+const SAMPLE_NAMES=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const instrumentBanks=new Map(),instrumentLoads=new Map();
+let activeInstrumentBuffers=null,activeInstrumentId='offline',instrumentRequest=0,instrumentSelection=0,instrumentResume=false;
+function invalidateInstrumentChange(){instrumentRequest++;instrumentSelection++;instrumentResume=false}
+async function fetchSample(url){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+ try{const response=await fetch(url,{signal:controller.signal});if(!response.ok)throw Error('音源 HTTP '+response.status);return await response.arrayBuffer()}finally{clearTimeout(timer)}
+}
+async function mapAudio(items,job){
+ const results=new Array(items.length);let next=0;
+ await Promise.all(Array.from({length:Math.min(6,items.length)},async()=>{while(next<items.length){const index=next++;results[index]=await job(items[index])}}));
+ return results;
+}
+function audibleSample(buffer){
+ for(let channel=0;channel<buffer.numberOfChannels;channel++){
+  const data=buffer.getChannelData(channel);for(let i=0;i<data.length;i++)if(Math.abs(data[i])>.00001)return true;
+ }
+ return false;
+}
+async function transposeBuffer(buffer,semitones){
+ const rate=2**(semitones/12),length=Math.max(1,Math.ceil(buffer.length/rate)),C=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+ if(C){const offline=new C(buffer.numberOfChannels,length,buffer.sampleRate),source=offline.createBufferSource();source.buffer=buffer;source.playbackRate.value=rate;source.connect(offline.destination);source.start();return offline.startRendering()}
+ const output=getAudio().createBuffer(buffer.numberOfChannels,length,buffer.sampleRate);
+ for(let channel=0;channel<buffer.numberOfChannels;channel++){
+  const input=buffer.getChannelData(channel),data=output.getChannelData(channel);
+  for(let i=0;i<length;i++){const at=i*rate,index=Math.floor(at),fraction=at-index;data[i]=(input[index]||0)*(1-fraction)+(input[index+1]||0)*fraction}
+ }
+ return output;
+}
+async function loadInstrumentBank(id){
+ const spec=instrumentSpec(id),ac=getAudio();
+ if(spec.id==='offline'){await loadOfflinePiano();return state.pianoBuffers}
+ if(instrumentBanks.has(spec.id))return instrumentBanks.get(spec.id);
+ if(!instrumentLoads.has(spec.id)){
+  const load=(async()=>{
+   let items;
+   if(spec.id==='salamander'){
+    items=await mapAudio(ONLINE_PIANO_ROOTS,async([name,midi])=>[midi,await ac.decodeAudioData(await fetchSample(ONLINE_PIANO_BASE+name+'.mp3'))]);
+   }else{
+    const embedded=window.SKY_INSTRUMENT_SAMPLES?.[spec.bank];
+    items=await mapAudio(Array.from({length:36},(_,i)=>i+60),async midi=>{
+     let bytes;
+     if(spec.mode==='offline'){
+      if(!embedded?.[midi])throw Error('离线音色缺少采样 '+midi);
+      bytes=base64ToBytes(embedded[midi]).buffer;
+     }else{
+      const note=SAMPLE_NAMES[midi%12]+(Math.floor(midi/12)-1);
+      bytes=await fetchSample(FLUID_BASE+spec.bank+'-mp3/'+note+'.mp3');
+     }
+     return [midi,await ac.decodeAudioData(bytes)];
+    });
+   }
+   const bank=new Map(items);
+   if(bank.size!==(spec.id==='salamander'?12:36))throw Error('音源加载不完整');
+   if([...bank.values()].some(buffer=>buffer.duration<.03))throw Error('音源采样无效');
+   const valid=[...bank].filter(([,buffer])=>audibleSample(buffer));if(!valid.length)throw Error('音源没有有效声音');
+   bank.repairedNotes=[];
+   for(const [midi,buffer] of bank)if(!audibleSample(buffer)){
+    const [root,reference]=valid.reduce((a,b)=>Math.abs(a[0]-midi)<=Math.abs(b[0]-midi)?a:b);
+    bank.set(midi,await transposeBuffer(reference,midi-root));bank.repairedNotes.push(midi);
+   }
+   instrumentBanks.set(spec.id,bank);if(spec.id==='salamander')state.onlinePianoBuffers=bank;
+   return bank;
+  })().catch(error=>{instrumentLoads.delete(spec.id);throw error});
+  instrumentLoads.set(spec.id,load);
+ }
+ return instrumentLoads.get(spec.id);
+}
+async function prepareInstrument(){
+ try{if(window.navigator?.audioSession)window.navigator.audioSession.type='playback'}catch(error){console.warn('Audio session unavailable',error)}
+ const ac=getAudio();await ac.resume();if(ac.state&&ac.state!=='running')throw Error('音频尚未启动，请再次点击播放');
+ const project=state.project,spec=instrumentSpec(project?.playback?.instrument),request=++instrumentRequest;
+ try{
+  const bank=await loadInstrumentBank(spec.id);
+  if(request!==instrumentRequest||project!==state.project)return false;
+  activeInstrumentId=spec.id;activeInstrumentBuffers=bank;return true;
+ }catch(error){
+  if(request!==instrumentRequest||project!==state.project)return false;
+  console.warn(spec.name+' 无法加载，将回退离线钢琴',error);
+  await loadOfflinePiano();if(request!==instrumentRequest||project!==state.project)return false;
+  activeInstrumentId='offline';activeInstrumentBuffers=state.pianoBuffers;
+  if(project)project.playback.instrument='offline';$('instrumentSelect').value='offline';syncInstrumentPicker();saveLibrary();
+  toast(spec.name+' 暂不可用，已切换经典钢琴',5200);return true;
+ }
+}
+// A reusable bounded wheel animation for both instrument and range pickers.
+function bindSmoothWheel(track,host,axis='x',limit=24){
+ let raf=0,target=0,position=0,last=0;
+ const read=()=>axis==='x'?track.scrollLeft:track.scrollTop;
+ const write=value=>{if(axis==='x')track.scrollLeft=value;else track.scrollTop=value};
+ const cancel=()=>{cancelAnimationFrame(raf);raf=0};
+ host.addEventListener('wheel',event=>{
+  event.preventDefault();let delta=event.deltaY+event.deltaX;
+  if(event.deltaMode===1)delta*=16;if(event.deltaMode===2)delta*=axis==='x'?track.clientWidth:track.clientHeight;
+  if(!delta)return;if(!raf)target=position=read();
+  const max=axis==='x'?track.scrollWidth-track.clientWidth:track.scrollHeight-track.clientHeight;
+  target=clamp(target+Math.sign(delta)*Math.min(limit,Math.abs(delta)*.22),0,Math.max(0,max));
+  if(raf)return;last=performance.now();
+  const animate=now=>{
+   if(host.hidden){cancel();return}const dt=Math.min(40,now-last);last=now;
+   position+=(target-position)*(1-Math.exp(-dt/65));
+   if(Math.abs(target-position)<.5){write(target);raf=0;return}
+   write(position);raf=requestAnimationFrame(animate);
+  };
+  raf=requestAnimationFrame(animate);
+ },{passive:false});
+ host.addEventListener('pointerdown',cancel);host.addEventListener('keydown',cancel);
+ return cancel;
+}
+let cancelInstrumentWheel=()=>{};
+function closeInstrumentPicker(returnFocus=false){cancelInstrumentWheel();$('instrumentMenu').hidden=true;$('instrumentToggle').setAttribute('aria-expanded','false');if(returnFocus)$('instrumentToggle').focus()}
+function syncInstrumentPicker(){
+ const spec=instrumentSpec(state.project?.playback?.instrument);
+ $('instrumentSelect').value=spec.id;$('instrumentValue').textContent=spec.name;$('instrumentCurrent').textContent=spec.name+' · '+(spec.mode==='offline'?'离线':'在线');
+ for(const button of $('instrumentOptions').querySelectorAll('[data-instrument]')){
+  const chosen=button.dataset.instrument===spec.id;button.hidden=chosen;button.setAttribute('aria-selected',String(chosen));
+ }
+}
+function positionInstrumentPicker(){
+ const rect=$('instrumentToggle').getBoundingClientRect(),menu=$('instrumentMenu'),width=Math.min(224,innerWidth-24);
+ menu.style.width=width+'px';menu.style.left=clamp(rect.right-width,12,Math.max(12,innerWidth-width-12))+'px';
+ menu.style.top=clamp(rect.bottom+7,8,Math.max(8,innerHeight-222))+'px';
+}
+function openInstrumentPicker(){closeRangePicker();syncInstrumentPicker();$('instrumentMenu').hidden=false;$('instrumentToggle').setAttribute('aria-expanded','true');positionInstrumentPicker();$('instrumentCurrent').focus({preventScroll:true})}
+async function chooseInstrument(id){
+ if(!state.project)return;const project=state.project,selection=++instrumentSelection,was=state.isPlaying||instrumentResume;
+ instrumentResume=was;if(state.isPlaying)pauseSong();project.playback.instrument=instrumentSpec(id).id;saveLibrary();syncInstrumentPicker();closeInstrumentPicker(true);
+ toast('正在准备'+instrumentSpec(id).name+'…',1300);
+ try{const ready=await preloadPiano();if(selection!==instrumentSelection||project!==state.project)return;instrumentResume=false;if(ready&&was&&!state.isPlaying)await playPause()}catch(error){if(selection===instrumentSelection)instrumentResume=false;console.warn(error);toast('音源加载异常：'+error.message,5000)}
+}
+function bindInstrumentPicker(){
+ const menu=$('instrumentMenu'),trigger=$('instrumentToggle'),options=$('instrumentOptions');
+ for(const spec of INSTRUMENTS){const button=document.createElement('button');button.type='button';button.dataset.instrument=spec.id;button.setAttribute('role','option');button.setAttribute('aria-selected','false');button.tabIndex=-1;button.textContent=spec.name+' · '+(spec.mode==='offline'?'离线':'在线');button.onclick=()=>chooseInstrument(spec.id);options.append(button)}
+ cancelInstrumentWheel=bindSmoothWheel(options,menu,'y',18);
+ trigger.onclick=()=>menu.hidden?openInstrumentPicker():closeInstrumentPicker();$('instrumentCurrent').onclick=()=>closeInstrumentPicker(true);
+ trigger.onkeydown=event=>{if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();openInstrumentPicker()}};
+ menu.onkeydown=event=>{
+  const buttons=[$('instrumentCurrent'),...[...options.querySelectorAll('[data-instrument]')].filter(b=>!b.hidden)],index=buttons.indexOf(document.activeElement);let next;
+  if(event.key==='ArrowDown')next=(index+1)%buttons.length;if(event.key==='ArrowUp')next=(index-1+buttons.length)%buttons.length;
+  if(event.key==='Home')next=0;if(event.key==='End')next=buttons.length-1;
+  if(next!==undefined){event.preventDefault();buttons[next].focus({preventScroll:true});buttons[next].scrollIntoView({block:'nearest'})}
+  if(event.key==='Escape'){event.preventDefault();closeInstrumentPicker(true)}if(event.key==='Tab')closeInstrumentPicker();
+ };
+ document.addEventListener('pointerdown',event=>{if(!menu.hidden&&!menu.contains(event.target)&&!trigger.contains(event.target))closeInstrumentPicker()});
+ window.addEventListener('resize',()=>{if(!menu.hidden)positionInstrumentPicker()});
+ window.addEventListener('scroll',event=>{if(!menu.hidden&&event.target!==menu&&!menu.contains(event.target))closeInstrumentPicker()},true);
+}
+
 /* 20-audio.js */
 const ONLINE_PIANO_ROOTS=[['C4',60],['Ds4',63],['Fs4',66],['A4',69],['C5',72],['Ds5',75],['Fs5',78],['A5',81],['C6',84],['Ds6',87],['Fs6',90],['A6',93]];
 const ONLINE_PIANO_BASE='https://tonejs.github.io/audio/salamander/';
@@ -128,13 +295,10 @@ function getAudio(){if(!state.audioCtx){const C=window.AudioContext||window.webk
  state.dryBus=ac.createGain();state.dryBus.connect(state.master);state.reverbSend=ac.createGain();let convolution=ac.createConvolver();convolution.buffer=makeRoomImpulse(ac);state.wetBus=ac.createGain();state.reverbSend.connect(convolution);convolution.connect(state.wetBus);state.wetBus.connect(state.master);updateSustainAudio();}return state.audioCtx}
 function updateSustainAudio(){if(!state.audioCtx||!state.wetBus)return;state.wetBus.gain.setTargetAtTime(.012+state.sustain*.40,state.audioCtx.currentTime,.04)}
 async function loadOfflinePiano(){const ac=getAudio();if(state.pianoBuffers.size>=15)return;if(!state.loadedSamplePromise){state.loadedSamplePromise=Promise.all(Object.entries(SAMPLES).map(async([midi,b64])=>{let bytes=base64ToBytes(b64);return [Number(midi),await ac.decodeAudioData(bytes.buffer)]})).then(items=>{for(let [m,b]of items)state.pianoBuffers.set(m,b)}).catch(err=>{state.loadedSamplePromise=null;throw err})}await state.loadedSamplePromise}
-async function preloadPiano(){try{if(window.navigator?.audioSession)window.navigator.audioSession.type='playback'}catch(e){console.warn('Audio session unavailable',e)}const ac=getAudio();await ac.resume();if(ac.state&&ac.state!=='running')throw Error('音频尚未启动，请再次点击播放');if(state.project?.playback?.instrument==='salamander'){
- try{if(state.onlinePianoBuffers.size<8){if(!state.onlineSamplePromise){state.onlineSamplePromise=Promise.all(ONLINE_PIANO_ROOTS.map(async ([name,midi])=>{let r=await fetch(ONLINE_PIANO_BASE+name+'.mp3');if(!r.ok)throw Error('HTTP '+r.status);return [midi,await ac.decodeAudioData(await r.arrayBuffer())]})).then(items=>{for(let [m,b]of items)state.onlinePianoBuffers.set(m,b)}).catch(e=>{state.onlineSamplePromise=null;throw e})}await state.onlineSamplePromise}return}
- catch(e){console.warn('在线 Yamaha C5 无法访问，将回退离线钢琴',e);if(state.project)state.project.playback.instrument='offline';$('instrumentSelect').value='offline';toast('在线 Yamaha C5 音源不可用，已切换离线钢琴',5200)}}
- await loadOfflinePiano()}
+async function preloadPiano(){return prepareInstrument()}
 function sampledKey(midi,buffers){let keys=[...buffers.keys()];if(!keys.length)return null;keys.sort((a,b)=>Math.abs(a-midi)-Math.abs(b-midi));return keys[0]}
-function triggerSample(note,at,duration=190,poly=1,velocity=85){const ac=state.audioCtx;if(!ac)return;let midi=noteMidi(note),online=state.project?.playback?.instrument==='salamander'&&state.onlinePianoBuffers.size>=8,buffers=online?state.onlinePianoBuffers:state.pianoBuffers,root=sampledKey(midi,buffers);if(root==null)return;
- let source=ac.createBufferSource();source.buffer=buffers.get(root);source.playbackRate.value=2**((midi-root)/12);let gain=ac.createGain();let attack=.008,noteSec=clamp(duration/1000,.06,2.8)/state.rate,release=(.16+state.sustain*1.6)/Math.sqrt(state.rate),volume=.23/Math.sqrt(Math.max(1,poly))*Math.pow(clamp(velocity,1,127)/95,1.28);let end=at+noteSec+release;
+function triggerSample(note,at,duration=190,poly=1,velocity=85){const ac=state.audioCtx;if(!ac)return;let midi=noteMidi(note),buffers=activeInstrumentBuffers||state.pianoBuffers,root=sampledKey(midi,buffers);if(root==null)return;
+ let source=ac.createBufferSource();source.buffer=buffers.get(root);source.playbackRate.value=2**((midi-root)/12);let gain=ac.createGain();let attack=.008,noteSec=clamp(duration/1000,.06,2.8)/state.rate,release=(.16+state.sustain*1.6)/Math.sqrt(state.rate),volume=instrumentSpec(activeInstrumentId).gain/Math.sqrt(Math.max(1,poly))*Math.pow(clamp(velocity,1,127)/95,1.28);let end=at+noteSec+release;
  gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(volume,at+attack);gain.gain.setValueAtTime(volume*.74,at+noteSec);gain.gain.exponentialRampToValueAtTime(.00013,end);source.connect(gain);gain.connect(state.dryBus);gain.connect(state.reverbSend);source.start(at);source.stop(Math.min(at+source.buffer.duration/Math.max(.01,source.playbackRate.value)-.02,end+.1));state.activeVoices.add(source);source.onended=()=>{state.activeVoices.delete(source);try{source.disconnect();gain.disconnect()}catch(e){}}
 }
 function stopVoices(){for(let source of [...state.activeVoices]){try{source.stop()}catch(e){}}state.activeVoices.clear()}
@@ -142,7 +306,7 @@ function realPosition(){if(!state.isPlaying||!state.audioCtx)return state.positi
 function beginClock(){let ac=state.audioCtx;state.mediaAnchor=state.position;state.clockAnchor=ac.currentTime;let ev=scoreEvents(state.project);state.scheduleIndex=lowerBound(ev,state.position-2);state.interval=setInterval(scheduleAudio,24);scheduleAudio()}
 function lowerBound(arr,t){let l=0,r=arr.length;while(l<r){let m=(l+r)>>1;if(arr[m].timeMs<t)l=m+1;else r=m}return l}
 function scheduleAudio(){if(!state.isPlaying)return;let events=scoreEvents(state.project),now=realPosition(),lookahead=Math.min(state.project.durationMs,now+170*state.rate);while(state.scheduleIndex<events.length&&events[state.scheduleIndex].timeMs<=lookahead){let e=events[state.scheduleIndex++];if(!e.notes.length||e.timeMs<now-35)continue;let at=state.audioCtx.currentTime+Math.max(0,(e.timeMs-now)/(1000*state.rate));for(let n of e.notes)triggerSample(n,at,e.durationMs,e.notes.length,e.velocity||85)}}
-async function playPause(){if(state.isPlaying){pauseSong();return}if(!state.project)return;cancelRollFinish();try{toast('正在准备钢琴音源…',1300);await preloadPiano()}catch(err){console.error(err);toast('音源加载失败：'+err.message,6000);return}if(state.position>=state.project.durationMs-80){state.position=0;state.rollPageStart=0}state.isPlaying=true;beginClock();$('playBtn').textContent='Ⅱ 暂停';state.sceneBase=performance.now();state.raf=requestAnimationFrame(playFrame);toast('开始演奏',1000)}
+async function playPause(){if(state.isPlaying){pauseSong();return}if(!state.project)return;cancelRollFinish();try{toast('正在准备音源…',1300);if(!await preloadPiano())return}catch(err){console.error(err);toast('音源加载失败：'+err.message,6000);return}if(state.position>=state.project.durationMs-80){state.position=0;state.rollPageStart=0}state.isPlaying=true;beginClock();$('playBtn').textContent='Ⅱ 暂停';state.sceneBase=performance.now();state.raf=requestAnimationFrame(playFrame);toast('开始演奏',1000)}
 function pauseSong(){if(!state.isPlaying)return;state.position=clamp(realPosition(),0,state.project.durationMs);state.isPlaying=false;clearInterval(state.interval);cancelAnimationFrame(state.raf);stopVoices();$('playBtn').textContent='▶ 播放';updateVisual();$('stageStatus').textContent='已暂停'}
 function seekTo(time,preserveRoll=false){
  if(!state.project)return;
@@ -265,14 +429,14 @@ function snowPopulate(element,count,scope='world'){element.innerHTML='';for(let 
 function renderLibrary(){let q=$('songSearch').value.trim().toLowerCase(),c=$('libraryCards');c.innerHTML='';let filter=$('libraryFilter').value;let visible=state.library.filter(p=>(p.title+' '+p.subtitle+' '+(p.author||'')).toLowerCase().includes(q)).filter(p=>filter==='favorite'?p.favorite:filter==='recent'?p.lastOpened>0:true);if(filter==='recent')visible.sort((a,b)=>b.lastOpened-a.lastOpened);$('libraryCount').textContent=state.library.length+' 首乐曲';for(let song of visible){let card=document.createElement('article');card.className='song-card';let scene=sceneId(song);const cover=scene==='christmas'?`<img alt="" src="${song._imageUrl||window.SKY_INLINE_STAGE||'assets/christmas/stage_00.webp'}">`:'';card.innerHTML=`<div class="song-cover ${scene}"><span class="cover-tag">${song.originKind==='builtin'?'内置歌曲':song.originKind==='imported'?'导入曲谱':'我的曲谱'}</span>${cover}</div><div class="song-details"><div><h3></h3><p></p></div><button class="card-play">▶</button></div>`;card.querySelector('h3').textContent=song.title;card.querySelector('p').textContent=durationFmt(song.durationMs)+' · '+songNotes(song)+' 音符 · '+(PRESETS[scene]?.name||'主题');card.querySelector('.card-play').onclick=()=>openSong(song.id);card.querySelector('.song-cover').onclick=()=>openSong(song.id);
  let actions=document.createElement('div');actions.className='song-card-actions';for(let [label,func,title] of [[song.favorite?'★':'☆',()=>favoriteSong(song.id),'收藏'],['✎',()=>renameSong(song.id),'重命名'],['⧉',()=>duplicateSong(song.id),'制作副本'],['×',()=>deleteSong(song.id),'删除项目']]){let btn=document.createElement('button');btn.textContent=label;btn.title=title;btn.setAttribute('aria-label',title);btn.onclick=e=>{e.stopPropagation();func()};actions.append(btn)}card.querySelector('.song-cover').append(actions);c.append(card)}let add=document.createElement('button');add.className='song-card add-card';add.innerHTML='<span class="plus">＋</span><strong>导入新的乐曲</strong><span>SKYMUSIC · MIDI · MUSICXML · AUDIO</span>';add.onclick=()=>openImport();c.append(add)}
 function openImport(){$('importDialog').showModal()}
-function openSong(id){closeRangePicker();cancelRollFinish();pauseSong();let p=state.library.find(p=>p.id===id);if(!p){toast('找不到歌曲');return}state.project=p;state.editMode=false;state.editDirty=false;state.editSource=null;state.editBaseline=null;updateEditButton();p.lastOpened=Date.now();saveLibrary();state.position=0;state.rollPageStart=0;state.selected=0;state.lastSelected=-1;state.page=-1;state.rate=p.playback.rate||1;state.tuning=p.playback.tuning||'C';state.sustain=Number.isFinite(p.playback.sustain)?p.playback.sustain:.45;$('homeView').hidden=true;$('playerView').hidden=false;state.mode='player';$('playBtn').textContent='▶ 播放';$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';$('speedSelect').value=String(state.rate);$('sustainSlider').value=Math.round(state.sustain*100);$('sustainValue').textContent=Math.round(state.sustain*100)+'%';$('instrumentSelect').value=p.playback.instrument||'offline';$('keySelect').value=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs);$('playBtn').disabled=false;applyTheme();initializeScene();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();try{localStorage.setItem('sky-last-song',id)}catch(e){console.warn('最近播放缓存不可用',e)}requestAnimationFrame(drawRoll);try{history.replaceState(null,'','#song='+encodeURIComponent(id))}catch(e){}}
-function goHome(){closeRangePicker();cancelRollFinish();if(state.editMode){requestFinishEdit('home');return}pauseSong();state.mode='home';$('playerView').hidden=true;$('homeView').hidden=false;try{history.replaceState(null,'',location.pathname)}catch(e){};renderLibrary();toast('已返回音乐馆',1000)}
+function openSong(id){invalidateInstrumentChange();closeInstrumentPicker();closeRangePicker();cancelRollFinish();pauseSong();let p=state.library.find(p=>p.id===id);if(!p){toast('找不到歌曲');return}state.project=p;state.editMode=false;state.editDirty=false;state.editSource=null;state.editBaseline=null;updateEditButton();p.lastOpened=Date.now();saveLibrary();state.position=0;state.rollPageStart=0;state.selected=0;state.lastSelected=-1;state.page=-1;state.rate=p.playback.rate||1;state.tuning=p.playback.tuning||'C';state.sustain=Number.isFinite(p.playback.sustain)?p.playback.sustain:.45;$('homeView').hidden=true;$('playerView').hidden=false;state.mode='player';$('playBtn').textContent='▶ 播放';$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';$('speedSelect').value=String(state.rate);$('sustainSlider').value=Math.round(state.sustain*100);$('sustainValue').textContent=Math.round(state.sustain*100)+'%';$('instrumentSelect').value=p.playback.instrument||'offline';$('keySelect').value=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs);$('playBtn').disabled=false;applyTheme();initializeScene();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();try{localStorage.setItem('sky-last-song',id)}catch(e){console.warn('最近播放缓存不可用',e)}requestAnimationFrame(drawRoll);try{history.replaceState(null,'','#song='+encodeURIComponent(id))}catch(e){}}
+function goHome(){invalidateInstrumentChange();closeInstrumentPicker();closeRangePicker();cancelRollFinish();if(state.editMode){requestFinishEdit('home');return}pauseSong();state.mode='home';$('playerView').hidden=true;$('homeView').hidden=false;try{history.replaceState(null,'',location.pathname)}catch(e){};renderLibrary();toast('已返回音乐馆',1000)}
 function applyTheme(){let p=state.project;if(!p)return;let theme=sceneId(p),host=$('playerView');host.classList.toggle('theme-starlight',theme!=='christmas');host.classList.toggle('theme-citylights',theme==='citylights');applyPlayerTemplate(p,host);initializeScene()}
 function beatIndex(time){let events=scoreEvents(state.project);return clamp(lowerBound(events,time+1)-1,0,Math.max(events.length-1,0))}
 function stepEvent(direction){if(!state.project)return;pauseSong();let events=scoreEvents(state.project),index=clamp(state.selected+direction,0,events.length-1);if(events[index])seekTo(events[index].timeMs)}
 function renderBeatGrid(force=false){let events=scoreEvents(state.project);let pg=events.length?Math.floor(state.selected/32):0;if(pg===state.page&&!force)return;state.page=pg;let grid=$('beatGrid');grid.innerHTML='';let frag=document.createDocumentFragment();for(let i=pg*32;i<Math.min(events.length,(pg+1)*32);i++){let e=events[i],btn=document.createElement('button');btn.className='beat'+(e.notes.length===2?' poly2':e.notes.length>=3?' poly3':'')+(e.notes.length?'':' empty')+(e.confidence==='unverified'?' uncertain':'');btn.dataset.index=i;btn.title=`${positionFmt(e.timeMs)} · ${eventLabel(e)}`;btn.setAttribute('aria-label',`第 ${String(i+1).padStart(3,'0')} 格 · ${btn.title}`);let label=document.createElement('span');label.className='beat-number';label.textContent=String(i+1).padStart(3,'0');let dots=document.createElement('div');dots.className='mini-keys';dots.setAttribute('aria-hidden','true');for(let n=1;n<=15;n++){let dot=document.createElement('span');dot.className='mini-dot'+(e.notes.includes(n)?' on':'');dot.dataset.note=n;dots.append(dot)}let name=document.createElement('span');name.className='beat-name';name.textContent=e.notes.length?e.notes.map(noteName).join('·'):'·';btn.append(label,dots,name);btn.onclick=()=>{pauseSong();seekTo(e.timeMs);state.selected=i;renderBeatGrid();renderKeyBoard();updateVisual();if(state.editMode)syncEditorFields()};frag.append(btn)}for(let i=Math.min(events.length-pg*32,32);i<32;i++){let tile=document.createElement('div');tile.className='beat empty beat-placeholder';tile.setAttribute('aria-hidden','true');frag.append(tile)}grid.append(frag);$('pageLabel').textContent=String(pg+1).padStart(2,'0')+' / '+String(Math.max(1,Math.ceil(events.length/32))).padStart(2,'0');$('pagePrev').disabled=pg===0;$('pageNext').disabled=pg===Math.max(1,Math.ceil(events.length/32))-1}
 function renderKeyBoard(){let c=$('keyBoard');c.innerHTML='';let active=scoreEvents(state.project)[state.selected]?.notes||[];for(let n=1;n<=15;n++){let b=document.createElement('button');b.className='key-tile'+(active.includes(n)?' active':'');b.dataset.note=n;b.setAttribute('aria-label','切换琴键 '+n+' '+noteName(n));b.innerHTML=`<span class="key-no">${String(n).padStart(2,'0')}</span><span class="key-name">${noteName(n)}</span>`;b.onclick=()=>toggleNote(n);c.append(b)}}
-async function toggleNote(n){if(!state.project)return;if(!state.editMode){try{await preloadPiano();triggerSample(n,state.audioCtx.currentTime+.02,280)}catch(e){toast('钢琴音源尚未就绪',2500)}return}let item=scoreEvents(state.project)[state.selected];if(!item)return;let exists=item.notes.includes(n);rememberEdit();item.notes=exists?item.notes.filter(v=>v!==n):[...item.notes,n].sort((a,b)=>a-b);if(item.notes.length&&item.durationMs<70)item.durationMs=190;if(!item.notes.length)item.durationMs=0;item.confidence='user-corrected';saveLibrary();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();if(state.editMode)syncEditorFields();$('noteCountHeader').textContent=songNotes(state.project)+' NOTES';if(!exists){try{await preloadPiano();triggerSample(n,state.audioCtx.currentTime+.015,300)}catch(e){console.warn(e)}}}
+async function toggleNote(n){if(!state.project)return;if(!state.editMode){try{await preloadPiano();triggerSample(n,state.audioCtx.currentTime+.02,280)}catch(e){toast('音源尚未就绪',2500)}return}let item=scoreEvents(state.project)[state.selected];if(!item)return;let exists=item.notes.includes(n);rememberEdit();item.notes=exists?item.notes.filter(v=>v!==n):[...item.notes,n].sort((a,b)=>a-b);if(item.notes.length&&item.durationMs<70)item.durationMs=190;if(!item.notes.length)item.durationMs=0;item.confidence='user-corrected';saveLibrary();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();if(state.editMode)syncEditorFields();$('noteCountHeader').textContent=songNotes(state.project)+' NOTES';if(!exists){try{await preloadPiano();triggerSample(n,state.audioCtx.currentTime+.015,300)}catch(e){console.warn(e)}}}
 function updateVisual(){let p=state.project;if(!p)return;let pos=state.position,events=scoreEvents(p),now=beatIndex(pos);let changed=now!==state.selected;if(state.isPlaying||state.lastSelected!==state.selected){state.selected=now;if(Math.floor(now/32)!==state.page)renderBeatGrid();if(changed)renderKeyBoard()}
  state.lastSelected=state.selected;$('timeClock').textContent=positionFmt(pos);$('seekSlider').value=Math.round(pos);$('rollSeekSlider').max=p.durationMs;$('rollSeekSlider').value=Math.round(pos);$('rollPosition').textContent=String(state.selected+1).padStart(4,'0')+' / '+events.length;
  const e=events[state.selected];$('selectedSummary').textContent=eventLabel(e);$('currentBeatIndex').textContent='第 '+String(state.selected+1).padStart(3,'0')+' 格';$('currentBeatNotes').textContent=eventLabel(e);
@@ -449,18 +613,18 @@ function install(){state.library=BUILTINS.map(p=>normalize(p));loadLibrary();sno
  $('pageNext').onclick=()=>{pauseSong();let pg=Math.floor(state.selected/32);let ev=scoreEvents(state.project),i=Math.min(ev.length-1,(pg+1)*32);seekTo(ev[i]?.timeMs||0)};
  $('resetKeyEdit').onclick=()=>{if(!state.editMode)return;let p=state.project;let original=BUILTINS.find(x=>x.id===(p.provenance?.derivedFrom||p.id));let e=scoreEvents(p)[state.selected],reference=original&&scoreEvents(original)[state.selected];if(!e)return;if(reference){rememberEdit();e.notes=[...reference.notes];e.durationMs=reference.durationMs;e.confidence='source';renderKeyBoard();renderBeatGrid(true);updateVisual();toast('已恢复此格的原始琴键')}else toast('导入曲目无内置原谱，请通过导入文件恢复')};
  $('keySelect').onchange=ev=>{if(!state.project)return;let was=state.isPlaying;if(was)pauseSong();state.tuning=ev.target.value;state.project.playback.tuning=state.tuning;saveLibrary();setTuningButtons();renderKeyBoard();renderBeatGrid(true);updateVisual();if(state.editMode)syncEditorFields();if(was)playPause()};
- $('instrumentSelect').onchange=async ev=>{if(!state.project)return;let was=state.isPlaying;if(was)pauseSong();state.project.playback.instrument=ev.target.value;saveLibrary();toast('正在切换钢琴音色…',1100);try{await preloadPiano()}catch(err){console.warn(err);toast('音源加载异常：'+err.message,5000)}if(was)playPause()};
+ $('instrumentSelect').onchange=ev=>chooseInstrument(ev.target.value);
  document.addEventListener('keydown',e=>{if(state.mode!=='player'||e.target.closest('input,select,textarea,button'))return;if(e.code==='Space'){e.preventDefault();playPause()}else if(e.code==='ArrowRight'){e.preventDefault();stepEvent(1)}else if(e.code==='ArrowLeft'){e.preventDefault();stepEvent(-1)}});
  window.addEventListener('resize',()=>{if(state.mode==='player')requestAnimationFrame(()=>{drawRoll();if(!state.isPlaying)initializeScene()})});
- bindRangePicker();bindWorkspace();bindVideo();renderLibrary();if(location.hash.startsWith('#song=')){let id=decodeURIComponent(location.hash.slice(6));if(state.library.some(x=>x.id===id))openSong(id)}
+ bindRangePicker();bindInstrumentPicker();bindWorkspace();bindVideo();renderLibrary();if(location.hash.startsWith('#song=')){let id=decodeURIComponent(location.hash.slice(6));if(state.library.some(x=>x.id===id))openSong(id)}
  }
 function setTuningButtons(){
  const key=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';
- $('keySelect').value=key;$('keyRangeValue').textContent=KEY_DEGREES[key][0]+' 大调';
+ $('keySelect').value=key;$('keyRangeValue').textContent=key==='sky-original'?'光遇原调':KEY_DEGREES[key][0]+' 大调';syncInstrumentPicker();
  for(const button of document.querySelectorAll('#keyRangeMenu [data-key]'))button.setAttribute('aria-selected',String(button.dataset.key===key));
 }
-const rangeScroll={target:0,position:0,raf:0,last:0};
-function cancelRangeScroll(){cancelAnimationFrame(rangeScroll.raf);rangeScroll.raf=0}
+let cancelRangeWheel=()=>{};
+function cancelRangeScroll(){cancelRangeWheel()}
 function closeRangePicker(returnFocus=false){cancelRangeScroll();$('keyRangeMenu').hidden=true;$('keyRangeToggle').setAttribute('aria-expanded','false');if(returnFocus)$('keyRangeToggle').focus()}
 function positionRangePicker(){
  const trigger=$('keyRangeToggle'),menu=$('keyRangeMenu'),rect=trigger.getBoundingClientRect();
@@ -470,31 +634,13 @@ function positionRangePicker(){
  menu.style.width=width+'px';menu.style.left=left+'px';menu.style.top=Math.max(8,Math.min(innerHeight-46,rect.top+(rect.height-42)/2))+'px';
 }
 function openRangePicker(){
- setTuningButtons();$('keyRangeMenu').hidden=false;$('keyRangeToggle').setAttribute('aria-expanded','true');positionRangePicker();
+ closeInstrumentPicker();setTuningButtons();$('keyRangeMenu').hidden=false;$('keyRangeToggle').setAttribute('aria-expanded','true');positionRangePicker();
  const selected=$('keyRangeMenu').querySelector('[aria-selected="true"]');selected?.focus({preventScroll:true});selected?.scrollIntoView({block:'nearest',inline:'nearest'});
 }
 function bindRangePicker(){
  const trigger=$('keyRangeToggle'),menu=$('keyRangeMenu'),track=$('keyRangeTrack');
  trigger.onclick=()=>menu.hidden?openRangePicker():closeRangePicker();
- menu.addEventListener('wheel',event=>{
-  event.preventDefault();let delta=event.deltaX+event.deltaY;
-  if(event.deltaMode===1)delta*=16;if(event.deltaMode===2)delta*=track.clientWidth;
-  if(!delta)return;
-  if(!rangeScroll.raf)rangeScroll.target=rangeScroll.position=track.scrollLeft;
-  // One wheel event travels at most half a cell; incoming deltas retarget the same animation.
-  rangeScroll.target=clamp(rangeScroll.target+Math.sign(delta)*Math.min(24,Math.abs(delta)*.22),0,track.scrollWidth-track.clientWidth);
-  if(rangeScroll.raf)return;
-  rangeScroll.last=performance.now();
-  const animate=now=>{
-   if(menu.hidden){cancelRangeScroll();return}
-   const dt=Math.min(40,now-rangeScroll.last);rangeScroll.last=now;
-   rangeScroll.position+=(rangeScroll.target-rangeScroll.position)*(1-Math.exp(-dt/65));
-   if(Math.abs(rangeScroll.target-rangeScroll.position)<.5){track.scrollLeft=rangeScroll.target;rangeScroll.raf=0;return}
-   track.scrollLeft=rangeScroll.position;rangeScroll.raf=requestAnimationFrame(animate);
-  };
-  rangeScroll.raf=requestAnimationFrame(animate);
- },{passive:false});
- menu.addEventListener('pointerdown',cancelRangeScroll);
+ cancelRangeWheel=bindSmoothWheel(track,menu,'x',24);
  trigger.onkeydown=event=>{if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();openRangePicker()}};
  for(const button of menu.querySelectorAll('[data-key]'))button.onclick=()=>{
   $('keySelect').value=button.dataset.key;$('keySelect').onchange({target:$('keySelect')});closeRangePicker(true);
@@ -515,6 +661,6 @@ function bindRangePicker(){
 }
 // Avoid editing the user-provided v7 backup: all transforms occur on copied score objects.
 const oldOpenSong=openSong;openSong=function(id){oldOpenSong(id);setTuningButtons();updateEditButton()};
-window.__SKY_STUDIO_TEST__={state,openSong,goHome,normalize,makeZip,readZip,unpackProject,parseMIDI,parseCSV,parseMusicXML,exportProject,exportMIDI,exportCSV,importFile,createProject,renameSong,renameConfirmed,duplicateSong,deleteSong,deleteConfirmed,completeEdit,openEditor,requestFinishEdit,KEY_ROOTS,noteMidi,noteName,rollFrame,undo,redo,eventInsert,eventRemove,applyThemeFields,analyseSkyGrid,applyPlayerTemplate,PLAYER_TEMPLATE_ID};
+window.__SKY_STUDIO_TEST__={state,openSong,goHome,normalize,makeZip,readZip,unpackProject,parseMIDI,parseCSV,parseMusicXML,exportProject,exportMIDI,exportCSV,importFile,createProject,renameSong,renameConfirmed,duplicateSong,deleteSong,deleteConfirmed,completeEdit,openEditor,requestFinishEdit,KEY_ROOTS,noteMidi,noteName,rollFrame,INSTRUMENTS,loadInstrumentBank,preloadPiano,triggerSample,chooseInstrument,undo,redo,eventInsert,eventRemove,applyThemeFields,analyseSkyGrid,applyPlayerTemplate,PLAYER_TEMPLATE_ID};
 install();startDbBackup();
 })();

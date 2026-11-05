@@ -4,7 +4,7 @@ from pathlib import Path
 import base64, json, zipfile, re, html
 ROOT=Path(__file__).resolve().parents[1]
 APP=ROOT/'app'
-FILES=['00-core.js','10-zip.js','20-audio.js','30-import.js','35-video.js','38-player-template.js','40-ui.js','45-workspace.js','47-edit-session.js','99-bootstrap.js']
+FILES=['00-core.js','10-zip.js','18-instruments.js','20-audio.js','30-import.js','35-video.js','38-player-template.js','40-ui.js','45-workspace.js','47-edit-session.js','99-bootstrap.js']
 compiled='\n'.join('/* '+f+' */\n'+(ROOT/'src'/f).read_text(encoding='utf-8') for f in FILES)
 (APP/'js/studio.js').write_text(compiled,encoding='utf-8')
 html_source=(APP/'index.html').read_text(encoding='utf-8')
@@ -21,7 +21,7 @@ for decoration in ['legacy-tree.png']:
  site=site.replace(f'src="assets/christmas/{decoration}"',f'src="{uri}"')
 preload='<script>window.SKY_STAGE_FRAMES='+json.dumps(frames,separators=(',',':'))+';window.SKY_INLINE_STAGE='+json.dumps(stage_uri)+';</script>'
 site=site.replace('<script src="js/builtins.js"></script>',preload+'\n<script src="js/builtins.js"></script>')
-for filename in ['builtins.js','piano-samples.js','scene-embedded.js','studio.js']:
+for filename in ['builtins.js','piano-samples.js','instrument-samples.js','scene-embedded.js','studio.js']:
  script=(APP/'js'/filename).read_text(encoding='utf-8').replace('</script>','<\\/script>')
  site=site.replace('<script src="js/'+filename+'"></script>','<script>\n'+script+'\n</script>')
 if '<script src=' in site:raise Exception('Standalone HTML has external script src')

@@ -24,7 +24,7 @@ with sync_playwright() as pw:
         score = page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.project.score)')
         trigger.click()
         assert menu.is_visible() and trigger.get_attribute('aria-expanded') == 'true'
-        assert page.locator('#keyRangeMenu [role=option]').count() == 12
+        assert page.locator('#keyRangeMenu [role=option]').count() == 13
         tr, mr = trigger.bounding_box(), menu.bounding_box()
         assert mr['width'] <= 272
         assert menu.evaluate('(e)=>getComputedStyle(e).borderTopWidth') == '0px'
