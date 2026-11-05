@@ -459,12 +459,14 @@ function setTuningButtons(){
  $('keySelect').value=key;$('keyRangeValue').textContent=KEY_DEGREES[key][0]+' 大调';
  for(const button of document.querySelectorAll('#keyRangeMenu [data-key]'))button.setAttribute('aria-selected',String(button.dataset.key===key));
 }
-function closeRangePicker(returnFocus=false){$('keyRangeMenu').hidden=true;$('keyRangeToggle').setAttribute('aria-expanded','false');if(returnFocus)$('keyRangeToggle').focus()}
+const rangeScroll={target:0,position:0,raf:0,last:0};
+function cancelRangeScroll(){cancelAnimationFrame(rangeScroll.raf);rangeScroll.raf=0}
+function closeRangePicker(returnFocus=false){cancelRangeScroll();$('keyRangeMenu').hidden=true;$('keyRangeToggle').setAttribute('aria-expanded','false');if(returnFocus)$('keyRangeToggle').focus()}
 function positionRangePicker(){
  const trigger=$('keyRangeToggle'),menu=$('keyRangeMenu'),rect=trigger.getBoundingClientRect();
- let width=Math.min(252,Math.max(0,rect.left-20)),left=rect.left-width-8;
+ let width=Math.min(272,Math.max(0,rect.left-20)),left=rect.left-width-8;
  // Narrow screens retain one horizontal strip; never fall back to a downward menu.
- if(width<120){width=Math.min(252,innerWidth-24);left=12}
+ if(width<120){width=Math.min(272,innerWidth-24);left=12}
  menu.style.width=width+'px';menu.style.left=left+'px';menu.style.top=Math.max(8,Math.min(innerHeight-46,rect.top+(rect.height-42)/2))+'px';
 }
 function openRangePicker(){
@@ -472,14 +474,33 @@ function openRangePicker(){
  const selected=$('keyRangeMenu').querySelector('[aria-selected="true"]');selected?.focus({preventScroll:true});selected?.scrollIntoView({block:'nearest',inline:'nearest'});
 }
 function bindRangePicker(){
- const trigger=$('keyRangeToggle'),menu=$('keyRangeMenu');
+ const trigger=$('keyRangeToggle'),menu=$('keyRangeMenu'),track=$('keyRangeTrack');
  trigger.onclick=()=>menu.hidden?openRangePicker():closeRangePicker();
- menu.addEventListener('wheel',event=>{event.preventDefault();menu.scrollLeft+=event.deltaX+event.deltaY},{passive:false});
+ menu.addEventListener('wheel',event=>{
+  event.preventDefault();let delta=event.deltaX+event.deltaY;
+  if(event.deltaMode===1)delta*=16;if(event.deltaMode===2)delta*=track.clientWidth;
+  if(!delta)return;
+  if(!rangeScroll.raf)rangeScroll.target=rangeScroll.position=track.scrollLeft;
+  // One wheel event travels at most half a cell; incoming deltas retarget the same animation.
+  rangeScroll.target=clamp(rangeScroll.target+Math.sign(delta)*Math.min(24,Math.abs(delta)*.22),0,track.scrollWidth-track.clientWidth);
+  if(rangeScroll.raf)return;
+  rangeScroll.last=performance.now();
+  const animate=now=>{
+   if(menu.hidden){cancelRangeScroll();return}
+   const dt=Math.min(40,now-rangeScroll.last);rangeScroll.last=now;
+   rangeScroll.position+=(rangeScroll.target-rangeScroll.position)*(1-Math.exp(-dt/65));
+   if(Math.abs(rangeScroll.target-rangeScroll.position)<.5){track.scrollLeft=rangeScroll.target;rangeScroll.raf=0;return}
+   track.scrollLeft=rangeScroll.position;rangeScroll.raf=requestAnimationFrame(animate);
+  };
+  rangeScroll.raf=requestAnimationFrame(animate);
+ },{passive:false});
+ menu.addEventListener('pointerdown',cancelRangeScroll);
  trigger.onkeydown=event=>{if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();openRangePicker()}};
  for(const button of menu.querySelectorAll('[data-key]'))button.onclick=()=>{
   $('keySelect').value=button.dataset.key;$('keySelect').onchange({target:$('keySelect')});closeRangePicker(true);
  };
  menu.onkeydown=event=>{
+  cancelRangeScroll();
   const options=[...menu.querySelectorAll('[data-key]')],index=options.indexOf(document.activeElement);let next;
   if(event.key==='ArrowLeft')next=(index-1+options.length)%options.length;
   if(event.key==='ArrowRight')next=(index+1)%options.length;

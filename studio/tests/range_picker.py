@@ -20,33 +20,53 @@ with sync_playwright() as pw:
         page.locator('.card-play').first.click()
         assert page.locator('.key-control > span').inner_text() == '音域'
         trigger, menu = page.locator('#keyRangeToggle'), page.locator('#keyRangeMenu')
+        track = page.locator('#keyRangeTrack')
         score = page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.project.score)')
         trigger.click()
         assert menu.is_visible() and trigger.get_attribute('aria-expanded') == 'true'
         assert page.locator('#keyRangeMenu [role=option]').count() == 12
         tr, mr = trigger.bounding_box(), menu.bounding_box()
-        assert mr['width'] <= 252
+        assert mr['width'] <= 272
+        assert menu.evaluate('(e)=>getComputedStyle(e).borderTopWidth') == '0px'
+        assert 'linear-gradient' in menu.evaluate('(e)=>getComputedStyle(e).maskImage')
+        assert menu.evaluate('(e)=>getComputedStyle(e,"::before").content') == 'none'
+        assert menu.evaluate('(e)=>getComputedStyle(e,"::after").content') == 'none'
         assert mr['x'] >= 0 and mr['x'] + mr['width'] <= width
         assert abs(mr['y'] + mr['height']/2 - tr['y'] - tr['height']/2) < 1
         if tr['x'] >= 140:
             assert mr['x'] + mr['width'] <= tr['x']
         selected = page.locator('#keyRangeMenu [data-key=C]')
         assert selected.get_attribute('aria-selected') == 'true'
-        visible = menu.evaluate('(e)=>{const r=e.getBoundingClientRect();return [...e.children].filter(b=>{const v=b.getBoundingClientRect();return v.left>=r.left&&v.right<=r.right}).length}')
+        visible = menu.evaluate('(e)=>{const r=e.getBoundingClientRect();return [...e.querySelectorAll("[role=option]")].filter(b=>{const v=b.getBoundingClientRect();return v.left>=r.left&&v.right<=r.right}).length}')
         assert visible == 5, visible
         menu.hover()
         vertical = page.evaluate('scrollY')
-        scroll = menu.evaluate('(e)=>e.scrollLeft')
+        scroll = track.evaluate('(e)=>e.scrollLeft')
         page.mouse.wheel(0, 100)
-        page.wait_for_function('document.getElementById("keyRangeMenu").scrollLeft > 0')
-        assert menu.evaluate('(e)=>e.scrollLeft') > scroll
+        page.wait_for_function('document.getElementById("keyRangeTrack").scrollLeft > 0')
+        page.wait_for_timeout(350)
+        distance = track.evaluate('(e)=>e.scrollLeft') - scroll
+        assert 0 < distance <= 24, distance
         assert page.evaluate('scrollY') == vertical
         page.mouse.wheel(0, -100)
-        page.wait_for_function('document.getElementById("keyRangeMenu").scrollLeft === 0')
+        page.wait_for_function('document.getElementById("keyRangeTrack").scrollLeft === 0')
+        if width == 1366:
+            positions = page.evaluate('''async () => {
+              const track=document.getElementById('keyRangeTrack'),samples=[];
+              track.dispatchEvent(new WheelEvent('wheel',{deltaY:1200,bubbles:true,cancelable:true}));
+              for(let i=0;i<28;i++){await new Promise(requestAnimationFrame);samples.push(track.scrollLeft)}
+              return samples;
+            }''')
+            assert max(positions) <= 24, positions
+            assert any(0 < p < max(positions) for p in positions), positions
+            assert max(b-a for a,b in zip(positions, positions[1:])) < 12, positions
+        assert all(abs(w-44) < .1 for w in page.locator('#keyRangeMenu [role=option]').evaluate_all('(es)=>es.map(e=>e.getBoundingClientRect().width)'))
         option = page.locator('#keyRangeMenu [data-key=F]')
+        page.locator('h1#songTitle').hover()
+        page.wait_for_timeout(220)
         color = option.evaluate('(e)=>getComputedStyle(e).borderTopColor')
         option.hover()
-        assert option.evaluate('(e)=>getComputedStyle(e).borderTopColor') != color
+        page.wait_for_function('(color)=>getComputedStyle(document.querySelector("#keyRangeMenu [data-key=F]")).borderTopColor !== color', arg=color)
         assert page.evaluate('window.__SKY_STUDIO_TEST__.state.tuning') == 'C'
         option.click()
         assert menu.is_hidden() and trigger.get_attribute('aria-expanded') == 'false'
