@@ -23,11 +23,11 @@ async function playPause(){if(state.isPlaying){pauseSong();return}if(!state.proj
 function pauseSong(){if(!state.isPlaying)return;state.position=clamp(realPosition(),0,state.project.durationMs);state.isPlaying=false;clearInterval(state.interval);cancelAnimationFrame(state.raf);stopVoices();$('playBtn').textContent='▶ 播放';updateVisual();$('stageStatus').textContent='已暂停'}
 function seekTo(time,preserveRoll=false){
  if(!state.project)return;
- const was=state.isPlaying,phase=rollFrame(was?realPosition():state.position).phase;
+ const was=state.isPlaying,frame=rollFrame(was?realPosition():state.position),fraction=frame.phase/frame.windowMs;
  cancelRollFinish();
  if(was){clearInterval(state.interval);stopVoices()}
  state.position=clamp(time,0,Math.max(0,state.project.durationMs));
- state.rollPageStart=preserveRoll?state.position-phase:Math.floor(state.position/(state.windowSec*1000))*state.windowSec*1000;
+ state.rollPageStart=preserveRoll?rollSeekOrigin(state.position,fraction):Math.floor(Math.max(0,state.position-(state.position>=state.project.durationMs ? .001 : 0))/(state.windowSec*1000))*state.windowSec*1000;
  state.lastSelected=-1;
  // Re-anchor the running audio clock directly: rapid drag events never spawn async play calls.
  if(was)beginClock();

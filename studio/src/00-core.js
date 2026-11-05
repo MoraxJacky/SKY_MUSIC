@@ -24,11 +24,10 @@ function trimTrailingRests(project){
  const events=scoreEvents(project);let last=events.length-1;
  while(last>=0&&!events[last].notes.length)last--;
  // An entirely blank score is an editable new-song template, not a finished performance.
- if(last<0||last===events.length-1)return project;
- const boundary=events[last+1].timeMs;
+ if(last<0)return project;
  events.splice(last+1);
  let soundingEnd=0;for(const e of events)if(e.notes.length)soundingEnd=Math.max(soundingEnd,e.timeMs+Math.max(1,e.durationMs));
- project.durationMs=Math.max(soundingEnd,Math.min(project.durationMs,boundary));
+ project.durationMs=soundingEnd;
  return project;
 }
 function normalize(raw){

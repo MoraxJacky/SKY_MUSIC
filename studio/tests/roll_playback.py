@@ -45,11 +45,13 @@ with sync_playwright() as pw:
     page.wait_for_function('window.__SKY_STUDIO_TEST__.state.isPlaying')
     drift = page.evaluate('''() => {
       const T=window.__SKY_STUDIO_TEST__, e=document.getElementById('rollSeekSlider');
+      const clock=T.state.audioCtx.currentTime;
       const phase=T.rollFrame(T.state.mediaAnchor+(T.state.audioCtx.currentTime-T.state.clockAnchor)*1000*T.state.rate).phase;
       for(let i=0;i<80;i++){e.value=30000+i*100;e.dispatchEvent(new Event('input',{bubbles:true}))}
-      return {difference:T.rollFrame().phase-phase, playing:T.state.isPlaying, target:T.state.position};
+      return {difference:T.rollFrame().phase-phase,elapsed:(T.state.audioCtx.currentTime-clock)*1000*T.state.rate,playing:T.state.isPlaying,target:T.state.position};
     }''')
-    assert drift['playing'] and drift['target'] == 37900 and 0 <= drift['difference'] < 150
+    assert drift['playing'] and drift['target'] == 37900, drift
+    assert abs(drift['difference'] - drift['elapsed']) < 50, drift
     page.wait_for_function('window.__SKY_STUDIO_TEST__.state.position > 37980')
     page.locator('#playBtn').click()
     page.screenshot(path=str(out / 'paged-roll.png'), animations='disabled')
@@ -65,21 +67,19 @@ with sync_playwright() as pw:
         }''')
         assert end['position'] == duration and not end['playing']
         assert end['begin'] == (8000 if duration == 10000 else 0)
-        if duration == 10000:
-            page.wait_for_timeout(100)
-            assert page.evaluate('window.__SKY_STUDIO_TEST__.rollFrame().phase') > end['phase']
-        # Advance only the visual tail clock; playback time stays at the true end.
-        page.evaluate('window.__SKY_STUDIO_TEST__.state.rollFinish.at -= 30000')
+        # The final page uses the true remaining duration, with no padded blank time.
+        assert end['end'] == duration
+        assert end['phase'] == end['windowMs']
         page.wait_for_function('window.__SKY_STUDIO_TEST__.state.rollFinishRaf === 0')
         final = page.evaluate('window.__SKY_STUDIO_TEST__.rollFrame()')
-        assert final['phase'] == 8000 and final['begin'] == end['begin']
+        assert final['phase'] == duration - end['begin'] and final['begin'] == end['begin']
         assert page.evaluate('window.__SKY_STUDIO_TEST__.state.position') == duration
         page.wait_for_timeout(100)
         assert page.evaluate('window.__SKY_STUDIO_TEST__.rollFrame()') == final
         page.screenshot(path=str(out / f'final-{duration}.png'), animations='disabled')
         page.locator('#rollWindow').select_option('10')
-        assert page.evaluate('window.__SKY_STUDIO_TEST__.rollFrame().phase') == 10000
-        assert page.evaluate('window.__SKY_STUDIO_TEST__.rollFrame().begin') == duration - 10000
+        assert page.evaluate('window.__SKY_STUDIO_TEST__.rollFrame().phase') == min(duration, 10000)
+        assert page.evaluate('window.__SKY_STUDIO_TEST__.rollFrame().begin') == max(0, duration - 10000)
         page.locator('#rollWindow').select_option('8')
         page.locator('#rollSeekSlider').fill('1500')
         assert page.evaluate('window.__SKY_STUDIO_TEST__.state.rollFinish === null')

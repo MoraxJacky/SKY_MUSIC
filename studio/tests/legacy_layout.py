@@ -56,7 +56,7 @@ with sync_playwright() as pw:
         page.locator('#seekSlider').fill(page.locator('#seekSlider').get_attribute('max'))
         assert page.locator('#pageNext').is_disabled()
         # The former uncertain suffix was empty; automatic trimming now ends on a note.
-        assert 'empty' not in page.locator('#beatGrid .beat').last.get_attribute('class').split()
+        assert 'empty' not in page.locator('#beatGrid button.beat').last.get_attribute('class').split()
         assert not errors,errors
         evidence.append({'viewport':[width,height],'grid':'4x8','squareCells':True,'playbackPageFollow':True,'restResonance':True,'pageErrors':errors})
         context.close()

@@ -3,7 +3,7 @@ function install(){state.library=BUILTINS.map(p=>normalize(p));loadLibrary();sno
  $('playBtn').onclick=()=>playPause();$('restartBtn').onclick=()=>seekTo(0);
  $('sustainSlider').oninput=ev=>{state.sustain=Number(ev.target.value)/100;$('sustainValue').textContent=Math.round(state.sustain*100)+'%';if(state.project){state.project.playback.sustain=state.sustain;saveLibrary()}updateSustainAudio()};
  $('speedSelect').onchange=ev=>{let was=state.isPlaying;if(was)pauseSong();state.rate=Number(ev.target.value);if(state.project){state.project.playback.rate=state.rate;saveLibrary()}if(was)playPause()};
- $('rollWindow').onchange=ev=>{const finishing=Boolean(state.rollFinish),fraction=rollFrame().phase/(state.windowSec*1000);cancelRollFinish();state.windowSec=Number(ev.target.value);state.rollPageStart=state.position-fraction*state.windowSec*1000;if(finishing)finishRollScan();else drawRoll()};
+ $('rollWindow').onchange=ev=>{const finishing=Boolean(state.rollFinish),frame=rollFrame(),fraction=frame.phase/frame.windowMs;cancelRollFinish();state.windowSec=Number(ev.target.value);state.rollPageStart=rollSeekOrigin(state.position,fraction);if(finishing)finishRollScan();else drawRoll()};
  $('rollWindow').value=String(state.windowSec);$('stepPrev').onclick=()=>stepEvent(-1);$('stepNext').onclick=()=>stepEvent(1);
  $('seekSlider').oninput=ev=>seekTo(Number(ev.target.value));
  $('rollSeekSlider').oninput=ev=>seekTo(Number(ev.target.value),true);
