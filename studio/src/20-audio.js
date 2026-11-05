@@ -19,10 +19,21 @@ function realPosition(){if(!state.isPlaying||!state.audioCtx)return state.positi
 function beginClock(){let ac=state.audioCtx;state.mediaAnchor=state.position;state.clockAnchor=ac.currentTime;let ev=scoreEvents(state.project);state.scheduleIndex=lowerBound(ev,state.position-2);state.interval=setInterval(scheduleAudio,24);scheduleAudio()}
 function lowerBound(arr,t){let l=0,r=arr.length;while(l<r){let m=(l+r)>>1;if(arr[m].timeMs<t)l=m+1;else r=m}return l}
 function scheduleAudio(){if(!state.isPlaying)return;let events=scoreEvents(state.project),now=realPosition(),lookahead=Math.min(state.project.durationMs,now+170*state.rate);while(state.scheduleIndex<events.length&&events[state.scheduleIndex].timeMs<=lookahead){let e=events[state.scheduleIndex++];if(!e.notes.length||e.timeMs<now-35)continue;let at=state.audioCtx.currentTime+Math.max(0,(e.timeMs-now)/(1000*state.rate));for(let n of e.notes)triggerSample(n,at,e.durationMs,e.notes.length,e.velocity||85)}}
-async function playPause(){if(state.isPlaying){pauseSong();return}if(!state.project)return;try{toast('正在准备钢琴音源…',1300);await preloadPiano()}catch(err){console.error(err);toast('音源加载失败：'+err.message,6000);return}if(state.position>=state.project.durationMs-80)state.position=0;state.isPlaying=true;beginClock();$('playBtn').textContent='Ⅱ 暂停';state.sceneBase=performance.now();state.raf=requestAnimationFrame(playFrame);toast('开始演奏',1000)}
+async function playPause(){if(state.isPlaying){pauseSong();return}if(!state.project)return;cancelRollFinish();try{toast('正在准备钢琴音源…',1300);await preloadPiano()}catch(err){console.error(err);toast('音源加载失败：'+err.message,6000);return}if(state.position>=state.project.durationMs-80){state.position=0;state.rollPageStart=0}state.isPlaying=true;beginClock();$('playBtn').textContent='Ⅱ 暂停';state.sceneBase=performance.now();state.raf=requestAnimationFrame(playFrame);toast('开始演奏',1000)}
 function pauseSong(){if(!state.isPlaying)return;state.position=clamp(realPosition(),0,state.project.durationMs);state.isPlaying=false;clearInterval(state.interval);cancelAnimationFrame(state.raf);stopVoices();$('playBtn').textContent='▶ 播放';updateVisual();$('stageStatus').textContent='已暂停'}
-function seekTo(time){const was=state.isPlaying;if(was)pauseSong();state.position=clamp(time,0,Math.max(0,state.project.durationMs));state.lastSelected=-1;updateVisual();if(was)playPause()}
-function playFrame(){if(!state.isPlaying)return;state.position=clamp(realPosition(),0,state.project.durationMs);if(state.position>=state.project.durationMs-10){pauseSong();return}updateVisual();animateScene();state.raf=requestAnimationFrame(playFrame)}
+function seekTo(time,preserveRoll=false){
+ if(!state.project)return;
+ const was=state.isPlaying,phase=rollFrame(was?realPosition():state.position).phase;
+ cancelRollFinish();
+ if(was){clearInterval(state.interval);stopVoices()}
+ state.position=clamp(time,0,Math.max(0,state.project.durationMs));
+ state.rollPageStart=preserveRoll?state.position-phase:Math.floor(state.position/(state.windowSec*1000))*state.windowSec*1000;
+ state.lastSelected=-1;
+ // Re-anchor the running audio clock directly: rapid drag events never spawn async play calls.
+ if(was)beginClock();
+ updateVisual();
+}
+function playFrame(){if(!state.isPlaying)return;state.position=clamp(realPosition(),0,state.project.durationMs);if(state.position>=state.project.durationMs){finishRollScan();return}updateVisual();animateScene();state.raf=requestAnimationFrame(playFrame)}
 function isSounding(timeMs){if(!state.isPlaying)return false;let ev=scoreEvents(state.project);let i=lowerBound(ev,timeMs);for(let k=Math.max(0,i-10);k<i;k++){let e=ev[k];if(e.notes.length&&timeMs>=e.timeMs&&timeMs<e.timeMs+e.durationMs+250+state.sustain*800)return true}return false}
 function activeNotes(timeMs){let ev=scoreEvents(state.project),i=lowerBound(ev,timeMs),set=new Set();for(let k=Math.max(0,i-12);k<i;k++){let e=ev[k];if(e.notes.length&&timeMs>=e.timeMs&&timeMs<e.timeMs+e.durationMs+state.sustain*570){for(let n of e.notes)set.add(n)}}return set}
 function animateScene(){const sounding=isSounding(state.position);$('stageStatus').textContent=state.isPlaying?(sounding?'♪ 演奏中':'休止'):'已暂停';if(sceneId(state.project)!=='christmas'||$('playerView').classList.contains('motion-off'))return;let now=performance.now();if(!state.stageImages?.length)return;if(sounding){if(!state.sceneTick)state.sceneTick=now;let dt=Math.min(65,now-state.sceneTick);state.sceneFrame=(state.sceneFrame+dt/6000*24)%24;}state.sceneTick=now;

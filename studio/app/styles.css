@@ -355,3 +355,7 @@ body:has(dialog[open]){overflow:hidden}
 /* Geometric centering avoids the text arrow baseline shifting the back icon. */
 .player-view .back-btn{display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0}
 .player-view .back-btn svg{display:block;flex-shrink:0}
+
+/* Score seeking changes the music position without moving the scan marker. */
+.player-view .roll-seek{display:flex;align-items:center;gap:10px;flex:none;padding:6px 0 0;color:var(--player-muted);font-size:10px}
+.player-view .roll-seek input{flex:1;min-width:0;height:14px;margin:0;accent-color:var(--theme-accent);cursor:pointer}
