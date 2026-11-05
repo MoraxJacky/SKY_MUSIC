@@ -1,0 +1,11 @@
+内置标准钢琴采样：TimGM6mb SoundFont，GM Program 0 Acoustic Grand Piano。
+音源原始作者：Tim Brechbill (2004), David Bolton (2010)；GPL v2 授权。
+本包包含原始SF2文件（sounds/TimGM6mb_SOURCE_GPL2.sf2）以及 GPL-2.0_LICENSE.txt。
+内置MP3均由原始SoundFont经FluidSynth渲染，以96 kb/s MP3编码，经过单音录制与重编码（已修改），用于网页中钢琴试听。
+官方上游: https://timbrechbill.com/saxguru/Timidity.php
+Debian 包: https://packages.debian.org/stable/timgm6mb-soundfont
+备用高保真在线音源：Salamander Grand Piano V3，Alexander Holm，CC BY 3.0。
+原始地址：https://github.com/sfzinstruments/SalamanderGrandPiano
+在线试听采样 CDN：https://tonejs.github.io/audio/salamander/
+Salamander 的音频按需从网络下载，不随压缩包打包。网络不可用时自动改用上面的离线钢琴音源。
+说明：琴键15个，按七声音阶跨两个八度C4-C6或G4-G6；5x3排列的同一列相差六度音程。

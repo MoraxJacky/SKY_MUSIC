@@ -1,0 +1,66 @@
+# 共用播放器模板：legacy-v7
+
+此模板依据用户指定的旧版 `christmas-canon` 网站提取，统一字体、面板材质、排版、4×8 点阵乐谱、播放高亮、逐拍导航和舞台。歌曲仅提供乐谱和主题配置；不同主题不复制页面，也不另写一套编辑/播放逻辑。
+
+## 模板的固定部分
+
+- `app/index.html`：音乐库与唯一播放器结构。播放器为顶部标题、播放控制、左侧卷帘/15键、右侧逐拍谱/舞台或编辑台。
+- `app/styles.css`：旧版比例、字号层级、近方形节拍格及装饰层；宽窗口双栏，窄窗口纵向排布。
+- `src/38-player-template.js`：模板标识、主题颜色配置、颜色数据白名单和统一应用入口 `applyPlayerTemplate(project, host)`。
+- `src/40-ui.js`：逐拍渲染、高亮、余音、翻页及共享导航，统一供全部主题调用。
+- `src/20-audio.js`：音频时钟、延音及舞台动画；保留旧网站的 iOS playback audio session 兼容逻辑。
+- `src/47-edit-session.js`：只读/编辑/保存会话。默认只读、修改前隔离副本等新版交互继续共用。
+
+常用字号：计时 20px（紧凑窗口 18px）、琴键编号/音名 13px、面板标题 18px（低高度窗口 16px）、节拍序号 10px、音名 9px。点阵保持 5×3 键位，逐拍谱每页 4×8，当前格金色/主题色边框及外发光、休止格弱化、单音/双音/多音分色。播放时可显示余音和经过格淡光，暂停时清除这些播放反馈。
+
+点击格子、上一页/下一页和上个/下个节拍会暂停并定位；键盘左右键移动一个实际事件。播放自动跟随当前事件翻页。不同长度、不同调性的乐曲使用相同规则。
+
+## 更换或增加主题
+
+现有圣诞、星光和暮光已调用同一模板。通过编辑模式中的「场景设计」选择主题，可设置主题色、背景色、飘雪、光晕、动作与专属舞台图。配置可导出为 `.skytheme`，再应用于其他乐曲。
+
+若只想制作一个新配色，不需要新增页面或修改 JavaScript：在主题包的 `scene.json` 中使用已支持的基础 `id`（如 `starlight`），并添加 `appearance` 配色字段。例如：
+
+```json
+{
+  "id": "starlight",
+  "name": "海边月夜",
+  "accent": "#a8ddd9",
+  "backgroundColor": "#102e39",
+  "snow": 12,
+  "glow": 40,
+  "motion": "ambient",
+  "appearance": {
+    "surfaceStart": "#183e48",
+    "surfaceEnd": "#102b36",
+    "controlStart": "#1a424b",
+    "controlEnd": "#17303f",
+    "button": "#204651",
+    "hover": "#325c68",
+    "border": "#5c8790",
+    "gridStart": "#244b53",
+    "gridEnd": "#15333e",
+    "rest": "#102b33",
+    "dot": "#527982",
+    "note": "#d3f1e6",
+    "chord": "#f2dbb4",
+    "poly": "#eab7c1",
+    "activeStart": "#486e73",
+    "activeEnd": "#669694"
+  }
+}
+```
+
+与 `manifest.json`（`format: "skytheme"`、`schemaVersion: 1`）一起打包即可。未提供的颜色从基础主题继承。颜色仅接受 `#RRGGBB`；不会把主题包中的字符串当作 CSS 规则或脚本执行。额外舞台图沿用 `.skytheme` 的 `image` 和资源文件机制。
+
+已有可直接导入的 [海边月夜示例](../samples/moonlight-template.skytheme)，可复制配置作为下一套主题的起点。
+
+完整配色键以 `PLAYER_APPEARANCE.christmas` 为准，涵盖面板、控制条、按钮、文字、点阵、休止格、高亮和舞台。`accent` 和 `backgroundColor` 优先于对应配色键。归一化会保留合法的 `appearance`，保存、重开、主题导出和项目导出均沿用这份配置。
+
+若要增加内置的独立主题分类，在 `00-core.js` 的 `PRESETS` 与 `38-player-template.js` 的 `PLAYER_APPEARANCE` 中添加同一个主题 ID，并在场景选择器中登记；无需复制播放器 DOM、样式布局或交互处理器。新增具体装饰时应放在既有舞台装饰层内，不改变音乐模块尺寸。
+
+## 装饰、舞台和验证
+
+圣诞树 `app/assets/christmas/legacy-tree.png` 从用户现有旧站文件中原样提取，未改变图像；原 48 个素材保留。雪花和树在构建独立 HTML 时嵌入，不依赖相对 URL。舞台 canvas 使用固定容器并在下一帧读取布局，避免点阵撑开面板前的尺寸造成角色裁切。装饰层不接收点击；减少动态效果设置或动作关闭时停止粒子及灯光动画。
+
+使用 `tests/legacy_layout.py --output <新的验证目录>` 检查六种窗口的点阵比例、播放高亮/余音、翻页和编辑；使用 `tests/player_template.py --output <新的验证目录>` 检查主题切换不改变结构、配色覆盖往返和舞台尺寸。运行需要 Playwright 和本机 Edge。原 v0.4 原始基线、截图与导入清单仍保留在外层版本目录。

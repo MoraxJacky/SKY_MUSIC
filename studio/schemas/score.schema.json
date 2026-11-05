@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SkyMusic 15-key score v1",
+  "type": "object",
+  "required": [
+    "mode",
+    "events"
+  ],
+  "properties": {
+    "mode": {
+      "enum": [
+        "grid",
+        "free"
+      ]
+    },
+    "gridIntervalMs": {
+      "type": "number",
+      "minimum": 20
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "type": "object",
+        "required": [
+          "timeMs",
+          "notes"
+        ],
+        "properties": {
+          "timeMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "notes": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 15
+            }
+          },
+          "durationMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "confidence": {
+            "type": "string"
+          },
+          "velocity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 127
+          }
+        }
+      }
+    }
+  }
+}

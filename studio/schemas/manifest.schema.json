@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SkyMusic manifest v1",
+  "type": "object",
+  "required": [
+    "format",
+    "schemaVersion",
+    "title",
+    "durationMs",
+    "keyCount"
+  ],
+  "properties": {
+    "format": {
+      "const": "skymusic-project"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "title": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "durationMs": {
+      "type": "number",
+      "minimum": 0
+    },
+    "keyCount": {
+      "const": 15
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "author": {
+      "type": "string",
+      "maxLength": 100
+    }
+  },
+  "additionalProperties": true
+}

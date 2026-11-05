@@ -1,0 +1,274 @@
+{
+  "format": "skymusic-project",
+  "schemaVersion": 1,
+  "id": "starlight-demo",
+  "title": "星光钢琴 · 演示",
+  "subtitle": "Starlight Piano · Original Demo",
+  "description": "原创演示短句，用于验证不同歌曲、主题和乐谱切换；不是《爱乐之城》正式曲谱。",
+  "durationMs": 13800,
+  "keyCount": 15,
+  "score": {
+    "mode": "free",
+    "gridIntervalMs": 460,
+    "tuning": "C",
+    "events": [
+      {
+        "timeMs": 0,
+        "notes": [
+          1,
+          5
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 460,
+        "notes": [
+          3
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 920,
+        "notes": [
+          5
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 1380,
+        "notes": [
+          8
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 1840,
+        "notes": [
+          10
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 2300,
+        "notes": [
+          8
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 2760,
+        "notes": [
+          5
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 3220,
+        "notes": [
+          3
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 3680,
+        "notes": [
+          1,
+          8
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 4140,
+        "notes": [
+          6
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 4600,
+        "notes": [
+          8
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 5060,
+        "notes": [
+          10
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 5520,
+        "notes": [
+          12
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 5980,
+        "notes": [
+          10
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 6440,
+        "notes": [
+          8
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 6900,
+        "notes": [
+          5
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 7360,
+        "notes": [
+          1,
+          5,
+          8
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 7820,
+        "notes": [],
+        "durationMs": 0,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 8280,
+        "notes": [
+          6
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 8740,
+        "notes": [
+          8
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 9200,
+        "notes": [
+          10
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 9660,
+        "notes": [
+          12
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 10120,
+        "notes": [
+          15
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 10580,
+        "notes": [
+          13
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 11040,
+        "notes": [
+          10
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 11500,
+        "notes": [
+          8
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 11960,
+        "notes": [
+          7
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 12420,
+        "notes": [
+          5
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 12880,
+        "notes": [
+          3
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      },
+      {
+        "timeMs": 13340,
+        "notes": [
+          1
+        ],
+        "durationMs": 360,
+        "confidence": "demo"
+      }
+    ]
+  },
+  "playback": {
+    "tuning": "C",
+    "rate": 1,
+    "sustain": 0.35,
+    "instrument": "piano"
+  },
+  "theme": {
+    "id": "starlight",
+    "accent": "#eac1d7",
+    "stage": "starlight",
+    "motion": "ambient"
+  },
+  "provenance": {
+    "source": "原创功能测试乐句，不代表任何已发表的电影音乐"
+  }
+}

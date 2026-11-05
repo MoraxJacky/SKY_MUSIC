@@ -1,0 +1,360 @@
+{
+  "catalogVersion": 1,
+  "origin": "Sky Canon Christmas v7 user-provided project, assets extracted without creative alteration",
+  "assets": [
+    {
+      "id": "60",
+      "path": "app/assets/audio/60.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "62",
+      "path": "app/assets/audio/62.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "64",
+      "path": "app/assets/audio/64.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "65",
+      "path": "app/assets/audio/65.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "67",
+      "path": "app/assets/audio/67.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "69",
+      "path": "app/assets/audio/69.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "71",
+      "path": "app/assets/audio/71.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "72",
+      "path": "app/assets/audio/72.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "74",
+      "path": "app/assets/audio/74.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "76",
+      "path": "app/assets/audio/76.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "77",
+      "path": "app/assets/audio/77.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "78",
+      "path": "app/assets/audio/78.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "79",
+      "path": "app/assets/audio/79.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "81",
+      "path": "app/assets/audio/81.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "83",
+      "path": "app/assets/audio/83.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "84",
+      "path": "app/assets/audio/84.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "86",
+      "path": "app/assets/audio/86.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "88",
+      "path": "app/assets/audio/88.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "90",
+      "path": "app/assets/audio/90.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "91",
+      "path": "app/assets/audio/91.mp3",
+      "type": "mp3",
+      "use": "piano sample",
+      "status": "reused-v7"
+    },
+    {
+      "id": "bow",
+      "path": "app/assets/christmas/bow.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "lantern",
+      "path": "app/assets/christmas/lantern.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "snowflake",
+      "path": "app/assets/christmas/snowflake.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_00",
+      "path": "app/assets/christmas/stage_00.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_01",
+      "path": "app/assets/christmas/stage_01.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_02",
+      "path": "app/assets/christmas/stage_02.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_03",
+      "path": "app/assets/christmas/stage_03.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_04",
+      "path": "app/assets/christmas/stage_04.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_05",
+      "path": "app/assets/christmas/stage_05.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_06",
+      "path": "app/assets/christmas/stage_06.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_07",
+      "path": "app/assets/christmas/stage_07.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_08",
+      "path": "app/assets/christmas/stage_08.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_09",
+      "path": "app/assets/christmas/stage_09.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_10",
+      "path": "app/assets/christmas/stage_10.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_11",
+      "path": "app/assets/christmas/stage_11.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_12",
+      "path": "app/assets/christmas/stage_12.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_13",
+      "path": "app/assets/christmas/stage_13.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_14",
+      "path": "app/assets/christmas/stage_14.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_15",
+      "path": "app/assets/christmas/stage_15.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_16",
+      "path": "app/assets/christmas/stage_16.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_17",
+      "path": "app/assets/christmas/stage_17.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_18",
+      "path": "app/assets/christmas/stage_18.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_19",
+      "path": "app/assets/christmas/stage_19.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_20",
+      "path": "app/assets/christmas/stage_20.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_21",
+      "path": "app/assets/christmas/stage_21.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_22",
+      "path": "app/assets/christmas/stage_22.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "stage_23",
+      "path": "app/assets/christmas/stage_23.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "tree",
+      "path": "app/assets/christmas/tree.webp",
+      "type": "webp",
+      "use": "Christmas theme asset",
+      "status": "reused-v7"
+    },
+    {
+      "id": "legacy-tree",
+      "path": "app/assets/christmas/legacy-tree.png",
+      "type": "png",
+      "use": "legacy template stage decoration",
+      "status": "reused-live-v7"
+    }
+  ],
+  "plannedAssets": [
+    {
+      "id": "la-la-land-theme-cover",
+      "status": "planned",
+      "note": "仅生成原创主题预览，不能假冒电影剧照或已导入曲谱"
+    },
+    {
+      "id": "original-video-transcriber",
+      "status": "planned"
+    }
+  ]
+}
