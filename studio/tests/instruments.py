@@ -97,20 +97,20 @@ with sync_playwright() as pw:
         page = browser.new_page(viewport={'width': width, 'height': 900}, reduced_motion='reduce')
         page.goto((root / 'SkyMusicStudio_Standalone.html').as_uri())
         page.locator('.card-play').first.click()
+        baseline = page.locator('#instrumentToggle').bounding_box()
         page.locator('#instrumentToggle').click()
         menu, track = page.locator('#instrumentMenu'), page.locator('#instrumentOptions')
         assert menu.is_visible()
         box = menu.bounding_box()
         assert 0 <= box['x'] and box['x']+box['width'] <= width
         current = page.locator('#instrumentCurrent').bounding_box()
-        assert current['y'] < track.bounding_box()['y']
-        assert track.evaluate('(e)=>e.scrollHeight>e.clientHeight')
+        assert current == baseline
         vertical = page.evaluate('scrollY')
         track.hover()
         page.mouse.wheel(0, 1200)
-        page.wait_for_timeout(400)
-        distance = track.evaluate('(e)=>e.scrollTop')
-        assert 0 < distance <= 18, distance
+        page.wait_for_timeout(550)
+        distance = menu.evaluate('(e)=>Number(e.dataset.position)') * (baseline['height'] + 5)
+        assert 0 < distance <= baseline['height']+5.1, distance
         assert page.evaluate('scrollY') == vertical
         assert page.locator('#instrumentCurrent').bounding_box() == current
         page.screenshot(path=str(out / f'instruments-{width}.png'), animations='disabled', full_page=width <= 900)

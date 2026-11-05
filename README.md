@@ -6,7 +6,7 @@
 
 圣诞、星光、暮光及自定义主题共用一份播放器模板，更换主题不会复制布局与交互代码。详细说明见 [模板与主题配置](studio/docs/PLAYER_TEMPLATE.md)，可导入 [海边月夜主题示例](studio/samples/moonlight-template.skytheme)。
 
-提供 5 种离线、6 种在线音色，支持全部 12 大调及普通光遇钢琴 C4–C6 基准。音色面板固定显示当前项，下方限定区域平滑滚动。来源、许可和基准边界见 [音色说明](studio/docs/INSTRUMENTS_AND_SKY.md)。
+提供 5 种离线、6 种在线音色，支持全部 12 大调及普通光遇钢琴 C4–C6 基准。音色面板以原按钮为固定基准，上下最多各展开两项，边界不补空白。来源、许可和基准边界见 [音色说明](studio/docs/INSTRUMENTS_AND_SKY.md)。
 
 ## 工程
 

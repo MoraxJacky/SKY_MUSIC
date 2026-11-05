@@ -388,15 +388,15 @@ body:has(dialog[open]){overflow:hidden}
 
 .player-view .key-control:has(.key-range-toggle[aria-expanded=true])>span{visibility:hidden}
 
-/* Instrument choices share the player theme; current voice stays above four scrolling rows. */
+/* The selector's baseline stays over the original control; only nearby rows move. */
 .player-view .instrument-toggle{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;width:clamp(105px,11vw,167px);padding:6px 8px;font-size:12px;white-space:nowrap;background:var(--player-button);border-color:var(--player-border)}
-.player-view .instrument-menu{position:fixed;z-index:101;padding:8px;border:1px solid var(--player-border);border-radius:12px;background:var(--player-surface-end);box-shadow:0 8px 24px #0006;color:var(--player-text)}
-.player-view .instrument-menu button{display:block;width:100%;height:34px;padding:5px 10px;text-align:left;font-size:12px;border-radius:8px;border:1px solid var(--player-border);background:var(--player-button);color:var(--player-text);white-space:nowrap}
-.player-view .instrument-menu #instrumentCurrent{background:linear-gradient(125deg,var(--player-active-start),var(--player-active-end));border-color:var(--theme-accent);box-shadow:inset 0 0 0 1px var(--theme-accent);font-weight:700;color:var(--player-text);margin-bottom:7px}
-.player-view .instrument-options{display:flex;flex-direction:column;gap:5px;height:151px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;scroll-padding-block:4px}
-.player-view .instrument-options::-webkit-scrollbar{display:none}
-.player-view .instrument-options button{flex:0 0 34px}
-.player-view .instrument-menu button:hover,.player-view .instrument-menu button:focus-visible{background:var(--player-hover);border-color:var(--theme-accent);outline:1px solid var(--theme-accent);outline-offset:-2px}
+.player-view .instrument-control:has(.instrument-toggle[aria-expanded=true])>.instrument-toggle{visibility:hidden}
+.player-view .instrument-menu{position:fixed;z-index:101;padding:0;border:0;border-radius:10px;background:var(--player-surface-end);box-shadow:0 0 0 1px var(--player-border),0 8px 24px #0006;color:var(--player-text);overflow:hidden;touch-action:none}
+.player-view .instrument-options{position:absolute;inset:0;overflow:hidden}
+.player-view .instrument-options button{position:absolute;display:block;left:0;width:100%;margin:0;padding:5px 8px;text-align:left;font-size:12px;border-radius:8px;border:1px solid var(--player-border);background:var(--player-button);color:var(--player-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player-view .instrument-options button[aria-selected=true]{background:linear-gradient(125deg,var(--player-active-start),var(--player-active-end));border-color:var(--theme-accent);font-weight:700}
+.player-view .instrument-focus{position:absolute;z-index:2;left:0;width:100%;border:1px solid var(--theme-accent);border-radius:8px;box-shadow:inset 0 0 0 1px var(--theme-accent);pointer-events:none}
+.player-view .instrument-options button:hover,.player-view .instrument-options button:focus-visible{background:var(--player-hover);border-color:var(--theme-accent);outline:1px solid var(--theme-accent);outline-offset:-2px}
 @media(max-width:1150px){.player-view .instrument-toggle{width:112px}}
 
 </style>
@@ -427,7 +427,7 @@ body:has(dialog[open]){overflow:hidden}
  </header>
  <div class="play-controls"><div class="player-control-row"><div class="play-main"><button class="play-btn" id="playBtn">▶ 播放</button><button id="restartBtn" class="icon-btn" title="从头播放">↶</button><time id="timeClock">00:00.000</time></div>
   <div class="control-inline key-control"><span>音域</span><select id="keySelect" aria-label="选择音域" hidden><option value="sky-original">光遇原调</option><option value="C">C 大调</option><option value="Db">D♭ 大调</option><option value="D">D 大调</option><option value="Eb">E♭ 大调</option><option value="E">E 大调</option><option value="F">F 大调</option><option value="Fs">F♯ 大调</option><option value="G">G 大调</option><option value="Ab">A♭ 大调</option><option value="A">A 大调</option><option value="Bb">B♭ 大调</option><option value="B">B 大调</option></select><button type="button" id="keyRangeToggle" class="key-range-toggle" aria-label="选择音域" aria-haspopup="listbox" aria-expanded="false" aria-controls="keyRangeMenu"><span aria-hidden="true">‹</span><span id="keyRangeValue">C 大调</span></button><div id="keyRangeMenu" class="key-range-menu" role="listbox" aria-label="音域选项" hidden><div id="keyRangeTrack" class="key-range-track"><button type="button" role="option" data-key="sky-original" aria-selected="false" tabindex="-1" title="普通光遇钢琴基准 C4–C6；实际调性由背景音乐或乐谱决定">光遇</button><button type="button" role="option" data-key="C" aria-selected="false" tabindex="-1">C</button><button type="button" role="option" data-key="Db" aria-selected="false" tabindex="-1">D♭</button><button type="button" role="option" data-key="D" aria-selected="false" tabindex="-1">D</button><button type="button" role="option" data-key="Eb" aria-selected="false" tabindex="-1">E♭</button><button type="button" role="option" data-key="E" aria-selected="false" tabindex="-1">E</button><button type="button" role="option" data-key="F" aria-selected="false" tabindex="-1">F</button><button type="button" role="option" data-key="Fs" aria-selected="false" tabindex="-1">F♯</button><button type="button" role="option" data-key="G" aria-selected="false" tabindex="-1">G</button><button type="button" role="option" data-key="Ab" aria-selected="false" tabindex="-1">A♭</button><button type="button" role="option" data-key="A" aria-selected="false" tabindex="-1">A</button><button type="button" role="option" data-key="Bb" aria-selected="false" tabindex="-1">B♭</button><button type="button" role="option" data-key="B" aria-selected="false" tabindex="-1">B</button></div></div></div>
-  <div class="control-inline instrument-control"><span>音色</span><select id="instrumentSelect" aria-label="选择音色" hidden><option value="offline">经典钢琴 · 离线</option><option value="offline-harp">竖琴 · 离线</option><option value="offline-music-box">八音盒 · 离线</option><option value="offline-flute">长笛 · 离线</option><option value="offline-nylon-guitar">尼龙吉他 · 离线</option><option value="salamander">Yamaha C5 · 在线</option><option value="online-electric-piano">电钢琴 · 在线</option><option value="online-violin">小提琴 · 在线</option><option value="online-cello">大提琴 · 在线</option><option value="online-strings">弦乐合奏 · 在线</option><option value="online-choir">合唱 · 在线</option></select><button id="instrumentToggle" class="instrument-toggle" type="button" aria-label="选择音色" aria-haspopup="listbox" aria-expanded="false" aria-controls="instrumentMenu"><span id="instrumentValue">经典钢琴</span><span aria-hidden="true">⌄</span></button><div id="instrumentMenu" class="instrument-menu" role="listbox" aria-label="音色选项" hidden><button id="instrumentCurrent" type="button" role="option" aria-selected="true">经典钢琴 · 离线</button><div id="instrumentOptions" class="instrument-options"></div></div></div>
+  <div class="control-inline instrument-control"><span>音色</span><select id="instrumentSelect" aria-label="选择音色" hidden><option value="offline">经典钢琴 · 离线</option><option value="offline-harp">竖琴 · 离线</option><option value="offline-music-box">八音盒 · 离线</option><option value="offline-flute">长笛 · 离线</option><option value="offline-nylon-guitar">尼龙吉他 · 离线</option><option value="salamander">Yamaha C5 · 在线</option><option value="online-electric-piano">电钢琴 · 在线</option><option value="online-violin">小提琴 · 在线</option><option value="online-cello">大提琴 · 在线</option><option value="online-strings">弦乐合奏 · 在线</option><option value="online-choir">合唱 · 在线</option></select><button id="instrumentToggle" class="instrument-toggle" type="button" aria-label="选择音色" aria-haspopup="listbox" aria-expanded="false" aria-controls="instrumentMenu"><span id="instrumentValue">经典钢琴</span><span aria-hidden="true">⌄</span></button><div id="instrumentMenu" class="instrument-menu" role="listbox" aria-label="音色选项" hidden><div id="instrumentCurrent" class="instrument-focus" aria-hidden="true"></div><div id="instrumentOptions" class="instrument-options"></div></div></div>
   <label class="control-inline sustain-control"><span>延音</span><input type="range" id="sustainSlider" min="0" max="100" value="45"><output id="sustainValue">45%</output></label>
   <label class="control-inline">倍速 <select id="speedSelect"><option value="0.25">0.25×</option><option value="0.5">0.50×</option><option value="0.75">0.75×</option><option value="1" selected>1.00×</option><option value="1.25">1.25×</option><option value="1.5">1.50×</option><option value="1.75">1.75×</option><option value="2">2.00×</option></select></label>
   </div><label class="seek-line"><input type="range" id="seekSlider" min="0" max="216000" step="1" value="0"><span id="seekMax">03:36</span></label>
@@ -709,44 +709,59 @@ async function prepareInstrument(){
  }
 }
 // A reusable bounded wheel animation for both instrument and range pickers.
-function bindSmoothWheel(track,host,axis='x',limit=24){
- let raf=0,target=0,position=0,last=0;
- const read=()=>axis==='x'?track.scrollLeft:track.scrollTop;
- const write=value=>{if(axis==='x')track.scrollLeft=value;else track.scrollTop=value};
- const cancel=()=>{cancelAnimationFrame(raf);raf=0};
+function bindSmoothWheel(track,host,axis='x',limit=24,model=null){
+ let raf=0,target=0,position=0,last=0,snapTimer=0;
+ const read=()=>model?model.read():(axis==='x'?track.scrollLeft:track.scrollTop);
+ const write=value=>{if(model)model.write(value);else if(axis==='x')track.scrollLeft=value;else track.scrollTop=value};
+ const maximum=()=>Math.max(0,model?model.max():(axis==='x'?track.scrollWidth-track.clientWidth:track.scrollHeight-track.clientHeight));
+ const cancel=()=>{cancelAnimationFrame(raf);clearTimeout(snapTimer);raf=0};
+ const animate=now=>{
+  if(host.hidden){cancel();return}const dt=Math.min(40,now-last);last=now;
+  position+=(target-position)*(1-Math.exp(-dt/65));
+  if(Math.abs(target-position)<.5){write(target);raf=0;return}
+  write(position);raf=requestAnimationFrame(animate);
+ };
+ const start=()=>{if(!raf){position=read();last=performance.now();raf=requestAnimationFrame(animate)}};
+ cancel.to=value=>{cancel();target=clamp(value,0,maximum());start()};
  host.addEventListener('wheel',event=>{
   event.preventDefault();let delta=event.deltaY+event.deltaX;
   if(event.deltaMode===1)delta*=16;if(event.deltaMode===2)delta*=axis==='x'?track.clientWidth:track.clientHeight;
-  if(!delta)return;if(!raf)target=position=read();
-  const max=axis==='x'?track.scrollWidth-track.clientWidth:track.scrollHeight-track.clientHeight;
-  target=clamp(target+Math.sign(delta)*Math.min(limit,Math.abs(delta)*.22),0,Math.max(0,max));
-  if(raf)return;last=performance.now();
-  const animate=now=>{
-   if(host.hidden){cancel();return}const dt=Math.min(40,now-last);last=now;
-   position+=(target-position)*(1-Math.exp(-dt/65));
-   if(Math.abs(target-position)<.5){write(target);raf=0;return}
-   write(position);raf=requestAnimationFrame(animate);
-  };
-  raf=requestAnimationFrame(animate);
+  if(!delta)return;if(!raf)target=read();
+  target=clamp(target+Math.sign(delta)*Math.min(limit,Math.abs(delta)*.22),0,maximum());start();
+  clearTimeout(snapTimer);
+  if(model?.snap)snapTimer=setTimeout(()=>{target=clamp(model.snap(target),0,maximum());start()},110);
  },{passive:false});
  host.addEventListener('pointerdown',cancel);host.addEventListener('keydown',cancel);
  return cancel;
 }
 let cancelInstrumentWheel=()=>{};
+const instrumentViewport={position:0,row:31,step:36,touch:null,suppressClick:false};
 function closeInstrumentPicker(returnFocus=false){cancelInstrumentWheel();$('instrumentMenu').hidden=true;$('instrumentToggle').setAttribute('aria-expanded','false');if(returnFocus)$('instrumentToggle').focus()}
 function syncInstrumentPicker(){
  const spec=instrumentSpec(state.project?.playback?.instrument);
- $('instrumentSelect').value=spec.id;$('instrumentValue').textContent=spec.name;$('instrumentCurrent').textContent=spec.name+' · '+(spec.mode==='offline'?'离线':'在线');
- for(const button of $('instrumentOptions').querySelectorAll('[data-instrument]')){
-  const chosen=button.dataset.instrument===spec.id;button.hidden=chosen;button.setAttribute('aria-selected',String(chosen));
- }
+ $('instrumentSelect').value=spec.id;$('instrumentValue').textContent=spec.name;
+ for(const button of $('instrumentOptions').querySelectorAll('[data-instrument]'))button.setAttribute('aria-selected',String(button.dataset.instrument===spec.id));
 }
 function positionInstrumentPicker(){
- const rect=$('instrumentToggle').getBoundingClientRect(),menu=$('instrumentMenu'),width=Math.min(224,innerWidth-24);
- menu.style.width=width+'px';menu.style.left=clamp(rect.right-width,12,Math.max(12,innerWidth-width-12))+'px';
- menu.style.top=clamp(rect.bottom+7,8,Math.max(8,innerHeight-222))+'px';
+ const rect=$('instrumentToggle').getBoundingClientRect(),menu=$('instrumentMenu'),view=instrumentViewport;
+ view.row=rect.height;view.step=rect.height+5;
+ const above=Math.min(2*view.step,view.position*view.step,Math.max(0,rect.top-8));
+ const below=Math.min(2*view.step,(INSTRUMENTS.length-1-view.position)*view.step,Math.max(0,innerHeight-rect.bottom-8));
+ menu.style.width=rect.width+'px';menu.style.left=rect.left+'px';menu.style.top=(rect.top-above)+'px';menu.style.height=(above+rect.height+below)+'px';
+ const focus=$('instrumentCurrent');focus.style.top=above+'px';focus.style.height=rect.height+'px';
+ const buttons=$('instrumentOptions').querySelectorAll('[data-instrument]');
+ for(let i=0;i<buttons.length;i++){
+  const y=above+(i-view.position)*view.step,visible=y+view.row>0&&y<above+view.row+below;
+  buttons[i].style.top=y+'px';buttons[i].style.height=view.row+'px';buttons[i].style.visibility=visible?'visible':'hidden';
+ }
+ menu.dataset.position=String(view.position);
 }
-function openInstrumentPicker(){closeRangePicker();syncInstrumentPicker();$('instrumentMenu').hidden=false;$('instrumentToggle').setAttribute('aria-expanded','true');positionInstrumentPicker();$('instrumentCurrent').focus({preventScroll:true})}
+function openInstrumentPicker(){
+ closeRangePicker();syncInstrumentPicker();cancelInstrumentWheel();
+ instrumentViewport.position=Math.max(0,INSTRUMENTS.findIndex(spec=>spec.id===state.project?.playback?.instrument));
+ $('instrumentMenu').hidden=false;$('instrumentToggle').setAttribute('aria-expanded','true');positionInstrumentPicker();
+ $('instrumentOptions').querySelector('[aria-selected="true"]')?.focus({preventScroll:true});
+}
 async function chooseInstrument(id){
  if(!state.project)return;const project=state.project,selection=++instrumentSelection,was=state.isPlaying||instrumentResume;
  instrumentResume=was;if(state.isPlaying)pauseSong();project.playback.instrument=instrumentSpec(id).id;saveLibrary();syncInstrumentPicker();closeInstrumentPicker(true);
@@ -754,20 +769,32 @@ async function chooseInstrument(id){
  try{const ready=await preloadPiano();if(selection!==instrumentSelection||project!==state.project)return;instrumentResume=false;if(ready&&was&&!state.isPlaying)await playPause()}catch(error){if(selection===instrumentSelection)instrumentResume=false;console.warn(error);toast('音源加载异常：'+error.message,5000)}
 }
 function bindInstrumentPicker(){
- const menu=$('instrumentMenu'),trigger=$('instrumentToggle'),options=$('instrumentOptions');
- for(const spec of INSTRUMENTS){const button=document.createElement('button');button.type='button';button.dataset.instrument=spec.id;button.setAttribute('role','option');button.setAttribute('aria-selected','false');button.tabIndex=-1;button.textContent=spec.name+' · '+(spec.mode==='offline'?'离线':'在线');button.onclick=()=>chooseInstrument(spec.id);options.append(button)}
- cancelInstrumentWheel=bindSmoothWheel(options,menu,'y',18);
- trigger.onclick=()=>menu.hidden?openInstrumentPicker():closeInstrumentPicker();$('instrumentCurrent').onclick=()=>closeInstrumentPicker(true);
+ const menu=$('instrumentMenu'),trigger=$('instrumentToggle'),options=$('instrumentOptions'),view=instrumentViewport;
+ for(const spec of INSTRUMENTS){
+  const button=document.createElement('button');button.type='button';button.dataset.instrument=spec.id;button.setAttribute('role','option');button.setAttribute('aria-selected','false');button.tabIndex=-1;button.textContent=spec.name+' · '+(spec.mode==='offline'?'离线':'在线');
+  button.onclick=()=>{if(view.suppressClick){view.suppressClick=false;return}if(state.project?.playback?.instrument===spec.id)closeInstrumentPicker(true);else chooseInstrument(spec.id)};options.append(button);
+ }
+ const move=position=>{view.position=clamp(position,0,INSTRUMENTS.length-1);positionInstrumentPicker()};
+ cancelInstrumentWheel=bindSmoothWheel(options,menu,'y',18,{read:()=>view.position*view.step,write:pixels=>move(pixels/view.step),max:()=>(INSTRUMENTS.length-1)*view.step,snap:pixels=>Math.round(pixels/view.step)*view.step});
+ trigger.onclick=()=>menu.hidden?openInstrumentPicker():closeInstrumentPicker();
  trigger.onkeydown=event=>{if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();openInstrumentPicker()}};
  menu.onkeydown=event=>{
-  const buttons=[$('instrumentCurrent'),...[...options.querySelectorAll('[data-instrument]')].filter(b=>!b.hidden)],index=buttons.indexOf(document.activeElement);let next;
-  if(event.key==='ArrowDown')next=(index+1)%buttons.length;if(event.key==='ArrowUp')next=(index-1+buttons.length)%buttons.length;
+  const buttons=[...options.querySelectorAll('[data-instrument]')],index=buttons.indexOf(document.activeElement);let next;
+  if(event.key==='ArrowDown')next=Math.min(buttons.length-1,index+1);if(event.key==='ArrowUp')next=Math.max(0,index-1);
   if(event.key==='Home')next=0;if(event.key==='End')next=buttons.length-1;
-  if(next!==undefined){event.preventDefault();buttons[next].focus({preventScroll:true});buttons[next].scrollIntoView({block:'nearest'})}
+  if(next!==undefined){event.preventDefault();cancelInstrumentWheel();move(next);buttons[next].focus({preventScroll:true})}
   if(event.key==='Escape'){event.preventDefault();closeInstrumentPicker(true)}if(event.key==='Tab')closeInstrumentPicker();
  };
+ menu.addEventListener('pointerdown',event=>{if(event.pointerType==='touch'){view.touch={id:event.pointerId,y:event.clientY,position:view.position};view.suppressClick=false}});
+ menu.addEventListener('pointermove',event=>{
+  if(!view.touch||view.touch.id!==event.pointerId)return;
+  const dy=event.clientY-view.touch.y;
+  if(Math.abs(dy)>6){view.suppressClick=true;menu.setPointerCapture(event.pointerId);move(view.touch.position-dy/view.step)}
+ });
+ const endTouch=()=>{if(view.touch&&view.suppressClick)cancelInstrumentWheel.to(Math.round(view.position)*view.step);view.touch=null;setTimeout(()=>view.suppressClick=false,0)};
+ menu.addEventListener('pointerup',endTouch);menu.addEventListener('pointercancel',endTouch);
  document.addEventListener('pointerdown',event=>{if(!menu.hidden&&!menu.contains(event.target)&&!trigger.contains(event.target))closeInstrumentPicker()});
- window.addEventListener('resize',()=>{if(!menu.hidden)positionInstrumentPicker()});
+ window.addEventListener('resize',()=>{if(!menu.hidden){cancelInstrumentWheel();positionInstrumentPicker()}});
  window.addEventListener('scroll',event=>{if(!menu.hidden&&event.target!==menu&&!menu.contains(event.target))closeInstrumentPicker()},true);
 }
 
