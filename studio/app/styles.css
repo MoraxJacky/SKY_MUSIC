@@ -351,3 +351,7 @@ body:has(dialog[open]){overflow:hidden}
 .player-view #currentBeatNotes{flex:1;min-width:0;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .player-view:not(.editing) .grid-foot{grid-template-columns:minmax(0,1fr)}
 .player-view:not(.editing) #gridHint{display:none}
+
+/* Geometric centering avoids the text arrow baseline shifting the back icon. */
+.player-view .back-btn{display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0}
+.player-view .back-btn svg{display:block;flex-shrink:0}
