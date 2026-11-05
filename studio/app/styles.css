@@ -345,3 +345,9 @@ body:has(dialog[open]){overflow:hidden}
 /* The original vignette uses an intrinsic 2:1 stage anchored at the panel floor. */
 @media(min-width:901px){.player-view[data-theme=christmas] .stage-pane:not(.has-custom-image) .stage-scenery{inset:auto;left:50%;bottom:0;height:94%;aspect-ratio:2/1;max-width:91%;width:auto;transform:translateX(-50%)}}
 @media(min-width:901px) and (max-height:790px){.player-view[data-theme=christmas] .stage-pane:not(.has-custom-image) .stage-scenery{height:92%}}
+.player-view .keys-pane #selectedSummary{flex:1;min-width:0;text-align:right;margin-left:auto;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.player-view .grid-foot #currentBeat{display:flex;align-items:center;gap:8px;width:100%;min-width:0;max-width:100%;overflow:hidden}
+.player-view #currentBeatIndex{flex:0 0 calc(2em + 7ch);text-align:center;font-family:ui-monospace,Consolas,'Microsoft YaHei',monospace;font-variant-numeric:tabular-nums}
+.player-view #currentBeatNotes{flex:1;min-width:0;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.player-view:not(.editing) .grid-foot{grid-template-columns:minmax(0,1fr)}
+.player-view:not(.editing) #gridHint{display:none}
