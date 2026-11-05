@@ -358,4 +358,8 @@ body:has(dialog[open]){overflow:hidden}
 
 /* Score seeking changes the music position without moving the scan marker. */
 .player-view .roll-seek{display:flex;align-items:center;gap:10px;flex:none;padding:6px 0 0;color:var(--player-muted);font-size:10px}
-.player-view .roll-seek input{flex:1;min-width:0;height:14px;margin:0;accent-color:var(--theme-accent);cursor:pointer}
+.player-view .roll-seek input{appearance:none;-webkit-appearance:none;flex:1;min-width:0;height:18px;margin:0;background:transparent;cursor:pointer}
+.player-view .roll-seek input::-webkit-slider-runnable-track{height:4px;border:1px solid #8b9e8b55;border-radius:2px;background:#52665d}
+.player-view .roll-seek input::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:44px;height:8px;margin-top:-3px;border:1px solid #f4dba4;border-radius:2px;background:#e8c88a;box-shadow:0 1px 3px #0004}
+.player-view .roll-seek input::-moz-range-track,.player-view .roll-seek input::-moz-range-progress{height:4px;border:0;border-radius:2px;background:#52665d}
+.player-view .roll-seek input::-moz-range-thumb{width:42px;height:6px;border:1px solid #f4dba4;border-radius:2px;background:#e8c88a;box-shadow:0 1px 3px #0004}
