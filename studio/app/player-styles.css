@@ -529,3 +529,4 @@ body:has(dialog[open]){overflow:hidden}
  .console-side .console-batch-grid{min-height:0}
 }
 @media(min-width:851px) and (max-width:1150px) and (min-height:821px){.console-layout{grid-template-columns:minmax(0,1fr) 400px}}
+@media(min-width:851px) and (min-height:821px){.console-side #inspectorPane .fields-grid input{font-size:13px}}
