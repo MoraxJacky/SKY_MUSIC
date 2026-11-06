@@ -7,12 +7,20 @@
   },
   "cardPhysics": {
     "mass": 1,
-    "stiffness": 135,
-    "damping": 20,
-    "maxTiltDeg": 5,
+    "stiffness": 170,
+    "damping": 25,
+    "maxTiltDeg": 6,
     "maxVelocityDegPerSec": 90,
     "maxFrameSeconds": 0.033,
     "restAngleDeg": 0.015,
-    "restVelocityDegPerSec": 0.03
+    "restVelocityDegPerSec": 0.03,
+    "flipMs": 820,
+    "parallaxPx": 7
+  },
+  "atmosphere": {
+    "fps": 16,
+    "maxWidth": 240,
+    "speed": 0.075,
+    "opacity": 0.48
   }
 }

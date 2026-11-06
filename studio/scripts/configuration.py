@@ -12,6 +12,9 @@ def render(root):
     home = load('home-interactions.json')
     assert home['cardPhysics']['mass'] > 0 and home['cardPhysics']['stiffness'] > 0 and home['cardPhysics']['damping'] > 0
     assert 0 < home['cardPhysics']['maxTiltDeg'] <= 8 and home['carousel']['intervalMs'] >= 3000
+    assert 300 <= home['cardPhysics']['flipMs'] <= 1500 and 0 < home['cardPhysics']['parallaxPx'] <= 12
+    assert 1 <= home['atmosphere']['fps'] <= 30 and 120 <= home['atmosphere']['maxWidth'] <= 480
+    assert 0 < home['atmosphere']['speed'] <= .2 and 0 < home['atmosphere']['opacity'] <= 1
     assert not ({'score', 'events', 'playback', 'songs'} & home.keys())
     assert not ({'score', 'events', 'theme', 'themes', 'songs'} & player.keys()), 'Player settings must not embed song/theme data'
     assert 0 < player['editor']['crossPageFocusFraction'] < 1

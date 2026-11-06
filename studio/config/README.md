@@ -84,4 +84,4 @@ python -X utf8 scripts/configuration.py --check
 
 ## 平台首页交互
 
-`home-interactions.json` 单独保存首页轮播计时与卡片弹簧参数，入口为 `src/41-home-experience.js`。它不包含数字谱、播放器状态或主题处理器；主题横幅仅读取六款平台预设作展示，不更改歌曲主题。详细行为见 [HOME_EXPERIENCE.md](../docs/HOME_EXPERIENCE.md)。
+`home-interactions.json` 单独保存首页轮播计时、卡片弹簧/翻转/视差与噪声光雾参数，入口为 `src/41-home-experience.js`。它不包含数字谱、播放器状态或主题处理器；主题横幅仅读取六款平台预设作展示，不更改歌曲主题。详细行为见 [HOME_EXPERIENCE.md](../docs/HOME_EXPERIENCE.md)。

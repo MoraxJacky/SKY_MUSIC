@@ -1,5 +1,5 @@
 """Homepage carousel, full-size flipping cards, bounded spring motion and full-scene wind."""
-import argparse,json
+import argparse,json,zipfile
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -40,15 +40,19 @@ with sync_playwright() as pw:
  # Motion is driven by pointer position and a damped spring, never random offsets.
  card=page.locator('.light-cone').first;r=card.bounding_box();page.mouse.move(r['x']+r['width']*.9,r['y']+r['height']*.15);page.wait_for_timeout(350)
  motion=card.evaluate('e=>({x:Number(e.dataset.tiltX),y:Number(e.dataset.tiltY),shine:Number(getComputedStyle(e).getPropertyValue("--shine-opacity"))})')
- assert .2<abs(motion['x'])<=5.5 and .2<abs(motion['y'])<=5.5 and motion['shine']>.15,motion
+ assert .2<abs(motion['x'])<=6.6 and .2<abs(motion['y'])<=6.6 and motion['shine']>.15,motion
  page.mouse.move(0,0);page.wait_for_timeout(1100);assert card.evaluate('e=>Math.abs(Number(e.dataset.tiltX))<.04&&Math.abs(Number(e.dataset.tiltY))<.04')
  # A flip changes presentation only; its reverse face contains data and no imagery.
  score=page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.library.map(p=>[p.score,p.playback]))')
- trigger=card.locator('.cone-flip-trigger');trigger.click();page.wait_for_timeout(700);assert card.get_attribute('data-face')=='back'
+ trigger=card.locator('.cone-flip-trigger');trigger.click();page.wait_for_timeout(340);assert card.locator('.cone-flip').evaluate('e=>e.getAnimations().some(a=>a.playState==="running")');assert card.locator('.cone-flip').bounding_box()['width']<r['width']*.65;page.wait_for_timeout(560);assert card.get_attribute('data-face')=='back'
  assert card.locator('.cone-back img').count()==0 and 'url(' not in card.locator('.cone-back').evaluate('e=>getComputedStyle(e).backgroundImage')
- assert card.locator('.cone-info dd').count()==6 and trigger.get_attribute('aria-pressed')=='true'
+ assert card.locator('.cone-info dd').count()==3 and card.locator('.cone-info dt').all_text_contents()==['音符数','音域','作者'] and trigger.get_attribute('aria-pressed')=='true'
  assert page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.library.map(p=>[p.score,p.playback]))')==score
- page.screenshot(path=str(out/'flipped-1366.png'));trigger.press('Space');assert card.get_attribute('data-face')=='front';trigger.press('Enter');assert card.get_attribute('data-face')=='back'
+ page.screenshot(path=str(out/'flipped-1366.png'))
+ # Reverse an unfinished turn from its present pose, then settle on the requested face.
+ trigger.press('Space');page.wait_for_timeout(160);trigger.press('Enter');page.wait_for_timeout(900)
+ assert card.get_attribute('data-face')=='back' and not card.evaluate('e=>e.classList.contains("is-turning")')
+ assert card.locator('.cone-flip').evaluate('e=>Math.abs(new DOMMatrixReadOnly(getComputedStyle(e).transform).m11+1)<.01')
  card.get_by_role('button',name='收藏',exact=True).click();card=page.locator('.light-cone').first;assert card.get_attribute('data-face')=='back'
  card.get_by_role('button',name='重命名',exact=True).click();page.locator('#renameInput').fill('光锥卡片测试');page.locator('#renameConfirm').click();assert page.locator('.cone-back h3').first.inner_text()=='光锥卡片测试'
  page.locator('.light-cone').first.get_by_role('button',name='制作副本',exact=True).click();assert page.locator('.light-cone').count()==4
@@ -67,11 +71,42 @@ with sync_playwright() as pw:
   assert abs(layout['arrowHeight']-layout['heroHeight'])<=2,layout
   page.screenshot(path=str(out/f'home-{width}-{height}.png'));layouts.append(layout)
  bg=page.locator('.home-atmosphere').bounding_box();assert bg['height']==768 and bg['width']==1024
- assert page.locator('.home-wind').count()==2 and page.locator('.home-wind').evaluate_all('es=>es.every(e=>getComputedStyle(e).animationName!=="none")')
- wind=page.locator('.wind-two').evaluate('e=>getComputedStyle(e).transform');page.wait_for_timeout(200);assert page.locator('.wind-two').evaluate('e=>getComputedStyle(e).transform')!=wind
+ flow=page.locator('#homeFlowCanvas');frames=int(flow.get_attribute('data-frames'));pixels=flow.evaluate('e=>e.toDataURL()');page.wait_for_timeout(300);assert int(flow.get_attribute('data-frames'))>frames and flow.evaluate('e=>e.toDataURL()')!=pixels
+ assert page.locator('.home-wind').count()==0 and page.locator('.home-art').evaluate('e=>getComputedStyle(e).animationName')=='none'
  assert page.locator('.home-atmosphere').evaluate('e=>getComputedStyle(e).pointerEvents')=='none'
+ # Symmetric heading insets, comfortable separation, and white navigation gradients.
+ geometry=page.evaluate('''()=>{const r=s=>document.querySelector(s).getBoundingClientRect(),g=r('#libraryCards'),h=r('.library-heading'),t=r('.library-heading h2'),c=r('.library-tools'),hero=r('.theme-carousel');return {left:t.left-g.left,right:g.right-c.right,gap:h.top-hero.bottom,arrow:getComputedStyle(document.getElementById('homeThemePrev')).backgroundImage,glow:getComputedStyle(document.querySelector('.theme-carousel')).boxShadow}}''')
+ assert abs(geometry['left']-geometry['right'])<1 and geometry['left']==12 and geometry['gap']>=27,geometry
+ assert '241, 250, 255' in geometry['arrow'] and geometry['glow']!='none',geometry
+ # Each slide carries its own settings button; a preview is isolated from musical state.
+ library=page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.library)')
+ for index,theme in enumerate(ids):
+  page.locator('#homeThemeDots button').nth(index).click();page.wait_for_timeout(800)
+  button=page.locator('.home-theme-slide[aria-hidden=false] .theme-preview-open');assert button.inner_text()=='设置主题'
+  button.click();assert page.locator('#homeThemeSample').get_attribute('data-theme')==theme
+  assert page.locator('#homeThemeSampleRoll i').count()==5 and page.locator('#homeThemeSampleKeys span').count()==15
+  page.locator('#homePreviewAccent').evaluate('e=>{e.value="#aaddff";e.dispatchEvent(new Event("input"))}')
+  assert page.locator('#homeThemeSample').evaluate('e=>e.style.getPropertyValue("--sample-accent")')=='#aaddff'
+  page.locator('#homePreviewMotion').select_option('off');assert page.locator('#homeThemeSample').get_attribute('data-motion')=='off'
+  if index==1:
+   with page.expect_download() as download:page.locator('#homePreviewExport').click()
+   target=out/'preview-edited.skytheme';download.value.save_as(target)
+   with zipfile.ZipFile(target) as z:
+    d=json.loads(z.read('theme.json'));assert d['id'].startswith('custom-') and d['initialOverrides']['accent']=='#aaddff' and d['initialOverrides']['motion']=='off'
+    assert d['decorations']['cover'] in z.namelist()
+   page.screenshot(path=str(out/'theme-settings.png'))
+  page.locator('#homePreviewReset').click();assert page.locator('#homePreviewMotion').input_value()=='ambient'
+  page.locator('[data-close=homeThemeDialog]').click()
+ assert page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.library)')==library
+ # Mid-transition the active settings button travels with the slide.
+ old=page.locator('.home-theme-slide[aria-hidden=false] .theme-preview-open').bounding_box()['x']
+ page.locator('#homeThemeNext').click();page.wait_for_timeout(170)
+ moving=page.locator('.home-theme-slide[aria-hidden=false] .theme-preview-open').bounding_box()['x'];assert abs(moving-old)>20
+ page.wait_for_timeout(650)
+ page.locator('#homeThemeDots button').nth(0).focus();page.locator('#homeThemeDots button').nth(0).press('ArrowRight');page.wait_for_timeout(800)
+ assert page.locator('#homeThemeTrack').get_attribute('data-index')=='1'
  assert not errors,errors;page.close()
  touch=b.new_page(viewport={'width':390,'height':844},has_touch=True);touch.goto(url);touch.locator('.cone-flip-trigger').first.tap();assert touch.locator('.light-cone').first.get_attribute('data-face')=='back';assert touch.locator('.light-cone').first.evaluate('e=>!Number(e.dataset.tiltX||0)&&!Number(e.dataset.tiltY||0)');touch.screenshot(path=str(out/'touch-390.png'));assert touch.evaluate('document.documentElement.scrollWidth<=innerWidth');touch.close()
- reduced=b.new_page(reduced_motion='reduce');reduced.goto(url);reduced.evaluate("window.SKY_STUDIO_CONFIG.home.carousel.intervalMs=100;document.dispatchEvent(new Event('visibilitychange'))");reduced.wait_for_timeout(350);assert reduced.locator('#homeThemeTrack').get_attribute('data-index')=='0';reduced.locator('.cone-flip-trigger').first.click();assert reduced.locator('.light-cone').first.get_attribute('data-face')=='back';assert reduced.locator('.home-wind').evaluate_all('es=>es.every(e=>getComputedStyle(e).animationName==="none")');b.close()
-(out/'results.json').write_text(json.dumps({'passed':True,'themes':ids,'automaticLeftAndPause':True,'seamlessBoundaries':True,'spring':motion,'flip':True,'backHasNoImage':True,'actionsAndPlayback':True,'layouts':layouts,'fullBackgroundWind':True,'touch':True,'reducedMotion':True,'errors':errors},ensure_ascii=False,indent=2),'utf-8')
-print('PASS six-theme carousel and wraps, bounded damped cards, flip/info/actions/playback, original card widths, two full rows, side margins, full-page wind, touch and reduced motion')
+ reduced=b.new_page(reduced_motion='reduce');reduced.goto(url);reduced.evaluate("window.SKY_STUDIO_CONFIG.home.carousel.intervalMs=100;document.dispatchEvent(new Event('visibilitychange'))");reduced.wait_for_timeout(350);assert reduced.locator('#homeThemeTrack').get_attribute('data-index')=='0';reduced.locator('.cone-flip-trigger').first.click();assert reduced.locator('.light-cone').first.get_attribute('data-face')=='back';assert reduced.locator('#homeFlowCanvas').evaluate('e=>getComputedStyle(e).display==="none"&&!e.dataset.frames');b.close()
+(out/'results.json').write_text(json.dumps({'passed':True,'themes':ids,'automaticLeftAndPause':True,'seamlessBoundaries':True,'spring':motion,'flip':True,'backHasNoImage':True,'actionsAndPlayback':True,'layouts':layouts,'organicNoiseFlow':True,'touch':True,'reducedMotion':True,'errors':errors},ensure_ascii=False,indent=2),'utf-8')
+print('PASS six-theme carousel and wraps, bounded damped cards, flip/info/actions/playback, original card widths, two full rows, side margins, organic local flow, touch and reduced motion')
