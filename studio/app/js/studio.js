@@ -589,9 +589,9 @@ function populateThemeChoices(){
 const APP_ICON_PATHS={
  play:'<path d="m8 5 11 7-11 7Z" fill="currentColor" stroke="none"/>',pause:'<path d="M8 5v14M16 5v14" stroke-width="3"/>',
  restart:'<path d="M4 10a8 8 0 1 1 2 9M4 4v6h6"/>',
- 'repeat-one':'<path d="M3 9V6h15l3 3M21 15v3H6l-3-3M18 3l3 3-3 3M6 21l-3-3 3-3"/><path d="m11 10 2-1v7m-2 0h4"/>',
+ 'repeat-one':'<path d="M4 10V7a2 2 0 0 1 2-2h14m-3-3 3 3-3 3M20 14v3a2 2 0 0 1-2 2H4m3 3-3-3 3-3"/><path d="m11 10 2-1v7m-2 0h4"/>',
  edit:'<path d="m4 16-1 5 5-1L20 8l-4-4Zm10-10 4 4M3 21l5-1"/>',download:'<path d="M12 3v12m-5-5 5 5 5-5M4 15v5h16v-5"/>',upload:'<path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/>',
- close:'<path d="m6 6 12 12M18 6 6 18"/>',info:'<path d="M12 6v8m0 4h.01"/>',
+ close:'<path d="m6 6 12 12M18 6 6 18"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7" r=".7" fill="currentColor"/>',
  left:'<path d="m15 5-7 7 7 7"/>',right:'<path d="m9 5 7 7-7 7"/>',down:'<path d="m5 8 7 7 7-7"/>',plus:'<path d="M12 4v16M4 12h16"/>',
  copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v13h5"/>',
  favorite:'<path d="m12 2 3 6.5 7 .9-5 5 1.3 7-6.3-3.3-6.3 3.3 1.3-7-5-5 7-.9Z"/>',
@@ -600,7 +600,7 @@ const APP_ICON_PATHS={
  note:'<path d="M9 18V5l11-2v12M9 8l11-2"/><ellipse cx="6" cy="18" rx="3" ry="2"/><ellipse cx="17" cy="15" rx="3" ry="2"/>',
  scene:'<path d="M12 3a9 9 0 1 0 0 18Z" fill="currentColor"/><circle cx="12" cy="12" r="9"/>',check:'<path d="m4 12 5 5L20 6"/>'
 };
-function appIcon(name){return '<svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(APP_ICON_PATHS[name]||APP_ICON_PATHS.spark)+'</svg>'}
+function appIcon(name){const weight=['restart','repeat-one','info'].includes(name)?2.5:1.8;return '<svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="'+weight+'" stroke-linecap="round" stroke-linejoin="round">'+(APP_ICON_PATHS[name]||APP_ICON_PATHS.spark)+'</svg>'}
 function setControlContent(el,name,label=''){el.innerHTML=appIcon(name);if(label){const text=document.createElement('span');text.textContent=label;el.append(text)}}
 function bindAppIcons(){
  if(!document.createTreeWalker)return;
@@ -640,17 +640,20 @@ function syncPlayerValue(kind){
 function syncVolumeControl(){syncPlayerValue('volume');updateVolumeAudio()}
 function syncSustainControl(){syncPlayerValue('sustain');updateSustainAudio()}
 function createVerticalChoiceStrip(el,items,options){
- const row=PLAYER_RULES.valuePicker.rowHeightPx,track=el.querySelector('.value-picker-track');let position=options.selected()*row,drag=null,settle=0;
+ const row=PLAYER_RULES.valuePicker.rowHeightPx,track=el.querySelector('.value-picker-track'),count=items.length;let position=options.selected()*row,drag=null,settle=0;
+ const wrap=index=>((index%count)+count)%count,bound=index=>options.loop?wrap(index):clamp(index,0,count-1);
  track.innerHTML='';for(const item of items){const cell=document.createElement('span'),label=document.createElement('b');label.textContent=item.label;label.title=item.title||item.label;cell.append(label);track.append(cell)}
- const indexAt=value=>clamp(Math.round(value/row),0,items.length-1);
+ el.classList.toggle('circular-choice',Boolean(options.loop));
+ const indexAt=value=>bound(Math.round(value/row));
  const commit=index=>options.choose(index);
- const paint=value=>{position=value;track.style.transform='translateY('+(-value)+'px)';const index=indexAt(value);options.preview?.(index);if(options.live)commit(index);else{clearTimeout(settle);settle=setTimeout(()=>commit(indexAt(position)),150)}};
- const wheel=bindSmoothWheel(track,el,'y',PLAYER_RULES.valuePicker.wheelMaxStepPx,{read:()=>position,write:paint,max:()=>(items.length-1)*row,snap:value=>Math.round(value/row)*row,wheelGain:PLAYER_RULES.valuePicker.wheelGain});
+ function render(){if(options.loop){track.style.transform='none';[...track.children].forEach((cell,index)=>{const offset=wrap(index-position/row+count/2)-count/2;cell.style.transform='translateY('+(offset*row)+'px)'})}else track.style.transform='translateY('+(-position)+'px)';el.dataset.position=String(position/row)}
+ const paint=value=>{position=value;render();const index=indexAt(value);options.preview?.(index);if(options.live)commit(index);else{clearTimeout(settle);settle=setTimeout(()=>commit(indexAt(position)),150)}};
+ const wheel=bindSmoothWheel(track,el,'y',PLAYER_RULES.valuePicker.wheelMaxStepPx,{loop:options.loop,read:()=>position,write:paint,max:()=>(count-1)*row,snap:value=>Math.round(value/row)*row,wheelGain:PLAYER_RULES.valuePicker.wheelGain});
  function cancel(){wheel();clearTimeout(settle);const active=drag;drag=null;if(active&&el.hasPointerCapture(active.id))el.releasePointerCapture(active.id)}
- function sync(index){cancel();position=clamp(index,0,items.length-1)*row;track.style.transform='translateY('+(-position)+'px)';options.preview?.(indexAt(position))}
- el.onkeydown=event=>{let index=indexAt(position);if(event.key==='ArrowUp')index--;else if(event.key==='ArrowDown')index++;else if(event.key==='ArrowRight')index+=options.numeric?-1:1;else if(event.key==='ArrowLeft')index+=options.numeric?1:-1;else if(event.key==='Home')index=options.numeric?items.length-1:0;else if(event.key==='End')index=options.numeric?0:items.length-1;else return;event.preventDefault();event.stopPropagation();index=clamp(index,0,items.length-1);cancel();commit(index);sync(index)};
+ function sync(index){cancel();position=bound(index)*row;render();options.preview?.(indexAt(position))}
+ el.onkeydown=event=>{let index=indexAt(position);if(event.key==='ArrowUp')index--;else if(event.key==='ArrowDown')index++;else if(event.key==='ArrowRight')index+=options.numeric?-1:1;else if(event.key==='ArrowLeft')index+=options.numeric?1:-1;else if(event.key==='Home')index=options.numeric?count-1:0;else if(event.key==='End')index=options.numeric?0:count-1;else return;event.preventDefault();event.stopPropagation();index=bound(index);cancel();commit(index);sync(index)};
  el.addEventListener('pointerdown',event=>{if(event.button!==0)return;cancel();el.focus();drag={id:event.pointerId,y:event.clientY,start:position};el.setPointerCapture(event.pointerId)});
- el.addEventListener('pointermove',event=>{if(drag?.id===event.pointerId){event.preventDefault();paint(clamp(drag.start+drag.y-event.clientY,0,(items.length-1)*row))}});
+ el.addEventListener('pointermove',event=>{if(drag?.id===event.pointerId){event.preventDefault();const value=drag.start+drag.y-event.clientY;paint(options.loop?value:clamp(value,0,(count-1)*row))}});
  const stop=event=>{if(drag?.id!==event.pointerId)return;drag=null;if(el.hasPointerCapture(event.pointerId))el.releasePointerCapture(event.pointerId);wheel.to(Math.round(position/row)*row)};
  el.addEventListener('pointerup',stop);el.addEventListener('pointercancel',stop);sync(options.selected());return {sync,cancel};
 }
@@ -850,7 +853,7 @@ async function chooseInstrument(id){
 function bindInstrumentPicker(){
  const host=$('instrumentPicker');host.oninput=()=>chooseInstrument(host.value);
  if(!document.createComment)return;
- const strip=createVerticalChoiceStrip(host,INSTRUMENTS.map(spec=>({label:spec.name,title:spec.name+' · '+(spec.mode==='offline'?'离线':'在线')})),{selected:()=>Math.max(0,INSTRUMENTS.findIndex(spec=>spec.id===state.project?.playback.instrument)),preview:index=>{host.value=INSTRUMENTS[index].id;host.setAttribute('aria-valuenow',String(index+1));host.setAttribute('aria-valuetext',INSTRUMENTS[index].name)},choose:index=>{if(state.project&&state.project.playback.instrument!==INSTRUMENTS[index].id)chooseInstrument(INSTRUMENTS[index].id)}});
+ const strip=createVerticalChoiceStrip(host,INSTRUMENTS.map(spec=>({label:spec.name,title:spec.name+' · '+(spec.mode==='offline'?'离线':'在线')})),{loop:true,selected:()=>Math.max(0,INSTRUMENTS.findIndex(spec=>spec.id===state.project?.playback.instrument)),preview:index=>{host.value=INSTRUMENTS[index].id;host.setAttribute('aria-valuenow',String(index+1));host.setAttribute('aria-valuetext',INSTRUMENTS[index].name)},choose:index=>{if(state.project&&state.project.playback.instrument!==INSTRUMENTS[index].id)chooseInstrument(INSTRUMENTS[index].id)}});
  instrumentPicker={sync:()=>strip.sync(Math.max(0,INSTRUMENTS.findIndex(spec=>spec.id===state.project?.playback.instrument))),close:()=>strip.cancel()};
  const closeOthers=()=>{closeRangePicker();closeSpeedPicker()};host.addEventListener('pointerdown',closeOthers,true);host.addEventListener('wheel',closeOthers,{capture:true,passive:true});
 }

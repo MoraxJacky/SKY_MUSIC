@@ -18,17 +18,20 @@ function syncPlayerValue(kind){
 function syncVolumeControl(){syncPlayerValue('volume');updateVolumeAudio()}
 function syncSustainControl(){syncPlayerValue('sustain');updateSustainAudio()}
 function createVerticalChoiceStrip(el,items,options){
- const row=PLAYER_RULES.valuePicker.rowHeightPx,track=el.querySelector('.value-picker-track');let position=options.selected()*row,drag=null,settle=0;
+ const row=PLAYER_RULES.valuePicker.rowHeightPx,track=el.querySelector('.value-picker-track'),count=items.length;let position=options.selected()*row,drag=null,settle=0;
+ const wrap=index=>((index%count)+count)%count,bound=index=>options.loop?wrap(index):clamp(index,0,count-1);
  track.innerHTML='';for(const item of items){const cell=document.createElement('span'),label=document.createElement('b');label.textContent=item.label;label.title=item.title||item.label;cell.append(label);track.append(cell)}
- const indexAt=value=>clamp(Math.round(value/row),0,items.length-1);
+ el.classList.toggle('circular-choice',Boolean(options.loop));
+ const indexAt=value=>bound(Math.round(value/row));
  const commit=index=>options.choose(index);
- const paint=value=>{position=value;track.style.transform='translateY('+(-value)+'px)';const index=indexAt(value);options.preview?.(index);if(options.live)commit(index);else{clearTimeout(settle);settle=setTimeout(()=>commit(indexAt(position)),150)}};
- const wheel=bindSmoothWheel(track,el,'y',PLAYER_RULES.valuePicker.wheelMaxStepPx,{read:()=>position,write:paint,max:()=>(items.length-1)*row,snap:value=>Math.round(value/row)*row,wheelGain:PLAYER_RULES.valuePicker.wheelGain});
+ function render(){if(options.loop){track.style.transform='none';[...track.children].forEach((cell,index)=>{const offset=wrap(index-position/row+count/2)-count/2;cell.style.transform='translateY('+(offset*row)+'px)'})}else track.style.transform='translateY('+(-position)+'px)';el.dataset.position=String(position/row)}
+ const paint=value=>{position=value;render();const index=indexAt(value);options.preview?.(index);if(options.live)commit(index);else{clearTimeout(settle);settle=setTimeout(()=>commit(indexAt(position)),150)}};
+ const wheel=bindSmoothWheel(track,el,'y',PLAYER_RULES.valuePicker.wheelMaxStepPx,{loop:options.loop,read:()=>position,write:paint,max:()=>(count-1)*row,snap:value=>Math.round(value/row)*row,wheelGain:PLAYER_RULES.valuePicker.wheelGain});
  function cancel(){wheel();clearTimeout(settle);const active=drag;drag=null;if(active&&el.hasPointerCapture(active.id))el.releasePointerCapture(active.id)}
- function sync(index){cancel();position=clamp(index,0,items.length-1)*row;track.style.transform='translateY('+(-position)+'px)';options.preview?.(indexAt(position))}
- el.onkeydown=event=>{let index=indexAt(position);if(event.key==='ArrowUp')index--;else if(event.key==='ArrowDown')index++;else if(event.key==='ArrowRight')index+=options.numeric?-1:1;else if(event.key==='ArrowLeft')index+=options.numeric?1:-1;else if(event.key==='Home')index=options.numeric?items.length-1:0;else if(event.key==='End')index=options.numeric?0:items.length-1;else return;event.preventDefault();event.stopPropagation();index=clamp(index,0,items.length-1);cancel();commit(index);sync(index)};
+ function sync(index){cancel();position=bound(index)*row;render();options.preview?.(indexAt(position))}
+ el.onkeydown=event=>{let index=indexAt(position);if(event.key==='ArrowUp')index--;else if(event.key==='ArrowDown')index++;else if(event.key==='ArrowRight')index+=options.numeric?-1:1;else if(event.key==='ArrowLeft')index+=options.numeric?1:-1;else if(event.key==='Home')index=options.numeric?count-1:0;else if(event.key==='End')index=options.numeric?0:count-1;else return;event.preventDefault();event.stopPropagation();index=bound(index);cancel();commit(index);sync(index)};
  el.addEventListener('pointerdown',event=>{if(event.button!==0)return;cancel();el.focus();drag={id:event.pointerId,y:event.clientY,start:position};el.setPointerCapture(event.pointerId)});
- el.addEventListener('pointermove',event=>{if(drag?.id===event.pointerId){event.preventDefault();paint(clamp(drag.start+drag.y-event.clientY,0,(items.length-1)*row))}});
+ el.addEventListener('pointermove',event=>{if(drag?.id===event.pointerId){event.preventDefault();const value=drag.start+drag.y-event.clientY;paint(options.loop?value:clamp(value,0,(count-1)*row))}});
  const stop=event=>{if(drag?.id!==event.pointerId)return;drag=null;if(el.hasPointerCapture(event.pointerId))el.releasePointerCapture(event.pointerId);wheel.to(Math.round(position/row)*row)};
  el.addEventListener('pointerup',stop);el.addEventListener('pointercancel',stop);sync(options.selected());return {sync,cancel};
 }
@@ -228,7 +231,7 @@ async function chooseInstrument(id){
 function bindInstrumentPicker(){
  const host=$('instrumentPicker');host.oninput=()=>chooseInstrument(host.value);
  if(!document.createComment)return;
- const strip=createVerticalChoiceStrip(host,INSTRUMENTS.map(spec=>({label:spec.name,title:spec.name+' · '+(spec.mode==='offline'?'离线':'在线')})),{selected:()=>Math.max(0,INSTRUMENTS.findIndex(spec=>spec.id===state.project?.playback.instrument)),preview:index=>{host.value=INSTRUMENTS[index].id;host.setAttribute('aria-valuenow',String(index+1));host.setAttribute('aria-valuetext',INSTRUMENTS[index].name)},choose:index=>{if(state.project&&state.project.playback.instrument!==INSTRUMENTS[index].id)chooseInstrument(INSTRUMENTS[index].id)}});
+ const strip=createVerticalChoiceStrip(host,INSTRUMENTS.map(spec=>({label:spec.name,title:spec.name+' · '+(spec.mode==='offline'?'离线':'在线')})),{loop:true,selected:()=>Math.max(0,INSTRUMENTS.findIndex(spec=>spec.id===state.project?.playback.instrument)),preview:index=>{host.value=INSTRUMENTS[index].id;host.setAttribute('aria-valuenow',String(index+1));host.setAttribute('aria-valuetext',INSTRUMENTS[index].name)},choose:index=>{if(state.project&&state.project.playback.instrument!==INSTRUMENTS[index].id)chooseInstrument(INSTRUMENTS[index].id)}});
  instrumentPicker={sync:()=>strip.sync(Math.max(0,INSTRUMENTS.findIndex(spec=>spec.id===state.project?.playback.instrument))),close:()=>strip.cancel()};
  const closeOthers=()=>{closeRangePicker();closeSpeedPicker()};host.addEventListener('pointerdown',closeOthers,true);host.addEventListener('wheel',closeOthers,{capture:true,passive:true});
 }

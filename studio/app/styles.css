@@ -915,7 +915,7 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
 .player-view .value-picker{height:44px}
 .player-view .value-picker-track{top:4px}
 .player-view .value-picker-track b{height:34px}
-.player-view .instrument-picker{width:clamp(112px,11vw,160px);min-width:112px}
+.player-view .instrument-picker{width:84px;min-width:0}
 .player-view .instrument-picker .value-picker-track b{width:calc(100% - 4px);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 7px}
 .player-view .speed-control .instrument-toggle{justify-content:space-between;gap:6px}
 .player-view .speed-control .instrument-toggle>span:last-child{display:grid;place-items:center;flex:0 0 14px;width:14px;height:14px;line-height:1}
@@ -933,3 +933,9 @@ button>.app-icon{vertical-align:middle}
 .song-card-actions button{display:grid;place-items:center;padding:0}
 
 #stageStatus{display:inline-flex;align-items:center;gap:4px}
+
+/* Circular tone strip and unclipped theme panel surfaces in the editor. */
+.circular-choice .value-picker-track{height:36px}
+.circular-choice .value-picker-track>span{position:absolute;top:0;left:0;right:0}
+.roll-pane .pane-actions>label{display:inline-flex;align-items:center;gap:6px}
+.score-console .console-score>div>.pane{box-shadow:none}
