@@ -1,0 +1,26 @@
+{
+  "format": "sky-music-entry",
+  "schemaVersion": 1,
+  "id": "starlight-demo",
+  "title": "星光钢琴 · 演示",
+  "subtitle": "Starlight Piano · Original Demo",
+  "description": "原创演示短句，用于验证不同歌曲、主题和乐谱切换；不是《爱乐之城》正式曲谱。",
+  "durationMs": 13800,
+  "keyCount": 15,
+  "playback": {
+    "tuning": "C",
+    "rate": 1,
+    "sustain": 0.35,
+    "instrument": "piano"
+  },
+  "provenance": {
+    "source": "原创功能测试乐句，不代表任何已发表的电影音乐"
+  },
+  "music": "scores/starlight-demo.skytrack",
+  "theme": "themes/starlight.skytheme",
+  "card": {
+    "title": "星光钢琴 · 演示",
+    "subtitle": "",
+    "coverElement": null
+  }
+}

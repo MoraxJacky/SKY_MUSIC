@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "christmas",
+  "name": "CHRISTMAS NIGHT",
+  "defaults": {
+    "accent": "#e8c88a",
+    "motion": "ambient",
+    "snow": 50,
+    "glow": 58
+  },
+  "appearance": {},
+  "decorations": {
+    "classes": [],
+    "tree": true,
+    "motif": false,
+    "choiceGlyph": "❄"
+  },
+  "rollPalette": {
+    "base": "#0b2524",
+    "light": "#244438",
+    "medium": "#112e29",
+    "dark": "#0b2825",
+    "label": "#b0c8b6",
+    "anchor": "#eed09e"
+  },
+  "displayName": "圣诞雪夜",
+  "initialOverrides": {
+    "accent": "#f2ca86",
+    "motion": "ambient"
+  },
+  "elementRefs": {
+    "identity": "christmas.identity",
+    "cover": "christmas.cover",
+    "tree": "christmas.tree",
+    "stage": "christmas.stage",
+    "palette": "palette.christmas",
+    "effects": [
+      "effect.snow",
+      "effect.glow",
+      "effect.lights"
+    ]
+  }
+}

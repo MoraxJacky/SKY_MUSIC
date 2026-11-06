@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "defaultTheme": "starlight",
+  "themeOrder": [
+    "christmas",
+    "starlight",
+    "citylights"
+  ],
+  "entries": [
+    "songs/canon-christmas.json",
+    "songs/starlight-demo.json",
+    "songs/citylights-demo.json"
+  ]
+}

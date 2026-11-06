@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sky Music complete song v2",
+  "type": "object",
+  "required": [
+    "format",
+    "schemaVersion",
+    "id",
+    "music",
+    "theme"
+  ],
+  "properties": {
+    "format": {
+      "const": "skymusic"
+    },
+    "schemaVersion": {
+      "const": 2
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "music": {
+      "$ref": "skytrack-v1.schema.json"
+    },
+    "theme": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[-a-zA-Z0-9_]{1,80}$"
+        }
+      }
+    },
+    "card": {
+      "type": "object"
+    },
+    "playback": {
+      "type": "object"
+    }
+  }
+}

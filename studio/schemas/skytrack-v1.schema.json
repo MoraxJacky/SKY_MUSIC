@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sky Track v1",
+  "type": "object",
+  "required": [
+    "format",
+    "schemaVersion",
+    "keyCount",
+    "timeUnit",
+    "events"
+  ],
+  "properties": {
+    "format": {
+      "const": "skytrack"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "keyCount": {
+      "const": 15
+    },
+    "timeUnit": {
+      "const": "ms"
+    },
+    "durationMs": {
+      "type": "number",
+      "minimum": 0
+    },
+    "mode": {
+      "enum": [
+        "grid",
+        "free"
+      ]
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "type": "object",
+        "required": [
+          "timeMs",
+          "notes",
+          "durationMs"
+        ],
+        "properties": {
+          "timeMs": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 36000000
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 15
+            }
+          },
+          "durationMs": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10000
+          }
+        }
+      }
+    }
+  }
+}

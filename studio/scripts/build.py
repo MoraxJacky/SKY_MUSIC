@@ -2,14 +2,16 @@
 """Rebuild modular app, standalone offline HTML, and portable .skymusic samples."""
 from pathlib import Path
 import base64, json, zipfile, re, html
+from configuration import generate
 ROOT=Path(__file__).resolve().parents[1]
 APP=ROOT/'app'
-FILES=['00-core.js','10-zip.js','18-instruments.js','20-audio.js','30-import.js','35-video.js','38-player-template.js','40-ui.js','45-workspace.js','47-edit-session.js','99-bootstrap.js']
+generate(ROOT)
+FILES=['00-core.js','10-zip.js','18-instruments.js','20-audio.js','30-import.js','35-video.js','36-platform-controller.js','37-theme-scenes.js','38-player-template.js','39-player-interactions.js','40-ui.js','45-workspace.js','47-edit-session.js','99-bootstrap.js']
 compiled='\n'.join('/* '+f+' */\n'+(ROOT/'src'/f).read_text(encoding='utf-8') for f in FILES)
 (APP/'js/studio.js').write_text(compiled,encoding='utf-8')
 html_source=(APP/'index.html').read_text(encoding='utf-8')
-css=(APP/'styles.css').read_text(encoding='utf-8')
-site=html_source.replace('<link rel="stylesheet" href="styles.css">','<style>\n'+css+'\n</style>')
+css=(APP/'player-styles.css').read_text(encoding='utf-8')
+site=html_source.replace('<link rel="stylesheet" href="player-styles.css">','<style>\n'+css+'\n</style>')
 # A standalone version MUST NOT fetch assets/scripts over file://. Base64 scenes are used only for offline portability.
 frames=['data:image/webp;base64,'+base64.b64encode((APP/f'assets/christmas/stage_{i:02d}.webp').read_bytes()).decode() for i in range(24)]
 stage_uri=frames[0]
@@ -19,9 +21,20 @@ site=site.replace('src="assets/christmas/snowflake.webp"','src="'+flake_uri+'"')
 for decoration in ['legacy-tree.png']:
  uri='data:image/png;base64,'+base64.b64encode((APP/f'assets/christmas/{decoration}').read_bytes()).decode()
  site=site.replace(f'src="assets/christmas/{decoration}"',f'src="{uri}"')
-preload='<script>window.SKY_STAGE_FRAMES='+json.dumps(frames,separators=(',',':'))+';window.SKY_INLINE_STAGE='+json.dumps(stage_uri)+';</script>'
+theme_assets={}
+config_text=(APP/'js/studio-config.js').read_text(encoding='utf-8')
+config_data=json.loads(config_text.split('window.SKY_STUDIO_CONFIG=',1)[1].rstrip(';\n'))
+for definition in config_data['themes'].values():
+ decoration=definition['decorations']
+ paths=[decoration['identity'].get('image'),decoration.get('cover'),decoration.get('treeImage')]
+ scene=decoration['scene']
+ if scene['type']=='frames':paths.extend(scene['framePattern'].replace('{index}',str(i).zfill(2)) for i in range(scene['frameCount']))
+ for asset in filter(None,paths):
+  mime='image/png' if asset.endswith('.png') else 'image/webp'
+  theme_assets[asset]='data:'+mime+';base64,'+base64.b64encode((APP/asset).read_bytes()).decode()
+preload='<script>window.SKY_THEME_ASSETS='+json.dumps(theme_assets,separators=(',',':'))+';window.SKY_STAGE_FRAMES='+'['+','.join('window.SKY_THEME_ASSETS['+json.dumps(f'assets/christmas/stage_{i:02d}.webp')+']' for i in range(24))+']'+';window.SKY_INLINE_STAGE=window.SKY_THEME_ASSETS["assets/christmas/stage_00.webp"]'+';</script>'
 site=site.replace('<script src="js/builtins.js"></script>',preload+'\n<script src="js/builtins.js"></script>')
-for filename in ['builtins.js','piano-samples.js','instrument-samples.js','scene-embedded.js','studio.js']:
+for filename in ['studio-config.js','builtins.js','piano-samples.js','instrument-samples.js','scene-embedded.js','studio.js']:
  script=(APP/'js'/filename).read_text(encoding='utf-8').replace('</script>','<\\/script>')
  site=site.replace('<script src="js/'+filename+'"></script>','<script>\n'+script+'\n</script>')
 if '<script src=' in site:raise Exception('Standalone HTML has external script src')

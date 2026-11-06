@@ -1,0 +1,30 @@
+{
+  "format": "sky-music-entry",
+  "schemaVersion": 1,
+  "id": "canon-christmas",
+  "title": "卡农圣诞夜",
+  "subtitle": "Canon · Christmas Night",
+  "description": "原第七版顶部方格谱重建 · 单遍216秒",
+  "durationMs": 216000,
+  "keyCount": 15,
+  "playback": {
+    "tuning": "sky",
+    "rate": 1,
+    "sustain": 0.45,
+    "instrument": "piano"
+  },
+  "provenance": {
+    "source": "用户提供的视频第二遍顶部方格谱",
+    "videoId": "BV19Z4y1g7ZT",
+    "originalV7": true,
+    "noteOnCount": 1399,
+    "notes": "第1296格未观察到；持音时间是试听默认值，不是视频中实测的按键时值。"
+  },
+  "music": "scores/canon.skytrack",
+  "theme": "themes/christmas.skytheme",
+  "card": {
+    "title": "卡农圣诞夜",
+    "subtitle": "",
+    "coverElement": "christmas.cover"
+  }
+}

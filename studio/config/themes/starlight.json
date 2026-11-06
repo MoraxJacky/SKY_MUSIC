@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "starlight",
+  "name": "STARLIGHT PIANO",
+  "defaults": {
+    "accent": "#c9b6f5",
+    "motion": "ambient",
+    "snow": 18,
+    "glow": 58
+  },
+  "appearance": {},
+  "decorations": {
+    "classes": [
+      "theme-starlight"
+    ],
+    "tree": false,
+    "motif": true,
+    "choiceGlyph": "✧"
+  },
+  "displayName": "星空钢琴",
+  "initialOverrides": {
+    "accent": "#eac1d7",
+    "motion": "ambient"
+  },
+  "elementRefs": {
+    "identity": "starlight.identity",
+    "cover": null,
+    "tree": null,
+    "stage": "symbol.stage",
+    "palette": "palette.starlight",
+    "effects": [
+      "effect.snow",
+      "effect.glow",
+      "effect.lights"
+    ]
+  }
+}

@@ -12,7 +12,7 @@ const starlight=JSON.parse(fs.readFileSync(root+'/samples/starlight-demo.json','
 const city=JSON.parse(fs.readFileSync(root+'/samples/citylights-demo.json','utf8'));
 let win={SKY_BUILTINS:[canon,starlight,city],SKY_SAMPLES:{},SKY_EMBED_SCENES:{},addEventListener:nop,location:{hash:'',pathname:'/'}},loc=win.location;
 const ctx=vm.createContext({window:win,document:doc,history:{replaceState:nop},location:loc,localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},Image:class{constructor(){this.width=960;this.height=530;this.complete=true;this.naturalWidth=960}set src(v){this._src=v}get src(){return this._src}},devicePixelRatio:1,requestAnimationFrame:nop,cancelAnimationFrame:nop,performance,setTimeout,clearTimeout,setInterval,clearInterval,TextEncoder,TextDecoder,Uint8Array,DataView,ArrayBuffer,Blob,Response,DecompressionStream,URL,console,atob,btoa,Math,Date});
-vm.runInContext(source,ctx,{timeout:30000});let T=win.__SKY_STUDIO_TEST__,s=T.state;
+vm.runInContext(fs.readFileSync(root+'/app/js/studio-config.js','utf8'),ctx);vm.runInContext(source,ctx,{timeout:30000});let T=win.__SKY_STUDIO_TEST__,s=T.state;
 function check(cond,msg){if(!cond)throw Error('FAIL: '+msg);console.log('PASS',msg)}
 check(s.library.length===3,'三首内置歌曲已载入');
 check(s.library.every(p=>p.originKind==='builtin'),'内置歌曲身份标记');

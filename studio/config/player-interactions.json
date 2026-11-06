@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "shared-player-v1",
+  "entry": "src/39-player-interactions.js",
+  "templateId": "legacy-v7",
+  "grid": {
+    "columns": 8,
+    "rows": 4,
+    "keyCount": 15
+  },
+  "roll": {
+    "windowsSeconds": [
+      8,
+      10,
+      12,
+      20
+    ],
+    "initialSeconds": 12,
+    "subdivisionsPerSecond": 6
+  },
+  "keyboard": {
+    "playPause": "Space",
+    "previousEvent": "ArrowLeft",
+    "nextEvent": "ArrowRight"
+  },
+  "selectors": {
+    "wheelGain": 0.22,
+    "smoothingMs": 65,
+    "rangeMaxStepPx": 24,
+    "instrumentMaxStepPx": 18,
+    "instrumentNeighbors": 2,
+    "instrumentRowGapPx": 5,
+    "instrumentSnapDelayMs": 110
+  }
+}

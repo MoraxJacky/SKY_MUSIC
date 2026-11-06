@@ -1,0 +1,28 @@
+{
+  "format": "sky-music-entry",
+  "schemaVersion": 1,
+  "id": "citylights-demo",
+  "title": "暮光钢琴 · 片段",
+  "subtitle": "City Lights · Original Demo",
+  "description": "原创测试乐句，用于验证城市暮光主题、和弦与不同事件时长；不是《爱乐之城》电影原曲。",
+  "durationMs": 22000,
+  "keyCount": 15,
+  "playback": {
+    "tuning": "C",
+    "rate": 1,
+    "sustain": 0.48,
+    "instrument": "piano"
+  },
+  "provenance": {
+    "source": "原创测试曲",
+    "accuracy": "hand-composed",
+    "notMovieSong": true
+  },
+  "music": "scores/citylights-demo.skytrack",
+  "theme": "themes/citylights.skytheme",
+  "card": {
+    "title": "暮光钢琴 · 片段",
+    "subtitle": "",
+    "coverElement": null
+  }
+}

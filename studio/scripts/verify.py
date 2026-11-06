@@ -4,6 +4,8 @@ from pathlib import Path
 from collections import Counter
 import json, zipfile, re, sys
 root=Path(__file__).resolve().parents[1]; errors=[]
+from configuration import generate
+generate(root,check=True)
 for f in ['SkyMusicStudio_独立版.html','app/index.html','app/js/studio.js','app/js/builtins.js','src/20-audio.js','samples/canon.skymusic','samples/citylights-demo.skymusic','legacy/第七版_原始备份.html']:
  if not (root/f).exists():errors.append('Missing: '+f)
 h=(root/'app/index.html').read_text(encoding='utf-8');js=(root/'app/js/studio.js').read_text(encoding='utf-8');ids=re.findall(r'\bid="([^"]+)"',h)

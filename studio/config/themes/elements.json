@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "elements": {
+    "christmas.identity": {
+      "kind": "image",
+      "path": "assets/christmas/snowflake.webp",
+      "glyph": "✧"
+    },
+    "christmas.cover": {
+      "kind": "image",
+      "path": "assets/christmas/stage_00.webp"
+    },
+    "christmas.tree": {
+      "kind": "image",
+      "path": "assets/christmas/legacy-tree.png"
+    },
+    "christmas.stage": {
+      "kind": "frames",
+      "pattern": "assets/christmas/stage_{index}.webp",
+      "count": 24,
+      "periodMs": 6000
+    },
+    "starlight.identity": {
+      "kind": "symbol",
+      "glyph": "✧"
+    },
+    "citylights.identity": {
+      "kind": "symbol",
+      "glyph": "☾"
+    },
+    "symbol.stage": {
+      "kind": "symbol",
+      "glyph": "✧"
+    },
+    "palette.christmas": {
+      "kind": "palette",
+      "colors": {
+        "surfaceStart": "#17372f",
+        "surfaceEnd": "#0d2826",
+        "controlStart": "#123a30",
+        "controlEnd": "#302729",
+        "button": "#193a31",
+        "hover": "#295044",
+        "border": "#456056",
+        "text": "#fff8eb",
+        "muted": "#b4c9bf",
+        "gridStart": "#254337",
+        "gridEnd": "#183229",
+        "rest": "#112b25",
+        "dot": "#476354",
+        "note": "#ddf1c4",
+        "chord": "#f2d09e",
+        "poly": "#f1a9a0",
+        "activeStart": "#765740",
+        "activeEnd": "#aa754b",
+        "accent": "#eac68a",
+        "stageStart": "#132e2c",
+        "stageEnd": "#193c38",
+        "backdrop": "#091e1b"
+      }
+    },
+    "palette.starlight": {
+      "kind": "palette",
+      "colors": {
+        "surfaceStart": "#202c49",
+        "surfaceEnd": "#142039",
+        "controlStart": "#252b48",
+        "controlEnd": "#382e50",
+        "button": "#26344e",
+        "hover": "#3a4c69",
+        "border": "#626b8b",
+        "text": "#fff4fb",
+        "muted": "#c0c9dc",
+        "gridStart": "#303d5b",
+        "gridEnd": "#202c46",
+        "rest": "#17213a",
+        "dot": "#526281",
+        "note": "#d5dffc",
+        "chord": "#f0cce1",
+        "poly": "#e3b4cb",
+        "activeStart": "#7d5879",
+        "activeEnd": "#b47e9b",
+        "accent": "#f2c9dd",
+        "stageStart": "#171e38",
+        "stageEnd": "#302748",
+        "backdrop": "#131b30"
+      }
+    },
+    "palette.citylights": {
+      "kind": "palette",
+      "colors": {
+        "surfaceStart": "#302c43",
+        "surfaceEnd": "#1b233b",
+        "controlStart": "#332c45",
+        "controlEnd": "#442e42",
+        "button": "#33334a",
+        "hover": "#4b4863",
+        "border": "#76647c",
+        "text": "#fff5eb",
+        "muted": "#d3c4ce",
+        "gridStart": "#42384f",
+        "gridEnd": "#292b43",
+        "rest": "#211f35",
+        "dot": "#6b5c72",
+        "note": "#dacde9",
+        "chord": "#f3d09b",
+        "poly": "#efb0b7",
+        "activeStart": "#845b55",
+        "activeEnd": "#b78666",
+        "accent": "#f0c3a8",
+        "stageStart": "#24223d",
+        "stageEnd": "#46314b",
+        "backdrop": "#201e31"
+      }
+    },
+    "effect.snow": {
+      "kind": "effect",
+      "type": "snow"
+    },
+    "effect.glow": {
+      "kind": "effect",
+      "type": "glow"
+    },
+    "effect.lights": {
+      "kind": "effect",
+      "type": "lights"
+    }
+  }
+}
