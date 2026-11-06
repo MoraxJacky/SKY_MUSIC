@@ -2,7 +2,7 @@ function install(){restorePlatformThemes();state.library=BUILTINS.map(p=>normali
  $('fileInput').onchange=async ev=>{let files=[...(ev.target.files||[])],file=files[0];ev.target.value='';if(!file)return;toast('正在检查 '+file.name,1200);try{await importFiles(files)}catch(err){console.error('Import failed',err);toast('导入失败：'+err.message,7500)}};
  $('importThemeLibrary').onclick=()=>$('themeLibraryInput').click();$('themeLibraryInput').onchange=async ev=>{const file=ev.target.files?.[0];ev.target.value='';if(file)try{await importFile(file)}catch(error){toast('主题录入失败：'+error.message,7500)}};
  bindPlayerInteractions();
- bindRangePicker();bindInstrumentPicker();bindSpeedPicker();bindWorkspace();bindScoreConsole();bindVideo();renderLibrary();const navigation=performance.getEntriesByType?.('navigation')?.[0];if(navigation?.type==='reload'){try{history.replaceState(null,'',location.pathname+location.search)}catch(error){}}else if(location.hash.startsWith('#song=')){let id=decodeURIComponent(location.hash.slice(6));if(state.library.some(x=>x.id===id))openSong(id)}
+ bindRangePicker();bindInstrumentPicker();bindSpeedPicker();bindWorkspace();bindScoreConsole();bindVideo();bindHomeExperience();renderLibrary();const navigation=performance.getEntriesByType?.('navigation')?.[0];if(navigation?.type==='reload'){try{history.replaceState(null,'',location.pathname+location.search)}catch(error){}}else if(location.hash.startsWith('#song=')){let id=decodeURIComponent(location.hash.slice(6));if(state.library.some(x=>x.id===id))openSong(id)}
  }
 // Browsers can restore a complete page or its form controls independently of app data.
 function resetStartupNavigation(home=true){
@@ -16,7 +16,7 @@ function resetStartupNavigation(home=true){
  for(const id of ['consoleInterval','consoleNoteDuration','consoleGenerateInterval','consoleNumberScore','quantizeMs','offsetMs','batchDuration','stretchFactor']){const input=$(id);input.value=input.defaultValue}
  $('consoleRecordMode').value='step';$('rollWindow').value=String(state.windowSec);$('timeClock').textContent=positionFmt(0);$('consoleClock').textContent=positionFmt(0);$('seekSlider').value='0';$('rollSeekSlider').value='0';$('playBtn').textContent='▶ 播放';
  updateEditButton();
- if(home){state.mode='home';state.project=null;$('playerView').hidden=true;$('homeView').hidden=false;$('songSearch').value='';$('libraryFilter').value='all';$('homeView').scrollTop=0;try{history.replaceState(null,'',location.pathname+location.search)}catch(error){}renderLibrary()}
+ if(home){state.mode='home';state.project=null;resetHomePresentation();$('playerView').hidden=true;$('homeView').hidden=false;$('songSearch').value='';$('libraryFilter').value='all';$('homeView').scrollTop=0;try{history.replaceState(null,'',location.pathname+location.search)}catch(error){}renderLibrary()}
  else if(state.project){refreshWorkspace()}
  try{window.scrollTo(0,0)}catch(error){}
 }

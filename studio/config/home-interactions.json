@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "carousel": {
+    "intervalMs": 6000,
+    "transitionMs": 680,
+    "pauseOnHover": true
+  },
+  "cardPhysics": {
+    "mass": 1,
+    "stiffness": 135,
+    "damping": 20,
+    "maxTiltDeg": 5,
+    "maxVelocityDegPerSec": 90,
+    "maxFrameSeconds": 0.033,
+    "restAngleDeg": 0.015,
+    "restVelocityDegPerSec": 0.03
+  }
+}

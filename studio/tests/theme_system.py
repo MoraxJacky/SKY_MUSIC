@@ -90,7 +90,7 @@ with sync_playwright() as pw:
  home=[]
  for width,height in [(1920,1080),(1366,900),(1366,768),(1024,768)]:
   page.set_viewport_size({'width':width,'height':height});page.wait_for_timeout(100)
-  layout=page.evaluate('''()=>{const cards=[...document.querySelectorAll('#libraryCards .song-card')].map(e=>e.getBoundingClientRect()),hero=document.querySelector('.home-hero').getBoundingClientRect(),action=document.querySelector('.hero-actions').getBoundingClientRect();return {bottom:cards[5].bottom,nextTop:cards[6].top,cardHeight:cards[0].height,heroBottom:hero.bottom,actionBottom:action.bottom,width:innerWidth,height:innerHeight,overflow:document.documentElement.scrollWidth>innerWidth}}''')
+  layout=page.evaluate('''()=>{const cards=[...document.querySelectorAll('#libraryCards .song-card')].map(e=>e.getBoundingClientRect()),hero=document.querySelector('.home-hero').getBoundingClientRect(),action=document.querySelector('.home-carousel-action').getBoundingClientRect();return {bottom:cards[5].bottom,nextTop:cards[6].top,cardHeight:cards[0].height,heroBottom:hero.bottom,actionBottom:action.bottom,width:innerWidth,height:innerHeight,overflow:document.documentElement.scrollWidth>innerWidth}}''')
   assert 12<=height-layout['bottom']<=54 and layout['nextTop']>=height-40,layout
   assert layout['actionBottom']<=layout['heroBottom']-8 and not layout['overflow'],layout
   page.screenshot(path=str(out/f'home-{width}-{height}.png'));home.append(layout)

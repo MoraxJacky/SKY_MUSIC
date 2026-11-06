@@ -81,3 +81,7 @@ python -X utf8 scripts/configuration.py --check
 ## 统一主题模板
 
 新增主题先复制一份预设 JSON，继承 `themes/template.json`，只调整配色、材质、素材元素引用和 `keyFeedback` 参数。规范、兼容边界、六款主题对照和素材来源见 [THEMES.md](../docs/THEMES.md)。主题没有单独播放器、点击处理器或谱面；主页面按键点击统一通知外观渲染器，编辑控制台统一禁用粒子。
+
+## 平台首页交互
+
+`home-interactions.json` 单独保存首页轮播计时与卡片弹簧参数，入口为 `src/41-home-experience.js`。它不包含数字谱、播放器状态或主题处理器；主题横幅仅读取六款平台预设作展示，不更改歌曲主题。详细行为见 [HOME_EXPERIENCE.md](../docs/HOME_EXPERIENCE.md)。

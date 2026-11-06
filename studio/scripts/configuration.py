@@ -9,6 +9,10 @@ def render(root):
     folder = root / 'config'
     load = lambda name: json.loads((folder / name).read_text(encoding='utf-8'))
     player = load('player-interactions.json')
+    home = load('home-interactions.json')
+    assert home['cardPhysics']['mass'] > 0 and home['cardPhysics']['stiffness'] > 0 and home['cardPhysics']['damping'] > 0
+    assert 0 < home['cardPhysics']['maxTiltDeg'] <= 8 and home['carousel']['intervalMs'] >= 3000
+    assert not ({'score', 'events', 'playback', 'songs'} & home.keys())
     assert not ({'score', 'events', 'theme', 'themes', 'songs'} & player.keys()), 'Player settings must not embed song/theme data'
     assert 0 < player['editor']['crossPageFocusFraction'] < 1
     assert player['editor']['beatRowsPerSection'] == 2, 'Console A/B sections are 8x2 halves of one 8x4 group'
@@ -109,7 +113,7 @@ def render(root):
     assert set(used) == set(rules), 'Every theme style slot must have exactly one definition'
     assert len(used) == len(set(used))
     compact = lambda obj: json.dumps(obj, ensure_ascii=False, separators=(',', ':'))
-    config = {'player': player, 'themes': themes, 'themeTemplate': template, 'defaultTheme': library['defaultTheme'], 'elements': elements,
+    config = {'player': player, 'home': home, 'themes': themes, 'themeTemplate': template, 'defaultTheme': library['defaultTheme'], 'elements': elements,
               'platform': {'entries': entries, 'music': music_files, 'themes': theme_files}}
     packages.update({'app/library/' + key: json.dumps(value, ensure_ascii=False, separators=(',', ':')) + '\n' for key, value in {**music_files, **theme_files}.items()})
     return {**packages,

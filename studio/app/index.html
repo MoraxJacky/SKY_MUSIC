@@ -9,16 +9,13 @@
 <div class="world-sky" aria-hidden="true"><div class="moon"></div><div class="mountain m1"></div><div class="mountain m2"></div><div class="stars"></div><div class="flakes" id="worldSnow"></div></div>
 <input id="fileInput" type="file" multiple accept=".skytrack,.skymusic,.skytheme,.json,.csv,.mid,.midi,.musicxml,.xml,.mp3,.wav,.ogg,.webm,.mp4,.mov" hidden><input id="themeLibraryInput" type="file" accept=".skytheme" hidden><input id="stageImageInput" type="file" accept="image/png,image/webp,image/jpeg" hidden>
 <main class="site-wrap">
-<section id="homeView" class="home-view" aria-label="音乐库"><div class="home-atmosphere" aria-hidden="true"><img class="home-art" src="assets/platform/music-islands-v1.png" alt=""><div class="home-shade"></div><i class="home-aura aura-one"></i><i class="home-aura aura-two"></i></div>
+<section id="homeView" class="home-view" aria-label="音乐库"><div class="home-atmosphere" aria-hidden="true"><img class="home-art" src="assets/platform/music-islands-v1.png" alt=""><div class="home-shade"></div><i class="home-aura aura-one"></i><i class="home-aura aura-two"></i><i class="home-wind wind-one"></i><i class="home-wind wind-two"></i></div>
  <header class="home-top"><div class="wordmark"><span class="mark">✦</span><span>SKY <strong>MUSIC</strong><small>星光音乐馆 · MUSIC LIBRARY</small></span></div>
   <div class="home-top-actions"><button class="btn-quiet" id="importThemeLibrary">录入主题</button><button class="btn-quiet" id="showGuide">使用说明</button><button class="btn-outline" id="newSongBtn">＋ 新建空白乐曲</button><button class="btn-primary" data-import>↥ 导入乐曲</button></div></header>
  <div class="home-body">
-  <section class="home-hero"><div class="hero-copy"><span class="eyebrow">SKY MUSIC · AN ISLAND OF MELODIES</span><h1>让每一段旋律，<br>飞向同一片<span>云海。</span></h1>
-   <p>收藏一份乐谱，点亮一座音乐小岛。演奏、校准与创作，都从这里开始。</p>
-   <div class="hero-actions"><button class="btn-primary" id="openFirst">▶ 开始演奏</button></div></div>
-   <div class="hero-illustration" aria-hidden="true"><span class="home-scene-caption">云海乐屿 <small>MELODIES BETWEEN THE CLOUDS</small></span></div>
-  </section>
-  <div class="library-heading"><div><span class="eyebrow">THE COLLECTION</span><h2>我的音乐收藏</h2></div><div class="library-tools"><input id="songSearch" type="search" placeholder="搜索乐曲" aria-label="搜索乐曲"><select id="libraryFilter" aria-label="筛选音乐库"><option value="all">全部曲目</option><option value="favorite">我的收藏</option><option value="recent">最近演奏</option></select><span id="libraryCount">2 首乐曲</span></div></div>
+  <section class="home-hero theme-carousel" aria-label="预设主题展示" aria-roledescription="轮播"><div id="homeThemeViewport" class="home-theme-viewport"><div id="homeThemeTrack" class="home-theme-track"></div></div><button id="homeThemePrev" class="home-theme-arrow theme-prev" aria-label="上一个主题"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><button id="homeThemeNext" class="home-theme-arrow theme-next" aria-label="下一个主题"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button><div class="home-carousel-action"><button class="btn-primary" id="openFirst">▶ 开始演奏</button></div><nav id="homeThemeDots" class="home-theme-dots" aria-label="选择预设主题"></nav></section>
+  <span id="homeThemeAnnouncement" class="sr-only" aria-live="polite"></span>
+  <div class="library-heading"><div><h2>我的音乐收藏</h2><span class="eyebrow">THE COLLECTION</span></div><div class="library-tools"><input id="songSearch" type="search" placeholder="搜索乐曲" aria-label="搜索乐曲"><select id="libraryFilter" aria-label="筛选音乐库"><option value="all">全部曲目</option><option value="favorite">我的收藏</option><option value="recent">最近演奏</option></select><span id="libraryCount">2 首乐曲</span></div></div>
   <section id="libraryCards" class="library-grid" aria-live="polite"></section>
   <footer class="home-footer">SKY MUSIC STUDIO <span>·</span> 自由编辑 · 本地播放 · 独立项目文件</footer>
  </div>

@@ -6,7 +6,8 @@
 
 双击 `SkyMusicStudio_Standalone.html`、中文独立版或 `Start_Windows.cmd`。模块化入口为 `app/index.html`，开发时用本机 HTTP 服务打开。
 
-- 首页使用独立“云海乐屿”插图、蓝青 UI 与缓慢呼吸光晕；桌面三列、两行卡片高度随窗口调整，更多曲目向下滚动。
+- 首页使用独立“云海乐屿”全屏插图、呼吸光晕与流风；内容居中并保留两侧留白。六款主题在横幅向左循环，箭头及框内六个白点可手动切换。
+- 音乐收藏保留三列两行、原有卡片高度和满列宽度；光锥材质跟随鼠标轻微倾斜与反光，点击翻面查看信息，播放按钮独立进入单曲。详见 [首页交互契约](docs/HOME_EXPERIENCE.md)。
 - 每次进入单曲从0开始，刷新回音乐库首页；已保存的曲谱、主题与试听参数保留。
 - 单曲默认只读。点击“曲谱编辑”打开独立控制台，即刻录制、精细修改、谱面生成共用同一工作副本。关闭必须选择保存、另存为或不保存。
 - 控制台与主播放器的进度、卷帘起点和窗口相互独立。单曲页8×4逐拍谱；控制台分A/B两个8×2段。
@@ -34,6 +35,6 @@ node --check app/js/studio.js
 node tests/v04-interactions.cjs
 ```
 
-浏览器回归需要 Playwright 和 Edge；`tests/theme_system.py`、`tests/layout_rhythm.py`、`tests/config_separation.py` 均通过 `--output <新的目录>` 保存结果，不覆盖历史截图。旧测试可能仍引用已删除的旧控件，不能把旧脚本断言当作当前行为。
+浏览器回归需要 Playwright 和 Edge；`tests/home_experience.py`、`tests/theme_system.py`、`tests/layout_rhythm.py`、`tests/config_separation.py` 均通过 `--output <新的目录>` 保存结果，不覆盖历史截图。旧测试可能仍引用已删除的旧控件，不能把旧脚本断言当作当前行为。
 
 音频/视频自动识谱仍是需人工校对的实验功能；自动化验证不等于人工听感或 Gear Link 验收。
