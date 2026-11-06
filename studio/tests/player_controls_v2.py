@@ -28,6 +28,7 @@ with sync_playwright() as pw:
  page.locator('#playBtn').click();page.wait_for_function('window.__SKY_STUDIO_TEST__.state.isPlaying');page.wait_for_timeout(1550)
  loop=page.evaluate("({playing:window.__SKY_STUDIO_TEST__.state.isPlaying,drops:window.loopPositions.reduce((n,v,i,a)=>n+(i>0&&v<a[i-1]-100),0),particles:window.feedbackCount})")
  assert loop['playing'] and loop['drops']>=2 and loop['particles']>10,loop
+ assert page.locator('#beatGrid .mini-dot').evaluate_all("es=>new Set(es.map(e=>{const r=e.getBoundingClientRect();return r.width+'x'+r.height})).size===1")
  page.locator('#playBtn').click();page.evaluate('window.trackLoop=false');assert not page.evaluate('window.__SKY_STUDIO_TEST__.state.isPlaying')
  page.locator('#loopOneBtn').click();assert page.locator('#loopOneBtn').get_attribute('aria-pressed')=='false'
  page.locator('#restartBtn').click();assert page.evaluate('window.__SKY_STUDIO_TEST__.state.position')==0;assert page.locator('#toast').is_visible()

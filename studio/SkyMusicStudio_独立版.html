@@ -954,7 +954,7 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
 /* Fixed horizontal capsules: identical geometry for all fifteen reference positions. */
 .player-view #beatGrid{--beat-dot-width:8px;--beat-dot-height:4px;--beat-dot-gap:2px}
 .player-view #beatGrid .mini-keys{grid-template-columns:repeat(5,var(--beat-dot-width));grid-template-rows:repeat(3,var(--beat-dot-height));gap:var(--beat-dot-gap);justify-content:center;align-content:center}
-.player-view #beatGrid .mini-dot{width:var(--beat-dot-width);height:var(--beat-dot-height);min-height:0;border-radius:999px;box-sizing:border-box;align-self:center;justify-self:center}
+.player-view #beatGrid .mini-dot{width:var(--beat-dot-width);height:var(--beat-dot-height);min-height:0;border-radius:999px;box-sizing:border-box;align-self:center;justify-self:center;transform:none}
 @media(max-width:1249px){.player-view #beatGrid{--beat-dot-width:6px;--beat-dot-height:3px}}
 @media(max-width:600px){.player-view #beatGrid{--beat-dot-width:4px;--beat-dot-height:2px;--beat-dot-gap:1px}}
 .player-view .header-actions{height:34px;align-items:center}
