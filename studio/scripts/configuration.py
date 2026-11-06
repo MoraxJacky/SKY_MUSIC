@@ -16,6 +16,7 @@ def render(root):
     assert 1 <= home['atmosphere']['fps'] <= 30 and 120 <= home['atmosphere']['maxWidth'] <= 480
     assert 0 < home['atmosphere']['speed'] <= .2 and 0 < home['atmosphere']['opacity'] <= 1
     assert 100 <= home['songEntry']['expandMs'] <= 600 and 100 <= home['songEntry']['revealMs'] <= 800
+    assert 100 <= home['songReturn']['coverMs'] <= 800 and 100 <= home['songReturn']['revealMs'] <= 800
     assert not ({'score', 'events', 'playback', 'songs'} & home.keys())
     assert not ({'score', 'events', 'theme', 'themes', 'songs'} & player.keys()), 'Player settings must not embed song/theme data'
     assert 0 < player['editor']['crossPageFocusFraction'] < 1

@@ -910,3 +910,20 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
  .home-view .home-top-actions{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:8px}
  .home-view .home-top-actions>button{width:100%;min-width:0}
 }
+
+/* The stationary mask belongs to the entire image strip, never to individual slides. */
+.home-theme-art-viewport{position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:.79;mask-image:linear-gradient(90deg,#000 0%,#000 38%,#000b 64%,transparent 100%);-webkit-mask-image:linear-gradient(90deg,#000 0%,#000 38%,#000b 64%,transparent 100%)}
+.home-theme-art-track{position:absolute;inset:0;display:flex;will-change:transform;transition:transform 680ms cubic-bezier(.22,.65,.25,1)}
+.home-theme-art-slide{position:relative;flex:0 0 100%;height:100%;overflow:hidden}
+.home-view .home-theme-art-slide .home-theme-art{inset:0;width:100%;mask-image:none;-webkit-mask-image:none;opacity:1;background:none}
+.home-view .home-theme-art-slide .preview-landscape{width:100%;height:100%;object-fit:cover;object-position:center 56%;filter:brightness(.82)}
+.home-view .home-theme-art-slide .preview-companion{left:30%;width:25%;height:84%;bottom:0}
+.home-view .home-top{background:transparent;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+.home-view .home-top-actions>button{height:34px;min-height:34px;max-height:34px;margin:0;padding-top:0;padding-bottom:0;align-self:center;line-height:1;box-shadow:none;transform:none}
+/* Pale prismatic facets keep the mark bright while the spectral color drifts slowly. */
+.home-view .brand-title{display:block;background:linear-gradient(112deg,#fcffff 0%,#bdeaff 15%,#e8cfff 29%,#fff5d2 43%,#b9e5f7 57%,#f3dfff 72%,#ecffff 88%,#fcffff 100%);background-size:220% 100%;background-clip:text;-webkit-background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 1px 2px #d5eaff1a);animation:brand-prism-drift 14s ease-in-out infinite}
+.home-view .brand-title strong{color:inherit}
+.home-view .brand-emblem{filter:drop-shadow(0 0 5px #d2e9ff38);animation:brand-facet-shift 14s ease-in-out infinite}
+@keyframes brand-prism-drift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes brand-facet-shift{0%,100%{filter:drop-shadow(0 0 5px #d2e9ff38) hue-rotate(0deg)}50%{filter:drop-shadow(0 0 6px #eed9ff38) hue-rotate(18deg)}}
+@media(prefers-reduced-motion:reduce){.home-theme-art-track{transition:none!important}.home-view .brand-title,.home-view .brand-emblem{animation:none}}

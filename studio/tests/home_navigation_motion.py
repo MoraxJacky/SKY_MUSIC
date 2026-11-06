@@ -45,7 +45,7 @@ with sync_playwright() as pw:
  assert page.evaluate('window.__SKY_STUDIO_TEST__.state.position')==0
  assert page.evaluate('document.activeElement.id')=='songTitle'
  assert set(page.evaluate('window.entryPhases'))>={'expand','loading','reveal','idle'}
- page.locator('#backLibrary').click()
+ page.locator('#backLibrary').click();page.wait_for_function("document.getElementById('songEntryTransition').hidden")
  assert page.locator('.light-cone[data-face="back"]').count()==0
  assert page.locator('#homeThemeTrack').get_attribute('data-index')=='0'
  assert page.locator('#songSearch').input_value()=='' and page.locator('#libraryFilter').input_value()=='all'
@@ -77,7 +77,7 @@ with sync_playwright() as pw:
  center=page.locator('#playerView').evaluate("e=>{const r=e.getBoundingClientRect(),m=getComputedStyle(e).clipPath.match(/at ([\\d.]+)px ([\\d.]+)px/);return m?{x:r.left+Number(m[1]),y:r.top+Number(m[2]),w:innerWidth,h:innerHeight}:null}")
  assert center and abs(center['x']-center['w']/2)<1 and abs(center['y']-center['h']/2)<1,center
  page.wait_for_function("document.getElementById('songEntryTransition').hidden")
- page.locator('#backLibrary').click()
+ page.locator('#backLibrary').click();page.wait_for_function("document.getElementById('songEntryTransition').hidden")
  page.close()
  reduced=b.new_page(viewport={'width':1366,'height':900},reduced_motion='reduce');reduced.goto(url)
  reduced.locator('.cone-flip-trigger').first.click();reduced.locator('.card-play').first.click()

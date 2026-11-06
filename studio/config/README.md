@@ -84,7 +84,7 @@ python -X utf8 scripts/configuration.py --check
 
 ## 平台首页交互
 
-`home-interactions.json` 单独保存首页轮播计时、卡片弹簧/翻转/视差、卡片进入播放器的展开/显露计时与噪声光雾参数，入口为 `src/41-home-experience.js`。它不包含数字谱、播放器状态或主题处理器；主题横幅仅读取六款平台预设作展示，不更改歌曲主题。详细行为见 [HOME_EXPERIENCE.md](../docs/HOME_EXPERIENCE.md)。
+`home-interactions.json` 单独保存首页轮播计时、卡片弹簧/翻转/视差、卡片进入播放器与播放器返回主页的展开/显露计时与噪声光雾参数，入口为 `src/41-home-experience.js`。它不包含数字谱、播放器状态或主题处理器；主题横幅仅读取六款平台预设作展示，不更改歌曲主题。详细行为见 [HOME_EXPERIENCE.md](../docs/HOME_EXPERIENCE.md)。
 
 六主题插画v2的资源索引在 `themes/elements.json`，每套预设通过 `elementRefs` 引用自己的场景、双人小景和挂件。`decorations.layout` 只控制场景填充与角色/挂件百分比构图，由共享模板校验并应用；不能携带音乐或处理器。详细路径、来源及提示词见 [THEME_ART_V2.md](../docs/THEME_ART_V2.md)。
 

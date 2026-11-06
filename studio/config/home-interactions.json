@@ -24,7 +24,11 @@
     "opacity": 0.72
   },
   "songEntry": {
-    "expandMs": 240,
-    "revealMs": 420
+    "expandMs": 320,
+    "revealMs": 560
+  },
+  "songReturn": {
+    "coverMs": 360,
+    "revealMs": 520
   }
 }

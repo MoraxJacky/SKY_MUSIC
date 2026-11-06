@@ -74,6 +74,7 @@ function paintHomeCarousel(animate=true){
  const c=homeExperience.carousel;if(!c)return;
  c.track.style.transitionDuration=animate&&!homeReducedMotion()?APP_CONFIG.home.carousel.transitionMs+'ms':'0ms';
  c.track.style.transform='translate3d('+(-100*c.physical)+'%,0,0)';
+ c.artTrack.style.transitionDuration=c.track.style.transitionDuration;c.artTrack.style.transform=c.track.style.transform;
  c.track.dataset.index=String(c.index);c.track.dataset.physical=String(c.physical);
  for(const [index,slide]of c.slides.entries()){const active=index===c.index;slide.setAttribute('aria-hidden',String(!active));slide.inert=!active}
  for(const [index,dot]of c.dots.entries()){dot.setAttribute('aria-current',String(index===c.index));dot.classList.toggle('is-active',index===c.index)}
@@ -103,22 +104,24 @@ function pauseHomePresentation(){stopHomeCarousel();clearHomeCardPhysics();stopH
 function resumeHomePresentation(){scheduleHomeCarousel();startHomeFlow()}
 function bindHomeExperience(){
  if(!document.createComment)return;
- const track=$('homeThemeTrack'),dotHost=$('homeThemeDots');
+ const track=$('homeThemeTrack'),artTrack=$('homeThemeArtTrack'),dotHost=$('homeThemeDots');
  const definitions=Object.values(APP_CONFIG.platform.themes).map(pack=>pack.definition);
- const c=homeExperience.carousel={track,definitions,count:definitions.length,index:0,physical:1,busy:false,pending:null,timer:0,settleTimer:0,hover:false,focus:false,slides:[],dots:[]};
+ const c=homeExperience.carousel={track,artTrack,definitions,count:definitions.length,index:0,physical:1,busy:false,pending:null,timer:0,settleTimer:0,hover:false,focus:false,slides:[],dots:[]};
  for(const [index,definition]of definitions.entries()){
   const slide=document.createElement('article');slide.className='home-theme-slide';slide.dataset.theme=definition.id;slide.setAttribute('role','group');slide.setAttribute('aria-roledescription','幻灯片');slide.setAttribute('aria-label',(index+1)+' / '+c.count+' '+definition.displayName);
   slide.style.setProperty('--preview-start',definition.appearance.stageStart);slide.style.setProperty('--preview-accent',definition.appearance.accent);
-  slide.innerHTML='<div class="home-theme-art"><img class="preview-landscape" alt=""><img class="preview-companion" alt=""></div><div class="home-theme-copy"><span class="eyebrow">THEME COLLECTION</span><h1></h1><p></p><span class="theme-preview-label">主题预览</span></div><div class="home-carousel-action"><button class="btn-primary theme-preview-open" type="button">设置主题</button></div>';
+  slide.innerHTML='<div class="home-theme-art"><img class="preview-landscape" alt=""><img class="preview-companion" alt=""></div><div class="home-theme-copy"><span class="eyebrow">THEME COLLECTION</span><h1></h1><p></p></div><div class="home-carousel-action"><button class="btn-primary theme-preview-open" type="button">设置主题</button></div>';
   slide.querySelector('.theme-preview-open').dataset.previewTheme=definition.id;
   slide.querySelector('h1').textContent=definition.displayName;slide.querySelector('p').textContent=definition.description||definition.name;
   const project={theme:{id:definition.id}},decor=definition.decorations,scene=decor.scene,path=decor.cover||(scene.type==='image'?scene.image:scene.type==='frames'?scene.framePattern.replace('{index}','00'):null),image=slide.querySelector('.preview-landscape');
   image.hidden=!path;if(path)image.src=themeAsset(path,project);
   const companion=slide.querySelector('.preview-companion');companion.hidden=!decor.companion;if(decor.companion)companion.src=themeAsset(decor.companion,project);
+  const artSlide=document.createElement('div');artSlide.className='home-theme-art-slide';artSlide.dataset.theme=definition.id;artSlide.append(slide.querySelector('.home-theme-art'));artTrack.append(artSlide);
   track.append(slide);c.slides.push(slide);
   const dot=document.createElement('button');dot.type='button';dot.setAttribute('aria-label','展示'+definition.displayName);dot.onclick=()=>goHomeTheme(index,true);dotHost.append(dot);c.dots.push(dot);
  }
  for(const [slide,where]of [[c.slides[c.count-1],'before'],[c.slides[0],'after']]){const clone=slide.cloneNode(true);clone.dataset.clone='true';clone.setAttribute('aria-hidden','true');clone.inert=true;if(where==='before')track.prepend(clone);else track.append(clone)}
+ const artSlides=[...artTrack.children];artTrack.prepend(artSlides[artSlides.length-1].cloneNode(true));artTrack.append(artSlides[0].cloneNode(true));
  track.addEventListener('transitionend',event=>{if(event.target===track&&event.propertyName==='transform')finishHomeThemeMove()});
  track.addEventListener('click',event=>{const button=event.target.closest('[data-preview-theme]');if(button&&!button.closest('[data-clone]'))openHomeThemePreview(button.dataset.previewTheme)});
  $('homeThemePrev').onclick=()=>moveHomeTheme(-1);$('homeThemeNext').onclick=()=>moveHomeTheme(1);
@@ -207,12 +210,12 @@ async function enterSongFromCard(id,card){
  const overlay=$('songEntryTransition');
  if(homeReducedMotion()||!overlay.animate){openSong(id);$('songTitle').focus?.({preventScroll:true});return}
  const entry={animations:[],mounting:false};homeExperience.entry=entry;
- const active=()=>homeExperience.entry===entry,animate=async(el,frames,duration)=>{const animation=el.animate(frames,{duration,easing:'cubic-bezier(.22,.65,.25,1)',fill:'forwards'});entry.animations.push(animation);await animation.finished.catch(()=>{})};
+ const active=()=>homeExperience.entry===entry,animate=(el,frames,duration)=>animateSongTransition(entry,el,frames,duration);
  const colors=resolvedPlayerColors(project),rect=card.getBoundingClientRect(),rules=APP_CONFIG.home.songEntry;
  for(const [name,value]of [['start',colors.surfaceStart],['end',colors.backdrop],['accent',colors.accent]])overlay.style.setProperty('--entry-'+name,value);
- $('songEntryTitle').textContent=project.title;const art=platformCover(project)||themeDefinition(project).decorations.cover;
+ $('songEntryTitle').textContent=project.title;$('songEntryMessage').textContent='正在展开谱面';const art=platformCover(project)||themeDefinition(project).decorations.cover;
  $('songEntryArt').hidden=!art;if(art)$('songEntryArt').src=themeAsset(art,project);
- $('homeView').inert=true;pauseHomePresentation();overlay.hidden=false;overlay.dataset.phase='expand';
+ overlay.setAttribute('aria-label','正在打开单曲');$('homeView').inert=true;pauseHomePresentation();overlay.hidden=false;overlay.dataset.phase='expand';
  try{
   await animate(overlay,[{clipPath:`inset(${Math.max(0,rect.top)}px ${Math.max(0,innerWidth-rect.right)}px ${Math.max(0,innerHeight-rect.bottom)}px ${Math.max(0,rect.left)}px round 16px)`,opacity:.7},{clipPath:'inset(0px 0px 0px 0px round 0px)',opacity:1}],rules.expandMs);
   if(!active())return;
@@ -221,8 +224,36 @@ async function enterSongFromCard(id,card){
   // Paint the assembled roll and grid under the cover before revealing the real player.
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(!active())return;
   overlay.dataset.phase='reveal';document.querySelector('.site-wrap').classList.add('song-entry-reveal');
-  const bounds=player.getBoundingClientRect(),cx=clamp(innerWidth/2-bounds.left,0,player.clientWidth),cy=clamp(innerHeight/2-bounds.top,0,player.clientHeight),radius=Math.ceil(Math.hypot(Math.max(cx,player.clientWidth-cx),Math.max(cy,player.clientHeight-cy)));
-  await animate(player,[{clipPath:`circle(0px at ${cx}px ${cy}px)`},{clipPath:`circle(${radius}px at ${cx}px ${cy}px)`}],rules.revealMs);
+  await animate(player,songRevealFrames(player),rules.revealMs);
   if(!active())return;cancelSongEntry();$('songTitle').focus({preventScroll:true});
  }catch(error){if(active()){cancelSongEntry();toast('打开单曲失败：'+error.message,5000)}}
+}
+
+async function animateSongTransition(entry,el,frames,duration){
+ const animation=el.animate(frames,{duration,easing:'cubic-bezier(.22,.65,.25,1)',fill:'forwards'});entry.animations.push(animation);await animation.finished.catch(()=>{});
+}
+function songRevealFrames(el,opening=true){
+ const bounds=el.getBoundingClientRect(),cx=clamp(innerWidth/2-bounds.left,0,el.clientWidth),cy=clamp(innerHeight/2-bounds.top,0,el.clientHeight),radius=Math.ceil(Math.hypot(Math.max(cx,el.clientWidth-cx),Math.max(cy,el.clientHeight-cy)));
+ const frames=[{clipPath:`circle(0px at ${cx}px ${cy}px)`},{clipPath:`circle(${radius}px at ${cx}px ${cy}px)`}];return opening?frames:frames.reverse();
+}
+async function returnHomeFromPlayer(){
+ if(homeExperience.entry)return;
+ const overlay=$('songEntryTransition');
+ if(state.mode!=='player'||state.editMode||homeReducedMotion()||!overlay.animate){goHome();return}
+ const entry={animations:[],mounting:false};homeExperience.entry=entry;
+ const active=()=>homeExperience.entry===entry,colors=resolvedPlayerColors(state.project),rules=APP_CONFIG.home.songReturn;
+ for(const [name,value]of [['start',colors.surfaceStart],['end',colors.backdrop],['accent',colors.accent]])overlay.style.setProperty('--entry-'+name,value);
+ $('songEntryTitle').textContent='星光音乐馆';$('songEntryMessage').textContent='正在返回音乐馆';$('songEntryArt').hidden=true;overlay.setAttribute('aria-label','正在返回音乐馆');
+ pauseSong();cancelRollDrag();cancelRollFinish();cancelPlayerValueScroll();closeRangePicker();closeInstrumentPicker();closeSpeedPicker();
+ $('homeView').inert=true;$('playerView').inert=true;overlay.hidden=false;overlay.dataset.phase='return-cover';
+ document.querySelector('.site-wrap').classList.add('song-entry-reveal');
+ try{
+  await animateSongTransition(entry,$('playerView'),songRevealFrames($('playerView'),false),rules.coverMs);if(!active())return;
+  document.querySelector('.site-wrap').classList.remove('song-entry-reveal');
+  overlay.dataset.phase='return-loading';entry.mounting=true;goHome();entry.mounting=false;$('homeView').inert=true;
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(!active())return;
+  overlay.dataset.phase='return-reveal';document.querySelector('.site-wrap').classList.add('song-entry-reveal');
+  await animateSongTransition(entry,$('homeView'),songRevealFrames($('homeView')),rules.revealMs);if(!active())return;
+  cancelSongEntry();$('libraryTitle').focus({preventScroll:true});
+ }catch(error){if(active()){cancelSongEntry();goHome()}}
 }

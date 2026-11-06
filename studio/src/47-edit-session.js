@@ -34,7 +34,7 @@ function completeEdit(kind){
  scoreConsole.views.set(original.id,editorView);if(kind==='new')scoreConsole.views.set(chosen.id,{...editorView});const playerView=scoreConsole.returnView;scoreConsole.returnView=null;applyTimelineView(playerView);
  state.history.delete(original.id);state.future.delete(original.id);updateEditButton();
  saveLibrary();
- if(action==='home'){goHome();return}
+ if(action==='home'){returnHomeFromPlayer();return}
  try{history.replaceState(null,'','#song='+encodeURIComponent(chosen.id))}catch(error){}
  state.rate=chosen.playback?.rate||1;state.volume=normalizeVolume(chosen.playback?.volume);syncSpeedPicker();syncVolumeControl();
  state.tuning=chosen.playback?.tuning||'C';state.sustain=chosen.playback?.sustain??.45;

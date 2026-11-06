@@ -59,7 +59,7 @@ with sync_playwright() as pw:
  page.locator('.light-cone').first.get_by_role('button',name='删除项目',exact=True).click();page.locator('#deleteConfirm').click();assert page.locator('.light-cone').count()==3
  # The dedicated play button works on the back without toggling the card.
  page.locator('.light-cone').first.locator('.card-play').click();page.wait_for_function("document.getElementById('songEntryTransition').hidden");assert page.locator('#playerView').is_visible();assert page.evaluate('window.__SKY_STUDIO_TEST__.state.position')==0
- page.locator('#backLibrary').click();page.locator('#songSearch').fill('不存在的乐曲');assert page.locator('.light-cone').count()==0;page.locator('#songSearch').fill('')
+ page.locator('#backLibrary').click();page.wait_for_function("document.getElementById('songEntryTransition').hidden");page.locator('#songSearch').fill('不存在的乐曲');assert page.locator('.light-cone').count()==0;page.locator('#songSearch').fill('')
  # Three columns keep their original full cell width and fill two usable rows.
  page.evaluate('''()=>{const t=window.__SKY_STUDIO_TEST__;while(t.state.library.length<6)t.duplicateSong(t.state.library[0].id)}''')
  layouts=[]

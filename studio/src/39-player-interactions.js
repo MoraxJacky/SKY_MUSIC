@@ -62,7 +62,7 @@ function bindPlayerInteractions(){
  bindPlayerValuePicker('volume');bindPlayerValuePicker('sustain');
 
  bindRollPointerSeek();
- $('backLibrary').onclick=goHome;
+ $('backLibrary').onclick=returnHomeFromPlayer;
  $('rollWindow').innerHTML='';for(const seconds of PLAYER_RULES.roll.windowsSeconds){const option=document.createElement('option');option.value=String(seconds);option.textContent=seconds+'秒';$('rollWindow').append(option)}
  $('playBtn').onclick=()=>playPause();$('restartBtn').onclick=()=>seekTo(0);
 
