@@ -806,3 +806,18 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
 .home-theme-settings input[type=range]{accent-color:#c0dadb}
 @media(max-width:600px){.home-theme-dialog{padding:18px}.home-theme-workspace{grid-template-columns:1fr;gap:18px}.theme-sample-scene{height:135px}.theme-sample-roll{height:75px}.home-theme-settings{display:grid;grid-template-columns:1fr 1fr;gap:12px}.home-theme-settings label:first-child,.home-theme-settings p{grid-column:1/-1}}
 @media(prefers-reduced-motion:reduce){.home-view .cone-tilt,.home-view .light-cone .song-cover img{transform:none;will-change:auto}.home-flow-canvas{display:none}.theme-sample-orbit{animation:none!important}}
+
+/* One data-driven artwork composition for all illustrated theme packs. */
+.player-view .stage-pane[data-scene-fit=cover]:not(.has-custom-image) .stage-scenery{inset:0;width:100%;height:100%;max-width:none;aspect-ratio:auto;transform:none}
+.player-view .stage-pane[data-scene-fit=cover] .stage-scenery img{object-fit:cover;filter:none}
+.player-view .stage-pane[data-scene-fit=cover] .stage-scenery::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#07122208 55%,#05121e7a)}
+.player-view .stage-companion{left:var(--art-companion-left,8%);bottom:var(--art-companion-bottom,9%);width:var(--art-companion-width,28%);height:var(--art-companion-height,64%);opacity:1;filter:drop-shadow(0 4px 5px #08102040)}
+.player-view .stage-pane[data-scene-fit=cover] .stage-charm{right:var(--art-ornament-right,3%);bottom:var(--art-ornament-bottom,11%);width:var(--art-ornament-width,14%);height:var(--art-ornament-height,32%);opacity:.85;filter:drop-shadow(0 2px 4px #06152744)}
+.player-view .stage-pane[data-scene-fit=cover] .stage-lights{opacity:.12}
+.player-view .stage-pane[data-scene-fit=cover] .stage-caption{color:#e4eee9;text-shadow:0 1px 6px #04101f;letter-spacing:1.4px}
+.home-theme-art .preview-landscape{object-fit:cover;object-position:center 45%;filter:brightness(.78)}
+.home-theme-art .preview-companion{left:47%;bottom:0;width:36%;height:93%;opacity:.96}
+.theme-sample-scene #homeThemeSampleImage{object-fit:cover;filter:none}
+.theme-sample-scene .theme-sample-companion{position:absolute;left:2%;bottom:4%;width:48%;height:84%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 4px 5px #07111d44);pointer-events:none}
+.theme-sample-scene .theme-sample-charm{position:absolute;right:4%;bottom:10%;width:17%;height:37%;object-fit:contain;filter:none;pointer-events:none}
+.theme-sample-scene>span{z-index:2;text-shadow:0 2px 7px #061322;background:linear-gradient(90deg,#08131b66,transparent);padding:4px 0}

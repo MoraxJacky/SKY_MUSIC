@@ -6,7 +6,18 @@
     "classes": [],
     "tree": false,
     "motif": false,
-    "choiceGlyph": "✧"
+    "choiceGlyph": "✧",
+    "layout": {
+      "sceneFit": "cover",
+      "companionWidth": 47,
+      "companionHeight": 86,
+      "companionLeft": 2,
+      "companionBottom": 5,
+      "ornamentWidth": 15,
+      "ornamentHeight": 34,
+      "ornamentRight": 3,
+      "ornamentBottom": 10
+    }
   },
   "defaults": {
     "accent": "#a9d6c9",
@@ -16,7 +27,7 @@
   },
   "name": "HIDDEN FOREST",
   "displayName": "雨林幽光",
-  "description": "雨亭 · 发光水母与雨丝",
+  "description": "共伞相伴 · 树屋、发光菌菇与光之水母",
   "legacyNames": [],
   "initialOverrides": {
     "accent": "#a9d6c9",
@@ -26,18 +37,18 @@
     "glow": 50
   },
   "elementRefs": {
-    "identity": "rainforest.identity",
-    "cover": "rainforest.scene",
+    "identity": "rainforest.v2.charm",
+    "cover": "rainforest.v2.scene",
     "tree": null,
-    "stage": "rainforest.scene",
+    "stage": "rainforest.v2.scene",
     "palette": "palette.rainforest",
     "effects": [
       "effect.glow"
     ],
     "ornaments": [
-      "rainforest.charm"
+      "rainforest.v2.charm"
     ],
-    "companion": "sky.pianist"
+    "companion": "rainforest.v2.companions"
   },
   "rollPalette": {
     "base": "#102930",

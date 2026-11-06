@@ -36,6 +36,8 @@ for definition in config_data['themes'].values():
  for asset in filter(None,paths):
   mime={'.png':'image/png','.svg':'image/svg+xml','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp'}[Path(asset).suffix.lower()]
   theme_assets[asset]='data:'+mime+';base64,'+base64.b64encode((APP/asset).read_bytes()).decode()
+# Preserve the legacy frame bank for imported v0.4 themes even when every preset uses new artwork.
+for i,uri in enumerate(frames):theme_assets[f'assets/christmas/stage_{i:02d}.webp']=uri
 preload='<script>window.SKY_THEME_ASSETS='+json.dumps(theme_assets,separators=(',',':'))+';window.SKY_STAGE_FRAMES='+'['+','.join('window.SKY_THEME_ASSETS['+json.dumps(f'assets/christmas/stage_{i:02d}.webp')+']' for i in range(24))+']'+';window.SKY_INLINE_STAGE=window.SKY_THEME_ASSETS["assets/christmas/stage_00.webp"]'+';</script>'
 site=site.replace('<script src="js/builtins.js"></script>',preload+'\n<script src="js/builtins.js"></script>')
 for filename in ['studio-config.js','builtins.js','piano-samples.js','instrument-samples.js','scene-embedded.js','studio.js']:

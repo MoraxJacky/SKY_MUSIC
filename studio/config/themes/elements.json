@@ -7,7 +7,7 @@
     },
     "christmas.cover": {
       "kind": "image",
-      "path": "assets/christmas/stage_00.webp"
+      "path": "assets/themes/v2/christmas-scene-v2.webp"
     },
     "christmas.tree": {
       "kind": "image",
@@ -215,7 +215,7 @@
     },
     "starlight.scene": {
       "kind": "image",
-      "path": "assets/themes/starlight-scene.svg"
+      "path": "assets/themes/v2/starlight-scene-v2.webp"
     },
     "citylights.charm": {
       "kind": "image",
@@ -223,7 +223,7 @@
     },
     "citylights.scene": {
       "kind": "image",
-      "path": "assets/themes/citylights-scene.svg"
+      "path": "assets/themes/v2/citylights-scene-v2.webp"
     },
     "prairie.charm": {
       "kind": "image",
@@ -231,7 +231,7 @@
     },
     "prairie.scene": {
       "kind": "image",
-      "path": "assets/themes/prairie-scene.svg"
+      "path": "assets/themes/v2/prairie-scene-v2.webp"
     },
     "prairie.identity": {
       "kind": "image",
@@ -243,7 +243,7 @@
     },
     "rainforest.scene": {
       "kind": "image",
-      "path": "assets/themes/rainforest-scene.svg"
+      "path": "assets/themes/v2/rainforest-scene-v2.webp"
     },
     "rainforest.identity": {
       "kind": "image",
@@ -255,7 +255,7 @@
     },
     "vault.scene": {
       "kind": "image",
-      "path": "assets/themes/vault-scene.svg"
+      "path": "assets/themes/v2/vault-scene-v2.webp"
     },
     "vault.identity": {
       "kind": "image",
@@ -288,6 +288,78 @@
     "sky.pianist": {
       "kind": "image",
       "path": "assets/platform/sky-pianist-v1.png"
+    },
+    "christmas.v2.scene": {
+      "kind": "image",
+      "path": "assets/themes/v2/christmas-scene-v2.webp"
+    },
+    "christmas.v2.companions": {
+      "kind": "image",
+      "path": "assets/themes/v2/christmas-companions-v2.webp"
+    },
+    "christmas.v2.charm": {
+      "kind": "image",
+      "path": "assets/themes/v2/christmas-charm-v2.webp"
+    },
+    "starlight.v2.scene": {
+      "kind": "image",
+      "path": "assets/themes/v2/starlight-scene-v2.webp"
+    },
+    "starlight.v2.companions": {
+      "kind": "image",
+      "path": "assets/themes/v2/starlight-companions-v2.webp"
+    },
+    "starlight.v2.charm": {
+      "kind": "image",
+      "path": "assets/themes/v2/starlight-charm-v2.webp"
+    },
+    "citylights.v2.scene": {
+      "kind": "image",
+      "path": "assets/themes/v2/citylights-scene-v2.webp"
+    },
+    "citylights.v2.companions": {
+      "kind": "image",
+      "path": "assets/themes/v2/citylights-companions-v2.webp"
+    },
+    "citylights.v2.charm": {
+      "kind": "image",
+      "path": "assets/themes/v2/citylights-charm-v2.webp"
+    },
+    "prairie.v2.scene": {
+      "kind": "image",
+      "path": "assets/themes/v2/prairie-scene-v2.webp"
+    },
+    "prairie.v2.companions": {
+      "kind": "image",
+      "path": "assets/themes/v2/prairie-companions-v2.webp"
+    },
+    "prairie.v2.charm": {
+      "kind": "image",
+      "path": "assets/themes/v2/prairie-charm-v2.webp"
+    },
+    "rainforest.v2.scene": {
+      "kind": "image",
+      "path": "assets/themes/v2/rainforest-scene-v2.webp"
+    },
+    "rainforest.v2.companions": {
+      "kind": "image",
+      "path": "assets/themes/v2/rainforest-companions-v2.webp"
+    },
+    "rainforest.v2.charm": {
+      "kind": "image",
+      "path": "assets/themes/v2/rainforest-charm-v2.webp"
+    },
+    "vault.v2.scene": {
+      "kind": "image",
+      "path": "assets/themes/v2/vault-scene-v2.webp"
+    },
+    "vault.v2.companions": {
+      "kind": "image",
+      "path": "assets/themes/v2/vault-companions-v2.webp"
+    },
+    "vault.v2.charm": {
+      "kind": "image",
+      "path": "assets/themes/v2/vault-charm-v2.webp"
     }
   }
 }

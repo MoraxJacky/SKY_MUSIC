@@ -38,3 +38,5 @@ node tests/v04-interactions.cjs
 浏览器回归需要 Playwright 和 Edge；`tests/home_experience.py`、`tests/theme_system.py`、`tests/layout_rhythm.py`、`tests/config_separation.py` 均通过 `--output <新的目录>` 保存结果，不覆盖历史截图。旧测试可能仍引用已删除的旧控件，不能把旧脚本断言当作当前行为。
 
 音频/视频自动识谱仍是需人工校对的实验功能；自动化验证不等于人工听感或 Gear Link 验收。
+
+六套主题已配备 [v2插画素材](docs/THEME_ART_V2.md)：18张生成图片，包括六个场景、六组双角色与六组挂件；首页预览、单曲舞台和 `.skytheme` 资源包引用一致。

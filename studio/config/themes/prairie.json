@@ -6,7 +6,18 @@
     "classes": [],
     "tree": false,
     "motif": false,
-    "choiceGlyph": "✧"
+    "choiceGlyph": "✧",
+    "layout": {
+      "sceneFit": "cover",
+      "companionWidth": 47,
+      "companionHeight": 86,
+      "companionLeft": 2,
+      "companionBottom": 5,
+      "ornamentWidth": 15,
+      "ornamentHeight": 34,
+      "ornamentRight": 3,
+      "ornamentBottom": 10
+    }
   },
   "defaults": {
     "accent": "#dcd7a2",
@@ -16,7 +27,7 @@
   },
   "name": "DAYLIGHT PRAIRIE",
   "displayName": "云野浮岛",
-  "description": "浮岛钟塔 · 金色蝴蝶",
+  "description": "遥鲲与蝴蝶 · 圣岛钟群与云海瀑布",
   "legacyNames": [],
   "initialOverrides": {
     "accent": "#dcd7a2",
@@ -26,18 +37,18 @@
     "glow": 50
   },
   "elementRefs": {
-    "identity": "prairie.identity",
-    "cover": "prairie.scene",
+    "identity": "prairie.v2.charm",
+    "cover": "prairie.v2.scene",
     "tree": null,
-    "stage": "prairie.scene",
+    "stage": "prairie.v2.scene",
     "palette": "palette.prairie",
     "effects": [
       "effect.glow"
     ],
     "ornaments": [
-      "prairie.charm"
+      "prairie.v2.charm"
     ],
-    "companion": "sky.pianist"
+    "companion": "prairie.v2.companions"
   },
   "rollPalette": {
     "base": "#152e30",

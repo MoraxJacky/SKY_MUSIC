@@ -11,9 +11,20 @@
   "appearance": {},
   "decorations": {
     "classes": [],
-    "tree": true,
+    "tree": false,
     "motif": false,
-    "choiceGlyph": "❄"
+    "choiceGlyph": "❄",
+    "layout": {
+      "sceneFit": "cover",
+      "companionWidth": 47,
+      "companionHeight": 86,
+      "companionLeft": 2,
+      "companionBottom": 5,
+      "ornamentWidth": 15,
+      "ornamentHeight": 34,
+      "ornamentRight": 3,
+      "ornamentBottom": 10
+    }
   },
   "rollPalette": {
     "base": "#0b2524",
@@ -32,10 +43,10 @@
     "glow": 50
   },
   "elementRefs": {
-    "identity": "christmas.identity",
-    "cover": "christmas.cover",
-    "tree": "christmas.tree",
-    "stage": "christmas.stage",
+    "identity": "christmas.v2.charm",
+    "cover": "christmas.v2.scene",
+    "tree": null,
+    "stage": "christmas.v2.scene",
     "palette": "palette.christmas",
     "effects": [
       "effect.glow",
@@ -43,10 +54,11 @@
       "effect.lights"
     ],
     "ornaments": [
-      "christmas.charm"
-    ]
+      "christmas.v2.charm"
+    ],
+    "companion": "christmas.v2.companions"
   },
-  "description": "红围巾 · 冬日礼物与烛光",
+  "description": "雪花斗篷 · 圣诞装扮与雪屋烛光",
   "legacyNames": [
     "CHRISTMAS NIGHT"
   ],

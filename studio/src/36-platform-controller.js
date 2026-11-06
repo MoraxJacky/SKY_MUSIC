@@ -54,7 +54,7 @@ function sanitizeThemeDefinition(raw){
  if(!['frames','symbol','image'].includes(scene.type))throw Error('不支持的主题舞台类型');
  if(scene.type==='frames'&&(!Number.isInteger(scene.frameCount)||scene.frameCount<1||scene.frameCount>48))throw Error('主题帧数超出范围');
  const classes=(input.classes||base.decorations.classes).filter(name=>['theme-starlight','theme-citylights'].includes(name));
- definition.decorations={classes,identity:{image:image(input.identity?.image),glyph:String(input.identity?.glyph||'✧').slice(0,8)},
+ definition.decorations={classes,layout:sanitizeThemeLayout(input.layout),identity:{image:image(input.identity?.image),glyph:String(input.identity?.glyph||'✧').slice(0,8)},
   companion:image(input.companion),ornaments:(input.ornaments||[]).slice(0,3).map(image),tree:Boolean(input.tree),treeImage:image(input.treeImage),motif:Boolean(input.motif),cover:image(input.cover),choiceGlyph:String(input.choiceGlyph||'✧').slice(0,8),
   effects:(input.effects||['snow','glow','lights']).filter(type=>['snow','glow','lights'].includes(type)),scene:{type:scene.type,frameCount:scene.type==='frames'?scene.frameCount:0,framePattern:scene.type==='frames'?image(scene.framePattern):null,periodMs:clamp(Number(scene.periodMs)||6000,100,60000),...(scene.type==='image'?{image:image(scene.image)}:{})}};
  definition.elements={};for(const [id,element] of Object.entries(raw.elements||{})){

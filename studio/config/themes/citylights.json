@@ -13,7 +13,18 @@
     "classes": [],
     "tree": false,
     "motif": false,
-    "choiceGlyph": "☾"
+    "choiceGlyph": "☾",
+    "layout": {
+      "sceneFit": "cover",
+      "companionWidth": 47,
+      "companionHeight": 86,
+      "companionLeft": 2,
+      "companionBottom": 5,
+      "ornamentWidth": 15,
+      "ornamentHeight": 34,
+      "ornamentRight": 3,
+      "ornamentBottom": 10
+    }
   },
   "displayName": "霞谷落日",
   "initialOverrides": {
@@ -24,20 +35,20 @@
     "glow": 50
   },
   "elementRefs": {
-    "identity": "citylights.identity",
-    "cover": "citylights.scene",
+    "identity": "citylights.v2.charm",
+    "cover": "citylights.v2.scene",
     "tree": null,
-    "stage": "citylights.scene",
+    "stage": "citylights.v2.scene",
     "palette": "palette.citylights",
     "effects": [
       "effect.glow"
     ],
     "ornaments": [
-      "citylights.charm"
+      "citylights.v2.charm"
     ],
-    "companion": "sky.pianist"
+    "companion": "citylights.v2.companions"
   },
-  "description": "双塔 · 霞光与滑行轨迹",
+  "description": "霞谷双子意象 · 冰湖、落日与天文星环",
   "legacyNames": [
     "CITY OF STARS"
   ],

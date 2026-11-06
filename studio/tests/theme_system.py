@@ -49,8 +49,8 @@ with sync_playwright() as pw:
   with zipfile.ZipFile(target) as z:
    definition=json.loads(z.read('theme.json'))
    assert definition['keyFeedback']['shape']==result['shape']
-   paths=[definition['decorations']['identity']['image'],*definition['decorations']['ornaments']]
-   if theme!='christmas':paths.extend([definition['decorations']['scene']['image'],definition['decorations']['companion']])
+   paths=[definition['decorations']['identity']['image'],*definition['decorations']['ornaments'],definition['decorations']['scene']['image'],definition['decorations']['companion']]
+   assert definition['decorations']['layout']['sceneFit']=='cover'
    assert all(path in z.namelist() for path in paths if path),(theme,paths,z.namelist())
   page.locator('[data-close=sceneDialog]').click();page.locator('#consoleRecordTab').click()
   page.locator('#keyBoard [data-note="1"]').click();assert page.locator('#keyFeedbackLayer .key-particle').count()==0
@@ -58,6 +58,8 @@ with sync_playwright() as pw:
   page.locator('#consoleClose').click();page.locator('#saveDirect').click()
   assert snapshot(page)['position']==main_position and page.locator('#beatGrid .beat').count()==32
   page.wait_for_function("[...document.querySelectorAll('[data-theme-decoration]:not([hidden]),.stage-companion:not([hidden]),#identitySnow:not([hidden])')].every(e=>e.complete&&e.naturalWidth>0)")
+  artwork=page.evaluate('''()=>{const pane=document.getElementById('stagePane'),scene=pane.querySelector('.stage-scenery'),companion=pane.querySelector('.stage-companion'),r=pane.getBoundingClientRect(),s=scene.getBoundingClientRect();return {fit:pane.dataset.sceneFit,sceneWidth:s.width,paneWidth:r.width,companion:companion.naturalWidth,passive:getComputedStyle(companion).pointerEvents==='none'}}''')
+  assert artwork['fit']=='cover' and abs(artwork['sceneWidth']-artwork['paneWidth'])<=2 and artwork['companion']==1536 and artwork['passive'],(theme,artwork)
   page.locator('#keyBoard [data-note="2"]').click()
   assert page.locator('#keyFeedbackLayer .key-particle').count()>=8
   assert page.locator('#keyFeedbackLayer .key-particle').first.get_attribute('data-shape')==result['shape']
@@ -83,7 +85,8 @@ with sync_playwright() as pw:
  assert snapshot(page)['score']==original
  assert page.evaluate('window.__SKY_STUDIO_TEST__.state.project.theme.id')=='sky-roundtrip-test'
  page.wait_for_function("document.getElementById('identitySnow').complete&&document.getElementById('identitySnow').naturalWidth>0&&document.querySelector('.stage-companion').complete&&document.querySelector('.stage-companion').naturalWidth>0")
- assert page.locator('#identitySnow').get_attribute('src').startswith('data:image/svg+xml;')
+ assert page.locator('#identitySnow').get_attribute('src').startswith('data:image/webp;')
+ assert page.locator('#stagePane').get_attribute('data-scene-fit')=='cover'
  page.locator('#consoleClose').click();page.locator('#discardChanges').click();page.locator('#backLibrary').click()
  # Fill two rows with genuine independent song copies; the seventh card starts below them.
  page.evaluate('''()=>{const t=window.__SKY_STUDIO_TEST__;while(t.state.library.length<6)t.duplicateSong(t.state.library[0].id)}''')

@@ -394,7 +394,7 @@ function sanitizeThemeDefinition(raw){
  if(!['frames','symbol','image'].includes(scene.type))throw Error('不支持的主题舞台类型');
  if(scene.type==='frames'&&(!Number.isInteger(scene.frameCount)||scene.frameCount<1||scene.frameCount>48))throw Error('主题帧数超出范围');
  const classes=(input.classes||base.decorations.classes).filter(name=>['theme-starlight','theme-citylights'].includes(name));
- definition.decorations={classes,identity:{image:image(input.identity?.image),glyph:String(input.identity?.glyph||'✧').slice(0,8)},
+ definition.decorations={classes,layout:sanitizeThemeLayout(input.layout),identity:{image:image(input.identity?.image),glyph:String(input.identity?.glyph||'✧').slice(0,8)},
   companion:image(input.companion),ornaments:(input.ornaments||[]).slice(0,3).map(image),tree:Boolean(input.tree),treeImage:image(input.treeImage),motif:Boolean(input.motif),cover:image(input.cover),choiceGlyph:String(input.choiceGlyph||'✧').slice(0,8),
   effects:(input.effects||['snow','glow','lights']).filter(type=>['snow','glow','lights'].includes(type)),scene:{type:scene.type,frameCount:scene.type==='frames'?scene.frameCount:0,framePattern:scene.type==='frames'?image(scene.framePattern):null,periodMs:clamp(Number(scene.periodMs)||6000,100,60000),...(scene.type==='image'?{image:image(scene.image)}:{})}};
  definition.elements={};for(const [id,element] of Object.entries(raw.elements||{})){
@@ -527,6 +527,7 @@ function applyThemeClasses(host,definition){const classes=new Set(Object.values(
 function rollPaletteForTheme(definition,colors){return {base:colors.surfaceEnd,light:colors.gridStart,medium:colors.gridEnd,dark:colors.rest,label:colors.muted,anchor:colors.accent,...definition.rollPalette}}
 function themeCaption(project=state.project){const definition=themeDefinition(project),name=project?.theme?.name;return !name||definition.legacyNames?.includes(name)?definition.name:name}
 function sanitizeThemeMaterials(raw={}){const base=APP_CONFIG.themeTemplate.materials;return {surfaceGradient:typeof raw.surfaceGradient==='boolean'?raw.surfaceGradient:base.surfaceGradient,activeGradient:typeof raw.activeGradient==='boolean'?raw.activeGradient:base.activeGradient,surfaceAngle:clamp(Number(raw.surfaceAngle)||base.surfaceAngle,0,360),activeAngle:clamp(Number(raw.activeAngle)||base.activeAngle,0,360)}}
+function sanitizeThemeLayout(raw={}){const result={sceneFit:raw.sceneFit==='cover'?'cover':'contain'};for(const [key,fallback,min,max]of [['companionWidth',28,12,60],['companionHeight',64,20,95],['companionLeft',8,0,70],['companionBottom',9,0,60],['ornamentWidth',14,4,25],['ornamentHeight',32,8,50],['ornamentRight',3,0,40],['ornamentBottom',11,0,60]])result[key]=clamp(Number.isFinite(raw[key])?raw[key]:fallback,min,max);return result}
 function sanitizeKeyFeedback(raw={},colors={}){const base=APP_CONFIG.themeTemplate.keyFeedback,shapes=['snowflake','star','spark','butterfly','drop','diamond'];return {enabled:raw.enabled===true,shape:shapes.includes(raw.shape)?raw.shape:'star',element:typeof raw.element==='string'?raw.element:null,count:clamp(Math.round(Number(raw.count)||base.count),1,16),durationMs:clamp(Number(raw.durationMs)||base.durationMs,180,1500),spreadPx:clamp(Number(raw.spreadPx)||base.spreadPx,8,100),risePx:clamp(Number(raw.risePx)||base.risePx,8,100),sizePx:clamp(Number(raw.sizePx)||base.sizePx,6,24),colors:(raw.colors||[colors.accent,colors.note]).filter(color=>/^#[0-9a-f]{6}$/i.test(color)).slice(0,4)}}
 function sanitizePlayerAppearance(raw){let result={};if(!raw||typeof raw!=='object')return result;for(let key of Object.keys(PLAYER_APPEARANCE.christmas))if(/^#[0-9a-f]{6}$/i.test(raw[key]||''))result[key]=raw[key];return result}
 function applyPlayerTemplate(project,host){
@@ -548,6 +549,7 @@ function applyPlayerTemplate(project,host){
  $('identitySnow').hidden=!decor.identity.image;if(decor.identity.image)$('identitySnow').src=themeAsset(decor.identity.image);$('identityGlyph').hidden=Boolean(decor.identity.image);$('identityGlyph').textContent=decor.identity.glyph;
  const tree=document.querySelector('.stage-tree');if(tree){tree.hidden=!decor.tree||Boolean(project._imageUrl);tree.style.display=tree.hidden?'none':'block';if(decor.treeImage)tree.src=themeAsset(decor.treeImage)}
  const motif=document.querySelector('.stage-motif');if(motif)motif.hidden=!decor.motif;$('stagePane').dataset.motif=decor.motif?'on':'off';
+ const layout=sanitizeThemeLayout(decor.layout);$('stagePane').dataset.sceneFit=project._imageUrl?'contain':layout.sceneFit;for(const [key,value]of Object.entries(layout))if(typeof value==='number')$('stagePane').style.setProperty('--art-'+key.replace(/[A-Z]/g,c=>'-'+c.toLowerCase()),value+'%');
  const companion=document.querySelector('.stage-companion');if(companion){companion.hidden=!decor.companion||Boolean(project._imageUrl);if(decor.companion)companion.src=themeAsset(decor.companion,project)}
  for(const image of document.querySelectorAll('[data-theme-decoration]')){const path=decor.ornaments?.[0];image.hidden=!path;if(path)image.src=themeAsset(path,project)}
  $('sceneName').textContent=themeCaption(project);
@@ -1082,6 +1084,7 @@ function paintHomeThemePreview(){
  for(const [key,value]of Object.entries(colors))host.style.setProperty('--sample-'+key.replace(/[A-Z]/g,c=>'-'+c.toLowerCase()),value);
  host.style.setProperty('--sample-glow',String(t.glow/100));host.dataset.motion=t.motion;host.dataset.theme=d.id;$('homePreviewGlowValue').textContent=t.glow+'%';$('homeThemeSampleName').textContent=t.name;
  const decor=d.decorations,path=decor.cover||decor.scene.image||(decor.scene.type==='frames'?decor.scene.framePattern.replace('{index}','00'):null),image=$('homeThemeSampleImage');image.hidden=!path;if(path)image.src=themeAsset(path,p);
+ for(const [id,path]of [['homeThemeSampleCompanion',decor.companion],['homeThemeSampleCharm',decor.ornaments?.[0]]]){const img=$(id);img.hidden=!path;if(path)img.src=themeAsset(path,p)}
  $('homeThemeSampleRoll').style.backgroundImage='linear-gradient(90deg,transparent calc(25% - 1px),#ffffff14 25%,transparent calc(25% + 1px)),linear-gradient(180deg,'+Array.from({length:15},(_,i)=>{const color=d.rollPalette[['light','medium','dark','medium','light'][i%5]];return color+' '+(i/15*100)+'%,'+color+' '+((i+1)/15*100)+'%'}).join(',')+')';
 }
 function bindHomeThemePreview(){

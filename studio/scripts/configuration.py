@@ -62,6 +62,10 @@ def render(root):
         theme['decorations']['companion'] = elements[refs['companion']]['path'] if refs.get('companion') else None
         theme['decorations']['ornaments'] = [elements[value]['path'] for value in refs.get('ornaments', [])]
         theme['decorations']['effects'] = [elements[value]['type'] for value in refs.get('effects', [])]
+        layout = theme['decorations'].get('layout', {})
+        assert layout.get('sceneFit', 'contain') in ['contain', 'cover']
+        assert all(isinstance(value, (int, float)) and 0 <= value <= 95 for key, value in layout.items() if key != 'sceneFit')
+        assert set(layout) <= {'sceneFit', 'companionWidth', 'companionHeight', 'companionLeft', 'companionBottom', 'ornamentWidth', 'ornamentHeight', 'ornamentRight', 'ornamentBottom'}
         if refs.get('palette'):
             theme['appearanceOverrides'] = json.loads(path.read_text(encoding='utf-8')).get('appearance', {})
             theme['appearance'] = {**elements[refs['palette']]['colors'], **theme['appearanceOverrides']}

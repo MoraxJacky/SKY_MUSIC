@@ -19,3 +19,7 @@ Opaque panoramic environment. Prompt:
 Original: `C:/Users/Morax/.codex/generated_images/01a1ac7b-758f-73f0-9484-eec460e2a2d7/exec-656e83dc-6b59-4e89-9e59-ecf49abae2f6.png`.
 
 Native dimensions are recorded in [THEMES.md](THEMES.md); no upscaling or pixel editing was performed. The homepage is independent platform artwork. Song themes reuse the small pianist with distinct data-configured SVG environments and their own palettes.
+
+## Theme artwork v2 — 2026-11-07
+
+18 new images were generated using the built-in `image_gen` tool. Its backend model selector/version was not exposed; image-2.6 is not asserted. Six environment paintings, six transparent two-character ensembles (twelve figures total), and six transparent ornaments replace the presets' earlier shared artwork. All exact prompts are stored in [the prompt set](../sources/theme-art-v2-prompts.json), with original and WebP SHA-256 hashes in [the asset manifest](../sources/theme-art-v2-manifest.json). Originals are preserved under `SkyMusicStudio/artwork/2026-11-07/theme-art-v2/`; web assets are in `app/assets/themes/v2/`. WebP encoding retains native dimensions and the original alpha. The v1 images above remain available as historical/compatibility resources. See [the v2 design and source notes](THEME_ART_V2.md).

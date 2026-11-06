@@ -1,0 +1,276 @@
+{
+  "generator": "built-in image_gen; backend version not exposed",
+  "date": "2026-11-07",
+  "assets": [
+    {
+      "id": "starlight-scene-v2",
+      "asset": "assets/themes/v2/starlight-scene-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/starlight-scene-v2.png",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "alpha": false,
+      "characters": 0,
+      "originalSha256": "6506d2e0aa280a20357b453b4bebb4fd0028565be25287f9d57906d0d68d01bf",
+      "webSha256": "0e9ccefb386ce28605c9ae2c7a40f0152bd14cb091d9495b5fe276be6f1c7051",
+      "bytes": 141678,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "christmas-scene-v2",
+      "asset": "assets/themes/v2/christmas-scene-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/christmas-scene-v2.png",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "alpha": false,
+      "characters": 0,
+      "originalSha256": "713288ed45077ac43c35cb892526669d66af8133a8e176594c6dbb2dee344e9f",
+      "webSha256": "43233e3e7b1ce9805630e80c389861ebd09df95a8104c6f69807e978b3690a73",
+      "bytes": 202550,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "citylights-scene-v2",
+      "asset": "assets/themes/v2/citylights-scene-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/citylights-scene-v2.png",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "alpha": false,
+      "characters": 0,
+      "originalSha256": "cb6fbd2b96678c81507d1360fb9c53cf62ebab20f3e196b4e4977d765209d80c",
+      "webSha256": "09c07e54eace82db9a67e9fcf461417ad0a92d514da8780ca2ead40b4ce42431",
+      "bytes": 198352,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "prairie-scene-v2",
+      "asset": "assets/themes/v2/prairie-scene-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/prairie-scene-v2.png",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "alpha": false,
+      "characters": 0,
+      "originalSha256": "08873d8bb63c5040d6199fbff76717229323d858628adbc8d71fbb83b2fe8696",
+      "webSha256": "d9a7298385c0c00ad0c237305e1df161237d2136f9d18637a094ecedcea6fc7e",
+      "bytes": 154268,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "rainforest-scene-v2",
+      "asset": "assets/themes/v2/rainforest-scene-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/rainforest-scene-v2.png",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "alpha": false,
+      "characters": 0,
+      "originalSha256": "8e4877e5cc7f8be58857489bb196088d380ad1aaff3c92255318084626eef475",
+      "webSha256": "de266716fee99128231a788d65fe9bf62a77e6f0573216447e92a2e2d2633447",
+      "bytes": 147760,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "vault-scene-v2",
+      "asset": "assets/themes/v2/vault-scene-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/vault-scene-v2.png",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "alpha": false,
+      "characters": 0,
+      "originalSha256": "e86d92f9212693116bc7b1c8765809f42d73ad61563043247bab8d471478907c",
+      "webSha256": "57cf0a417481dda033f4f5f7999a33bb26ebfd2af1b3026e4c07d173c3868ad3",
+      "bytes": 142704,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "starlight-companions-v2",
+      "asset": "assets/themes/v2/starlight-companions-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/starlight-companions-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alpha": true,
+      "characters": 2,
+      "originalSha256": "fad96e5bd1e862a132f9d325531f8706e3795b8f0291b1471ca06ac671a45aae",
+      "webSha256": "b3af5a734b2720696fb5d8bbe07b621b3cd832110d21d5875cd42c398bcac81c",
+      "bytes": 221850,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "christmas-companions-v2",
+      "asset": "assets/themes/v2/christmas-companions-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/christmas-companions-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alpha": true,
+      "characters": 2,
+      "originalSha256": "6ce8204a22b2cde1dfaf5dda326c02d81a24ff53d6e7fb4c4bde4ae59a21895a",
+      "webSha256": "ca68988be620a20f81ffb9d232d06fb74a16df304abc333dfeaf820856d2f0f8",
+      "bytes": 272670,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "citylights-companions-v2",
+      "asset": "assets/themes/v2/citylights-companions-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/citylights-companions-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alpha": true,
+      "characters": 2,
+      "originalSha256": "0ddc0f657f80e3d47b423236fbe5d02ac2fc514d693a15a103c7b7922f9d5451",
+      "webSha256": "367d89c4f13a80b3a36f00311294f89fc3546f2b933adce0376cfb924bc8db68",
+      "bytes": 213958,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "prairie-companions-v2",
+      "asset": "assets/themes/v2/prairie-companions-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/prairie-companions-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alpha": true,
+      "characters": 2,
+      "originalSha256": "59305b8e10c8ae8494fe9bb612bb6b5c70ae5071430ff109cf27efe37219913f",
+      "webSha256": "c16c172a8b390793e4e0863b1a81a84d19202e6a5601b8f018350f5d465fa5b6",
+      "bytes": 216954,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "rainforest-companions-v2",
+      "asset": "assets/themes/v2/rainforest-companions-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/rainforest-companions-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alpha": true,
+      "characters": 2,
+      "originalSha256": "1987fc57278136f2fd5a9a0b72bcce8d205477810082015d0b3285942225e120",
+      "webSha256": "d7fef589350da75fbc3aa446691832966b1e21a2545256a2f1d65d40eb7be3d1",
+      "bytes": 196920,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "vault-companions-v2",
+      "asset": "assets/themes/v2/vault-companions-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/vault-companions-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alpha": true,
+      "characters": 2,
+      "originalSha256": "146329e9355986a03549e238f747115087dd615191aec62940b52a1eaf96ed9b",
+      "webSha256": "f6f6f72c15ba9333cbbff250754891df768c80e9cf2930ff769ee082b4452259",
+      "bytes": 214684,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "starlight-charm-v2",
+      "asset": "assets/themes/v2/starlight-charm-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/starlight-charm-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alpha": true,
+      "characters": 0,
+      "originalSha256": "78f92ee70ae6d3b4368aefa5b94ed783943cb0343884369a4bd8dc472f873145",
+      "webSha256": "3aa1c7d629e0f1728c0d7536058dbb7052e141c532e93b6addf13a490a18d95e",
+      "bytes": 156556,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "christmas-charm-v2",
+      "asset": "assets/themes/v2/christmas-charm-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/christmas-charm-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alpha": true,
+      "characters": 0,
+      "originalSha256": "7ffe5c771645f80855eaa2364a74538ee327da72ce315b7e0db6d87c06e8fccf",
+      "webSha256": "01736070f125abef2f6912131ea45993dae0b37f7ef074d92c6f08b7bc7d2e76",
+      "bytes": 173984,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "citylights-charm-v2",
+      "asset": "assets/themes/v2/citylights-charm-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/citylights-charm-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alpha": true,
+      "characters": 0,
+      "originalSha256": "0cbfef6588bce8ff96136b599a2f3381c9193412c2fc5dbf5c03048ff793bff6",
+      "webSha256": "3474af250beb0dc087793c8387dc208d0ca04d8e9c8def5b275c499166feee3d",
+      "bytes": 182116,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "prairie-charm-v2",
+      "asset": "assets/themes/v2/prairie-charm-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/prairie-charm-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alpha": true,
+      "characters": 0,
+      "originalSha256": "07c95616c833a52bdfeb6f0e4b9b3711ae637d6c0b769ca10151809fe125e2ed",
+      "webSha256": "fa474fa8d24eaaabf1bca40d05c6d55f09ffe7067555e65990e9e23858b7776d",
+      "bytes": 237458,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "rainforest-charm-v2",
+      "asset": "assets/themes/v2/rainforest-charm-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/rainforest-charm-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alpha": true,
+      "characters": 0,
+      "originalSha256": "3bde5c7fa7ca03944be6a93ecb0a55cfcb72aabd2f2c8c06546bbdf204c35a87",
+      "webSha256": "57de204df363018fc94c23db4beba3d15fce4ebc0d4d44f77dd9c094b0a5d3a8",
+      "bytes": 180218,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    },
+    {
+      "id": "vault-charm-v2",
+      "asset": "assets/themes/v2/vault-charm-v2.webp",
+      "original": "SkyMusicStudio/artwork/2026-11-07/theme-art-v2/vault-charm-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alpha": true,
+      "characters": 0,
+      "originalSha256": "a80291bbcb64a310705dc771839ba7f7166498f2126026d4e2e9a09e3dc55f8e",
+      "webSha256": "62e9c7c7e5795dc09c808d71c53e55d98cd0aa1a6f798f649dfbe614fab38c52",
+      "bytes": 180082,
+      "encoding": "WebP quality 92; native size; original alpha unchanged"
+    }
+  ]
+}

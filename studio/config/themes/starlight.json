@@ -13,7 +13,18 @@
     "classes": [],
     "tree": false,
     "motif": false,
-    "choiceGlyph": "✧"
+    "choiceGlyph": "✧",
+    "layout": {
+      "sceneFit": "cover",
+      "companionWidth": 47,
+      "companionHeight": 86,
+      "companionLeft": 2,
+      "companionBottom": 5,
+      "ornamentWidth": 15,
+      "ornamentHeight": 34,
+      "ornamentRight": 3,
+      "ornamentBottom": 10
+    }
   },
   "displayName": "星光沙漠",
   "initialOverrides": {
@@ -24,20 +35,20 @@
     "glow": 50
   },
   "elementRefs": {
-    "identity": "starlight.identity",
-    "cover": "starlight.scene",
+    "identity": "starlight.v2.charm",
+    "cover": "starlight.v2.scene",
     "tree": null,
-    "stage": "starlight.scene",
+    "stage": "starlight.v2.scene",
     "palette": "palette.starlight",
     "effects": [
       "effect.glow"
     ],
     "ornaments": [
-      "starlight.charm"
+      "starlight.v2.charm"
     ],
-    "companion": "sky.pianist"
+    "companion": "starlight.v2.companions"
   },
-  "description": "玻璃罩玫瑰 · 沙丘与星群",
+  "description": "小王子 · 玫瑰、狐狸与星光沙丘",
   "legacyNames": [
     "STARLIGHT PIANO"
   ],
