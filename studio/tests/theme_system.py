@@ -24,6 +24,7 @@ with sync_playwright() as pw:
  assert page.locator('.home-art').evaluate('e=>e.complete&&e.naturalWidth>=1600&&!e.src.includes("christmas")')
  assert page.locator('.home-aura').evaluate_all('es=>es.every(e=>getComputedStyle(e).animationName!=="none")')
  page.locator('.card-play').first.click()
+ page.wait_for_function("document.getElementById('songEntryTransition').hidden")
  assert page.evaluate('Object.keys(window.__SKY_STUDIO_TEST__.THEME_DEFINITIONS)')==ids
  page.evaluate('''()=>{window.themePaint=[];const original=CanvasRenderingContext2D.prototype.fillRect;CanvasRenderingContext2D.prototype.fillRect=function(x,y,w,h){if(this.canvas.id==='rollCanvas'&&x===59&&w>150&&h>2&&h<70)window.themePaint.push(this.fillStyle);return original.call(this,x,y,w,h)};window.themeHandlers=Object.fromEntries(['playBtn','keySelect','pageNext','stepNext','consoleUndo'].map(id=>[id,document.getElementById(id).onclick||document.getElementById(id).onchange]))}''')
  palettes=[]
@@ -63,6 +64,11 @@ with sync_playwright() as pw:
   page.locator('#keyBoard [data-note="2"]').click()
   assert page.locator('#keyFeedbackLayer .key-particle').count()>=8
   assert page.locator('#keyFeedbackLayer .key-particle').first.get_attribute('data-shape')==result['shape']
+  page.locator('#restartBtn').click();page.wait_for_timeout(1500);assert page.locator('#keyFeedbackLayer .key-particle').count()==0
+  page.locator('#playBtn').click();page.wait_for_function('window.__SKY_STUDIO_TEST__.state.isPlaying');page.wait_for_function("document.querySelectorAll('#keyFeedbackLayer .key-particle').length>=8")
+  assert page.locator('#keyFeedbackLayer .key-particle').first.get_attribute('data-shape')==result['shape']
+  assert page.locator('#stageStatus svg').count()==1
+  page.locator('#playBtn').click()
   assert snapshot(page)['score']==before['score']
   page.screenshot(path=str(out/(theme+'-player.png')))
   page.wait_for_timeout(1150);assert page.locator('#keyFeedbackLayer .key-particle').count()==0
@@ -71,7 +77,7 @@ with sync_playwright() as pw:
   assert geometry['panelsBottom']<=geometry['viewport'],geometry
   # Existing playback and navigation continue under each theme.
   page.locator('#stepNext').click();page.locator('#stepPrev').click();page.locator('#playBtn').click();page.wait_for_function('window.__SKY_STUDIO_TEST__.state.isPlaying');page.locator('#playBtn').click()
-  checks.append({'theme':theme,'pausedCanvasRefresh':True,'rows':True,'independentStateAndHandlers':True,'portableAssets':True,'shape':result['shape'],'editorNoParticles':True,'geometry':geometry})
+  checks.append({'theme':theme,'pausedCanvasRefresh':True,'rows':True,'independentStateAndHandlers':True,'portableAssets':True,'shape':result['shape'],'editorNoParticles':True,'playbackParticles':True,'geometry':geometry})
  assert len(set(palettes))==6
  # Round-trip a theme with its SVG and PNG resources through the actual platform importer.
  with zipfile.ZipFile(exports['starlight']) as src:
@@ -87,7 +93,7 @@ with sync_playwright() as pw:
  page.wait_for_function("document.getElementById('identitySnow').complete&&document.getElementById('identitySnow').naturalWidth>0&&document.querySelector('.stage-companion').complete&&document.querySelector('.stage-companion').naturalWidth>0")
  assert page.locator('#identitySnow').get_attribute('src').startswith('data:image/webp;')
  assert page.locator('#stagePane').get_attribute('data-scene-fit')=='cover'
- page.locator('#consoleClose').click();page.locator('#discardChanges').click();page.locator('#backLibrary').click()
+ page.locator('#consoleClose').click();page.locator('#discardChanges').click();page.locator('#backLibrary').click();page.wait_for_function("document.getElementById('songEntryTransition').hidden&&!document.getElementById('homeView').hidden")
  # Fill two rows with genuine independent song copies; the seventh card starts below them.
  page.evaluate('''()=>{const t=window.__SKY_STUDIO_TEST__;while(t.state.library.length<6)t.duplicateSong(t.state.library[0].id)}''')
  home=[]

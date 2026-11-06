@@ -614,7 +614,7 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
  .home-view .mark{width:30px;height:30px;flex:none;font-size:23px}
  .home-view .home-top-actions{gap:6px;flex:none}.home-view .home-top-actions button{min-height:36px;padding:7px 10px}
  .home-view #newSongBtn,.home-view .home-top-actions [data-import]{font-size:0}
- .home-view #newSongBtn::after{content:'＋ 新建';font-size:12px}.home-view .home-top-actions [data-import]::after{content:'↥ 导入';font-size:12px}
+ .home-view #newSongBtn::after{content:'新建';font-size:12px}.home-view .home-top-actions [data-import]::after{content:'导入';font-size:12px}
  .home-view .library-heading{display:flex;flex-direction:column;align-items:stretch;gap:12px;margin:22px 0 16px}
  .home-view .library-heading h2{white-space:nowrap;font-size:23px}.home-view .library-heading .eyebrow{letter-spacing:2px;font-size:9px}
  .home-view .library-tools{display:grid;grid-template-columns:minmax(0,1fr) 92px auto;gap:8px;font-size:11px}
@@ -900,3 +900,36 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
 .player-view #beatGrid .score-arrival-pattern{position:absolute;z-index:2;margin:0;pointer-events:none;transform-origin:center}
 .player-view.score-arriving #keyBoard>.key-tile{position:relative}
 @media(prefers-reduced-motion:reduce){.player-view.score-arriving #beatGrid>.beat{opacity:1}}
+
+/* Fixed horizontal capsules: identical geometry for all fifteen reference positions. */
+.player-view #beatGrid{--beat-dot-width:8px;--beat-dot-height:4px;--beat-dot-gap:2px}
+.player-view #beatGrid .mini-keys{grid-template-columns:repeat(5,var(--beat-dot-width));grid-template-rows:repeat(3,var(--beat-dot-height));gap:var(--beat-dot-gap);justify-content:center;align-content:center}
+.player-view #beatGrid .mini-dot{width:var(--beat-dot-width);height:var(--beat-dot-height);min-height:0;border-radius:999px;box-sizing:border-box;align-self:center;justify-self:center}
+@media(max-width:1249px){.player-view #beatGrid{--beat-dot-width:6px;--beat-dot-height:3px}}
+@media(max-width:600px){.player-view #beatGrid{--beat-dot-width:4px;--beat-dot-height:2px;--beat-dot-gap:1px}}
+.player-view .header-actions{height:34px;align-items:center}
+.player-view .header-actions>button{height:34px;min-height:34px;max-height:34px;padding-top:0;padding-bottom:0;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:6px;line-height:1;margin:0;transform:none}
+.player-view .song-stats{height:34px;justify-content:center;line-height:1;gap:2px}
+.player-view :is(.key-range-toggle,.instrument-toggle,#playBtn,#restartBtn,#loopOneBtn){height:34px;min-height:34px;max-height:34px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;line-height:1;margin:0;transform:none}
+.player-view .play-main time{height:34px;display:flex;align-items:center;line-height:1}
+.player-view .value-picker{height:44px}
+.player-view .value-picker-track{top:4px}
+.player-view .value-picker-track b{height:34px}
+.player-view .instrument-picker{width:clamp(112px,11vw,160px);min-width:112px}
+.player-view .instrument-picker .value-picker-track b{width:calc(100% - 4px);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 7px}
+.player-view .speed-control .instrument-toggle{justify-content:space-between;gap:6px}
+.player-view .speed-control .instrument-toggle>span:last-child{display:grid;place-items:center;flex:0 0 14px;width:14px;height:14px;line-height:1}
+.player-view .loop-control[aria-pressed=true]{background:var(--player-active-paint);border-color:var(--theme-accent);color:var(--player-text);box-shadow:inset 0 0 0 1px var(--theme-accent)}
+.player-view .player-control-row{align-items:center}
+@media(min-width:901px){.player-view{grid-template-rows:57px 82px minmax(0,1fr)}.player-view .play-controls{grid-template-rows:44px 12px;gap:8px;padding:8px 14px}}
+
+.app-icon{display:inline-block;flex:0 0 auto;width:14px;height:14px;vertical-align:middle;pointer-events:none}
+button>.app-icon{vertical-align:middle}
+.home-view .home-top-actions>button{gap:6px}
+.plus>.app-icon{width:32px;height:32px}.entry-orbit>.app-icon{width:32px;height:32px}
+#identityGlyph>.app-icon{width:24px;height:24px}.stage-motif>.app-icon{width:64px;height:64px}.stage-motif span>.app-icon{width:46px;height:46px}
+.player-view .play-btn{gap:6px}.player-view :is(#restartBtn,#loopOneBtn)>.app-icon{width:18px;height:18px}
+.player-view #songInfoBtn>.app-icon{width:17px;height:17px}
+.song-card-actions button{display:grid;place-items:center;padding:0}
+
+#stageStatus{display:inline-flex;align-items:center;gap:4px}

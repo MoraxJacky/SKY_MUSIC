@@ -3,7 +3,7 @@ function canEditScore(){return Boolean(state.editMode&&$('scoreConsole').open&&!
 function updateEditButton(){
  const on=Boolean(state.editMode),p=$('playerView');if(!p)return;
  p.classList.toggle('editing',on);
- const b=$('scoreEditorBtn');b.textContent='✎ 曲谱编辑';
+ const b=$('scoreEditorBtn');setControlContent(b,'edit','曲谱编辑');
  b.classList.toggle('has-changes',on&&state.editDirty);
  const hint=$('gridHint');if(hint)hint.textContent=on?'点击节拍选择事件':'点击节拍可查看';
  const info=$('saveMetadata');if(info)info.hidden=!on;

@@ -48,6 +48,11 @@
           "minimum": 0,
           "maximum": 1,
           "description": "Master volume; omitted legacy values use shared player default."
+        },
+        "loop": {
+          "type": "boolean",
+          "default": false,
+          "description": "Repeat this song after its final note; defaults to disabled."
         }
       }
     }

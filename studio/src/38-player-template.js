@@ -52,3 +52,38 @@ function populateThemeChoices(){
   const option=document.createElement('option');option.value=definition.id;option.textContent=definition.displayName;$('createTheme').append(option);
  }
 }
+
+// UI pictograms use the same vector geometry on every platform. Legacy theme glyphs
+// are accepted as data, then mapped to this registry before the browser paints them.
+const APP_ICON_PATHS={
+ play:'<path d="m8 5 11 7-11 7Z" fill="currentColor" stroke="none"/>',pause:'<path d="M8 5v14M16 5v14" stroke-width="3"/>',
+ restart:'<path d="M4 10a8 8 0 1 1 2 9M4 4v6h6"/>',
+ 'repeat-one':'<path d="M3 9V6h15l3 3M21 15v3H6l-3-3M18 3l3 3-3 3M6 21l-3-3 3-3"/><path d="m11 10 2-1v7m-2 0h4"/>',
+ edit:'<path d="m4 16-1 5 5-1L20 8l-4-4Zm10-10 4 4M3 21l5-1"/>',download:'<path d="M12 3v12m-5-5 5 5 5-5M4 15v5h16v-5"/>',upload:'<path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/>',
+ close:'<path d="m6 6 12 12M18 6 6 18"/>',info:'<path d="M12 6v8m0 4h.01"/>',
+ left:'<path d="m15 5-7 7 7 7"/>',right:'<path d="m9 5 7 7-7 7"/>',down:'<path d="m5 8 7 7 7-7"/>',plus:'<path d="M12 4v16M4 12h16"/>',
+ copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v13h5"/>',
+ favorite:'<path d="m12 2 3 6.5 7 .9-5 5 1.3 7-6.3-3.3-6.3 3.3 1.3-7-5-5 7-.9Z"/>',
+ 'favorite-filled':'<path d="m12 2 3 6.5 7 .9-5 5 1.3 7-6.3-3.3-6.3 3.3 1.3-7-5-5 7-.9Z" fill="currentColor"/>',
+ spark:'<path d="m12 2 2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5Z"/>',
+ note:'<path d="M9 18V5l11-2v12M9 8l11-2"/><ellipse cx="6" cy="18" rx="3" ry="2"/><ellipse cx="17" cy="15" rx="3" ry="2"/>',
+ scene:'<path d="M12 3a9 9 0 1 0 0 18Z" fill="currentColor"/><circle cx="12" cy="12" r="9"/>',check:'<path d="m4 12 5 5L20 6"/>'
+};
+function appIcon(name){return '<svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(APP_ICON_PATHS[name]||APP_ICON_PATHS.spark)+'</svg>'}
+function setControlContent(el,name,label=''){el.innerHTML=appIcon(name);if(label){const text=document.createElement('span');text.textContent=label;el.append(text)}}
+function bindAppIcons(){
+ if(!document.createTreeWalker)return;
+ const symbols={'▶':'play','Ⅱ':'pause','↶':'restart','⇩':'download','↥':'upload','✎':'edit','◐':'scene','⌄':'down','⧉':'copy','★':'favorite-filled','☆':'favorite','×':'close','‹':'left','›':'right','＋':'plus','✧':'spark','♬':'note','✓':'check'};
+ const scope='button,.plus,.import-symbol,.entry-orbit,#identityGlyph,.stage-motif';
+ function hydrate(root){
+  for(const button of [...(root.matches?.('[data-icon]')?[root]:[]),...(root.querySelectorAll?.('[data-icon]')||[])])if(!button.querySelector('svg'))button.innerHTML=appIcon(button.dataset.icon);
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+  for(const node of nodes){const parent=node.parentElement;if(!parent||parent.closest('svg')||!parent.closest(scope))continue;const value=node.nodeValue;if(![...value].some(char=>(symbols[char]&&(char!=='×'||value.trim()==='×'))||(char==='!'&&parent.closest('#songInfoBtn'))))continue;
+   const button=parent.closest('button');if(button&&!button.getAttribute('aria-label')&&!button.title&&value.trim().length===1)button.setAttribute('aria-label',button.dataset.close?'关闭窗口':symbols[value.trim()]||'操作');
+   const fragment=document.createDocumentFragment();let text='';const flush=()=>{if(text){fragment.append(document.createTextNode(text));text=''}};
+   for(const char of value){const icon=char==='!'&&parent.closest('#songInfoBtn')?'info':char==='×'&&value.trim()!=='×'?null:symbols[char];if(icon){flush();const holder=document.createElement('span');holder.innerHTML=appIcon(icon);fragment.append(holder.firstElementChild)}else text+=char}flush();node.replaceWith(fragment);
+  }
+ }
+ hydrate(document.body);
+ new MutationObserver(records=>{const roots=new Set();for(const record of records){const target=record.target.nodeType===1?record.target:record.target.parentElement,control=target?.closest?.(scope);if(control)roots.add(control);else for(const added of record.addedNodes||[])if(added.nodeType===1&&(added.matches(scope)||added.querySelector(scope)||added.querySelector('[data-icon]')))roots.add(added)}for(const root of roots)hydrate(root)}).observe(document.body,{childList:true,characterData:true,subtree:true});
+}

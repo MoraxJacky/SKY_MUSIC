@@ -91,3 +91,5 @@ python -X utf8 scripts/configuration.py --check
 音量与延音共用 `valuePicker` 的单格竖向平滑选取；0–100 有界、不循环。`volume.controlId` / `sustain.controlId` 指向可识别的 spinbutton。通知生命周期归共用交互 `notifications`，颜色由模板解析器独立提供；倍速末端 `selectors.speedMinimumRows` 保留两个真实选项。
 
 `player-interactions.json.scoreEntrance` 控制卡片过渡后的谱面视觉入场时序、上浮距离与盖章幅度。该配置不含歌曲ID、音符或主题颜色；六主题共用一套展示逻辑。用户操作立即结束入场，音乐位置与编辑行为由既有控制器继续处理。
+
+音色 `instrumentPicker` 现与数值控件共用单格竖向滚轮（有界，停止滚动后提交音源选择），旧音色下拉框已移除；倍速仍保留下拉菜单。`scoreEntrance.durationMs=2400` 统一三块谱面入场进度，其他分段时序按比例归一。`loop` 定义单曲循环按钮，歌曲 `playback.loop` 存布尔开关。点击反馈、循环、粒子订阅与图标均属于共享逻辑，不接受主题定义的动作处理器。

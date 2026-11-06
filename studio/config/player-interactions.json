@@ -92,9 +92,14 @@
     "beatStepMs": 34,
     "beatGrowMs": 240,
     "rowGapMs": 30,
-    "stampDelayMs": 140,
+    "stampDelayMs": 0,
     "stampStepMs": 75,
-    "stampMs": 520,
-    "stampScale": 1.55
+    "stampMs": 1200,
+    "stampScale": 1.55,
+    "durationMs": 2400
+  },
+  "loop": {
+    "controlId": "loopOneBtn",
+    "default": false
   }
 }

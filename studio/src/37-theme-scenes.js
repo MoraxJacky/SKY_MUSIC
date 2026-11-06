@@ -1,5 +1,5 @@
 // Theme scene renderer; receives playback position without owning score data.
-function animateScene(){const sounding=isSounding(state.position);$('stageStatus').textContent=state.isPlaying?(sounding?'♪ 演奏中':'休止'):'已暂停';if(themeDefinition().decorations.scene.type!=='frames'||$('playerView').classList.contains('motion-off'))return;let now=performance.now();if(!state.stageImages?.length)return;if(sounding){if(!state.sceneTick)state.sceneTick=now;let dt=Math.min(65,now-state.sceneTick);state.sceneFrame=(state.sceneFrame+dt/themeDefinition().decorations.scene.periodMs*state.stageImages.length)%state.stageImages.length;}state.sceneTick=now;
+function animateScene(){const sounding=isSounding(state.position);const status=state.isPlaying?(sounding?'演奏中':'休止'):'已暂停',label=$('stageStatus');if(label.dataset.playStatus!==status){label.dataset.playStatus=status;if(status==='演奏中')setControlContent(label,'note',status);else label.textContent=status}if(themeDefinition().decorations.scene.type!=='frames'||$('playerView').classList.contains('motion-off'))return;let now=performance.now();if(!state.stageImages?.length)return;if(sounding){if(!state.sceneTick)state.sceneTick=now;let dt=Math.min(65,now-state.sceneTick);state.sceneFrame=(state.sceneFrame+dt/themeDefinition().decorations.scene.periodMs*state.stageImages.length)%state.stageImages.length;}state.sceneTick=now;
  const a=state.stageImages[Math.floor(state.sceneFrame)%state.stageImages.length],b=state.stageImages[(Math.floor(state.sceneFrame)+1)%state.stageImages.length];const f=state.sceneFrame%1;
  const c=$('sceneCanvas'),ctx=c?.getContext('2d');if(!ctx)return;let box=c.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);let width=Math.max(1,Math.round(box.width*dpr)),height=Math.max(1,Math.round(box.height*dpr));if(c.width!==width||c.height!==height){c.width=width;c.height=height}ctx.clearRect(0,0,width,height);let scale=Math.min(width/a.width,height/a.height);let w=a.width*scale,h=a.height*scale,x=(width-w)/2,y=(height-h)/2;ctx.globalAlpha=1;ctx.drawImage(a,x,y,w,h);if(b&&f>0){ctx.globalAlpha=f;ctx.drawImage(b,x,y,w,h);ctx.globalAlpha=1}
 }
@@ -23,4 +23,14 @@ function renderKeyFeedback(button){
   particle.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" fill-opacity=".3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">'+shapes[feedback.shape]+'</svg>';layer.append(particle);
   if(particle.animate){const animation=particle.animate([{transform:'translate(-50%,-50%) scale(.45)',opacity:0},{transform:`translate(calc(-50% + ${dx*.4}px),calc(-50% + ${dy*.45}px)) rotate(${rotation*.4}deg) scale(1)`,opacity:.85,offset:.35},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) rotate(${rotation}deg) scale(.65)`,opacity:0}],{duration:feedback.durationMs,delay:i*14,easing:'cubic-bezier(.2,.65,.3,1)',fill:'both'});animation.onfinish=()=>particle.remove();animation.oncancel=()=>particle.remove()}else setTimeout(()=>particle.remove(),feedback.durationMs);
  }
+}
+
+// Subscribe to note onsets, including repeated pitches; never change playback or score data.
+const playbackKeyFeedback={project:null,index:0,time:-1};
+function resetPlaybackKeyFeedback(){playbackKeyFeedback.project=null;playbackKeyFeedback.index=0;playbackKeyFeedback.time=-1}
+function syncPlaybackKeyFeedback(time){
+ const view=playbackKeyFeedback;if(!state.isPlaying||state.editMode||$('scoreConsole').open){resetPlaybackKeyFeedback();return}
+ const events=scoreEvents(state.project);
+ if(view.project!==state.project||time<view.time||time-view.time>240){view.project=state.project;view.index=lowerBound(events,Math.max(0,time-50))}
+ while(view.index<events.length&&events[view.index].timeMs<=time){for(const note of events[view.index].notes){const key=[...$('keyBoard').children].find(key=>Number(key.dataset.note)===note);if(key)renderKeyFeedback(key)}view.index++}view.time=time;
 }

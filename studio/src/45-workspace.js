@@ -19,7 +19,7 @@ function rememberEditFor(p,focusOverride=null){let h=historyItems(state.history,
 function rememberEdit(focusOverride=null){if(state.project)rememberEditFor(state.project,focusOverride)}
 function restoreSnapshot(p,entry){
  const view=rollFrame(),focus=typeof entry==='string'?{index:state.selected}:entry.focus,v=JSON.parse(typeof entry==='string'?entry:entry.data);
- for(const key of Object.keys(v))p[key]=v[key];state.rate=p.playback.rate;syncSpeedPicker();state.tuning=p.playback.tuning;state.sustain=p.playback.sustain;
+ for(const key of Object.keys(v))p[key]=v[key];state.rate=p.playback.rate;syncSpeedPicker();syncLoopControl();state.tuning=p.playback.tuning;state.sustain=p.playback.sustain;
  const events=scoreEvents(p),index=clamp(focus?.index??state.selected,0,Math.max(0,events.length-1)),event=events[index];state.selected=index;state.lastSelected=index;state.position=event?.timeMs??clamp(focus?.position??state.position,0,p.durationMs);
  scoreConsole.selection=event?.notes.length?{project:p,event,note:event.notes.includes(focus?.note)?focus.note:event.notes[0]}:null;
  settleFineRollView(view,event);state.page=-1;refreshWorkspace();

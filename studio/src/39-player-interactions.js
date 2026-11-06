@@ -1,13 +1,15 @@
 // One player interaction entry for every score and theme.
 // Notification timing belongs to the interaction layer; colors belong to the template.
+let actionNoticeRevision=0;
 function toast(text,ms=PLAYER_RULES.notifications.durationMs){
+ actionNoticeRevision++;
  const el=$(PLAYER_RULES.notifications.controlId);clearTimeout(state.toastTimer);
  syncStatusNotificationAppearance();el.textContent=text;el.hidden=false;
  if(el.showPopover&&!el.matches(':popover-open'))el.showPopover();
  state.toastTimer=setTimeout(()=>{if(el.hidePopover&&el.matches(':popover-open'))el.hidePopover();el.hidden=true},ms);
 }
 const playerValuePickers=new Map();
-function cancelPlayerValueScroll(){for(const picker of playerValuePickers.values())picker.cancel()}
+function cancelPlayerValueScroll(){for(const picker of playerValuePickers.values())picker.cancel();instrumentPicker?.close()}
 function syncPlayerValue(kind){
  const el=$(PLAYER_RULES[kind].controlId),percent=Math.round(state[kind]*100);
  el.value=String(percent);el.setAttribute('aria-valuenow',String(percent));el.setAttribute('aria-valuetext',kind==='volume'&&percent===0?'静音':percent+'%');
@@ -15,23 +17,28 @@ function syncPlayerValue(kind){
 }
 function syncVolumeControl(){syncPlayerValue('volume');updateVolumeAudio()}
 function syncSustainControl(){syncPlayerValue('sustain');updateSustainAudio()}
-function bindPlayerValuePicker(kind){
- const el=$(PLAYER_RULES[kind].controlId),row=PLAYER_RULES.valuePicker.rowHeightPx;
- const commit=percent=>{const value=clamp(Math.round(Number.isFinite(percent)?percent:state[kind]*100),0,100);if(state[kind]===value/100)return;state[kind]=value/100;el.value=String(value);el.setAttribute('aria-valuenow',String(value));el.setAttribute('aria-valuetext',kind==='volume'&&value===0?'静音':value+'%');if(state.project){state.project.playback[kind]=state[kind];saveLibrary()}if(kind==='volume')updateVolumeAudio();else updateSustainAudio()};
- el.oninput=()=>{commit(Number(el.value));playerValuePickers.get(kind)?.sync(Math.round(state[kind]*100))};
- // The headless DOM harness does not implement scrolling; the real browser owns animation.
- if(!document.createComment)return;
- const track=el.querySelector('.value-picker-track');let position=(100-Math.round(state[kind]*100))*row,drag=null;
- for(let n=100;n>=0;n--){const cell=document.createElement('span'),option=document.createElement('b');option.textContent=String(n);cell.append(option);track.append(cell)}
- const paint=value=>{position=value;track.style.transform='translateY('+(-position)+'px)';commit(100-value/row)};
- const wheel=bindSmoothWheel(track,el,'y',PLAYER_RULES.valuePicker.wheelMaxStepPx,{read:()=>position,write:paint,max:()=>100*row,snap:value=>Math.round(value/row)*row,wheelGain:PLAYER_RULES.valuePicker.wheelGain});
- const sync=value=>{wheel();position=(100-value)*row;track.style.transform='translateY('+(-position)+'px)'};
- el.onkeydown=event=>{let value=Math.round(state[kind]*100);if(['ArrowUp','ArrowRight'].includes(event.key))value++;else if(['ArrowDown','ArrowLeft'].includes(event.key))value--;else if(event.key==='Home')value=0;else if(event.key==='End')value=100;else return;event.preventDefault();event.stopPropagation();commit(value);sync(Math.round(state[kind]*100))};
- el.addEventListener('pointerdown',event=>{if(event.button!==0)return;wheel();el.focus();drag={id:event.pointerId,y:event.clientY,start:position};el.setPointerCapture(event.pointerId)});
- el.addEventListener('pointermove',event=>{if(drag?.id===event.pointerId){event.preventDefault();paint(clamp(drag.start+drag.y-event.clientY,0,100*row))}});
+function createVerticalChoiceStrip(el,items,options){
+ const row=PLAYER_RULES.valuePicker.rowHeightPx,track=el.querySelector('.value-picker-track');let position=options.selected()*row,drag=null,settle=0;
+ track.innerHTML='';for(const item of items){const cell=document.createElement('span'),label=document.createElement('b');label.textContent=item.label;label.title=item.title||item.label;cell.append(label);track.append(cell)}
+ const indexAt=value=>clamp(Math.round(value/row),0,items.length-1);
+ const commit=index=>options.choose(index);
+ const paint=value=>{position=value;track.style.transform='translateY('+(-value)+'px)';const index=indexAt(value);options.preview?.(index);if(options.live)commit(index);else{clearTimeout(settle);settle=setTimeout(()=>commit(indexAt(position)),150)}};
+ const wheel=bindSmoothWheel(track,el,'y',PLAYER_RULES.valuePicker.wheelMaxStepPx,{read:()=>position,write:paint,max:()=>(items.length-1)*row,snap:value=>Math.round(value/row)*row,wheelGain:PLAYER_RULES.valuePicker.wheelGain});
+ function cancel(){wheel();clearTimeout(settle);const active=drag;drag=null;if(active&&el.hasPointerCapture(active.id))el.releasePointerCapture(active.id)}
+ function sync(index){cancel();position=clamp(index,0,items.length-1)*row;track.style.transform='translateY('+(-position)+'px)';options.preview?.(indexAt(position))}
+ el.onkeydown=event=>{let index=indexAt(position);if(event.key==='ArrowUp')index--;else if(event.key==='ArrowDown')index++;else if(event.key==='ArrowRight')index+=options.numeric?-1:1;else if(event.key==='ArrowLeft')index+=options.numeric?1:-1;else if(event.key==='Home')index=options.numeric?items.length-1:0;else if(event.key==='End')index=options.numeric?0:items.length-1;else return;event.preventDefault();event.stopPropagation();index=clamp(index,0,items.length-1);cancel();commit(index);sync(index)};
+ el.addEventListener('pointerdown',event=>{if(event.button!==0)return;cancel();el.focus();drag={id:event.pointerId,y:event.clientY,start:position};el.setPointerCapture(event.pointerId)});
+ el.addEventListener('pointermove',event=>{if(drag?.id===event.pointerId){event.preventDefault();paint(clamp(drag.start+drag.y-event.clientY,0,(items.length-1)*row))}});
  const stop=event=>{if(drag?.id!==event.pointerId)return;drag=null;if(el.hasPointerCapture(event.pointerId))el.releasePointerCapture(event.pointerId);wheel.to(Math.round(position/row)*row)};
- el.addEventListener('pointerup',stop);el.addEventListener('pointercancel',stop);
- playerValuePickers.set(kind,{sync,cancel:wheel});sync(Math.round(state[kind]*100));
+ el.addEventListener('pointerup',stop);el.addEventListener('pointercancel',stop);sync(options.selected());return {sync,cancel};
+}
+function bindPlayerValuePicker(kind){
+ const el=$(PLAYER_RULES[kind].controlId);
+ const commit=percent=>{const value=clamp(Math.round(Number.isFinite(percent)?percent:state[kind]*100),0,100);if(state[kind]===value/100)return;state[kind]=value/100;el.value=String(value);el.setAttribute('aria-valuenow',String(value));el.setAttribute('aria-valuetext',kind==='volume'&&value===0?'静音':value+'%');const revision=actionNoticeRevision;if(state.project){state.project.playback[kind]=state[kind];saveLibrary()}if(kind==='volume')updateVolumeAudio();else updateSustainAudio();if(revision===actionNoticeRevision)toast(PLAYER_RULES[kind].label+' '+value,1400)};
+ el.oninput=()=>{commit(Number(el.value));playerValuePickers.get(kind)?.sync(Math.round(state[kind]*100))};
+ if(!document.createComment)return;
+ const strip=createVerticalChoiceStrip(el,Array.from({length:101},(_,i)=>({label:String(100-i)})),{numeric:true,live:true,selected:()=>100-Math.round(state[kind]*100),choose:index=>commit(100-index)});
+ playerValuePickers.set(kind,{sync:value=>strip.sync(100-value),cancel:strip.cancel});
 }
 let cancelRollDrag=()=>{};
 function bindRollPointerSeek(){
@@ -59,13 +66,13 @@ function bindRollPointerSeek(){
  window.addEventListener('blur',stop);
 }
 function bindPlayerInteractions(){
- bindScoreEntranceInterrupts();
+ bindScoreEntranceInterrupts();bindActionNotifications();
  bindPlayerValuePicker('volume');bindPlayerValuePicker('sustain');
 
  bindRollPointerSeek();
  $('backLibrary').onclick=returnHomeFromPlayer;
  $('rollWindow').innerHTML='';for(const seconds of PLAYER_RULES.roll.windowsSeconds){const option=document.createElement('option');option.value=String(seconds);option.textContent=seconds+'秒';$('rollWindow').append(option)}
- $('playBtn').onclick=()=>playPause();$('restartBtn').onclick=()=>seekTo(0);
+ $('playBtn').onclick=()=>playPause();$('restartBtn').onclick=()=>seekTo(0);$('loopOneBtn').onclick=()=>{if(!state.project)return;state.project.playback.loop=!state.project.playback.loop;saveLibrary();syncLoopControl();toast(state.project.playback.loop?'已开启单曲循环':'已关闭单曲循环')};
 
  $('speedSelect').onchange=ev=>{let was=state.isPlaying;if(was)pauseSong();state.rate=Number(ev.target.value);syncSpeedPicker();if(state.project){state.project.playback.rate=state.rate;saveLibrary()}if(was)playPause()};
  $('rollWindow').onchange=ev=>{const finishing=Boolean(state.rollFinish),frame=rollFrame(),fraction=frame.phase/frame.windowMs;cancelRollFinish();state.windowSec=Number(ev.target.value);state.rollPageStart=rollSeekOrigin(state.position,fraction);if(finishing)finishRollScan();else drawRoll()};
@@ -172,7 +179,7 @@ function bindConsoleRangePicker(){
  document.addEventListener('pointerdown',event=>{if(!menu.hidden&&!menu.contains(event.target)&&!trigger.contains(event.target))close()});
  consoleRangePicker={sync,close};sync();
 }
-// One downward picker template for instruments and playback speed.
+// Playback speed retains a bounded downward picker.
 function createDownwardPicker(config){
  const trigger=$(config.trigger),menu=$(config.menu),options=$(config.options),focus=$(config.focus),items=config.items;
  const view={position:0,row:31,step:36,touch:null,suppressClick:false};let cancelWheel=()=>{};
@@ -209,7 +216,7 @@ function createDownwardPicker(config){
 let instrumentPicker=null,speedPicker=null;
 function closeInstrumentPicker(returnFocus=false){instrumentPicker?.close(returnFocus)}
 function closeSpeedPicker(returnFocus=false){speedPicker?.close(returnFocus)}
-function syncInstrumentPicker(){const spec=instrumentSpec(state.project?.playback?.instrument);$('instrumentSelect').value=spec.id;$('instrumentValue').textContent=spec.name;instrumentPicker?.sync()}
+function syncInstrumentPicker(){const spec=instrumentSpec(state.project?.playback?.instrument),host=$('instrumentPicker');$('instrumentSelect').value=spec.id;host.value=spec.id;host.setAttribute('aria-valuenow',String(INSTRUMENTS.indexOf(spec)+1));host.setAttribute('aria-valuetext',spec.name+' · '+(spec.mode==='offline'?'离线':'在线'));instrumentPicker?.sync()}
 function syncSpeedPicker(){$('speedSelect').value=String(state.rate);$('speedValue').textContent=state.rate.toFixed(2)+'×';speedPicker?.sync()}
 async function chooseInstrument(id){
  if(!state.project)return;const project=state.project,selection=++instrumentSelection,was=state.isPlaying||instrumentResume;
@@ -219,7 +226,11 @@ async function chooseInstrument(id){
 }
 
 function bindInstrumentPicker(){
- instrumentPicker=createDownwardPicker({trigger:'instrumentToggle',menu:'instrumentMenu',options:'instrumentOptions',focus:'instrumentCurrent',attribute:'instrument',items:INSTRUMENTS.map(spec=>({value:spec.id,label:spec.name+' · '+(spec.mode==='offline'?'离线':'在线')})),selected:()=>instrumentSpec(state.project?.playback?.instrument).id,rowsBelow:()=>PLAYER_RULES.selectors.instrumentRowsBelow,beforeOpen:()=>{closeRangePicker();closeSpeedPicker()},choose:id=>{if(state.project?.playback?.instrument===id)closeInstrumentPicker(true);else chooseInstrument(id)}});
+ const host=$('instrumentPicker');host.oninput=()=>chooseInstrument(host.value);
+ if(!document.createComment)return;
+ const strip=createVerticalChoiceStrip(host,INSTRUMENTS.map(spec=>({label:spec.name,title:spec.name+' · '+(spec.mode==='offline'?'离线':'在线')})),{selected:()=>Math.max(0,INSTRUMENTS.findIndex(spec=>spec.id===state.project?.playback.instrument)),preview:index=>{host.value=INSTRUMENTS[index].id;host.setAttribute('aria-valuenow',String(index+1));host.setAttribute('aria-valuetext',INSTRUMENTS[index].name)},choose:index=>{if(state.project&&state.project.playback.instrument!==INSTRUMENTS[index].id)chooseInstrument(INSTRUMENTS[index].id)}});
+ instrumentPicker={sync:()=>strip.sync(Math.max(0,INSTRUMENTS.findIndex(spec=>spec.id===state.project?.playback.instrument))),close:()=>strip.cancel()};
+ const closeOthers=()=>{closeRangePicker();closeSpeedPicker()};host.addEventListener('pointerdown',closeOthers,true);host.addEventListener('wheel',closeOthers,{capture:true,passive:true});
 }
 function bindSpeedPicker(){
  $('speedSelect').innerHTML='';for(const rate of PLAYER_RULES.playbackRates){const option=document.createElement('option');option.value=String(rate);option.textContent=rate.toFixed(2)+'×';$('speedSelect').append(option)}
@@ -236,8 +247,8 @@ function scoreEntranceHidesKey(key){return Boolean(currentScoreEntrance()&&!key.
 function scoreEntranceShowsBeat(beat){return !currentScoreEntrance()||beat.classList.contains('score-grown')}
 function scoreEntranceRollProgress(time,begin,windowMs){
  const a=currentScoreEntrance();if(!a)return 1;if(a.started===null)return 0;
- const cfg=PLAYER_RULES.scoreEntrance,elapsed=performance.now()-a.started-cfg.blankMs-clamp((time-begin)/windowMs,0,1)*cfg.rollSpreadMs;
- const t=clamp(elapsed/cfg.rollFloatMs,0,1);return 1-(1-t)**3;
+ const cfg=PLAYER_RULES.scoreEntrance,span=cfg.durationMs-cfg.blankMs,scale=span/(cfg.rollSpreadMs+cfg.rollFloatMs),elapsed=performance.now()-a.started-cfg.blankMs-clamp((time-begin)/windowMs,0,1)*cfg.rollSpreadMs*scale;
+ const t=clamp(elapsed/(cfg.rollFloatMs*scale),0,1);return 1-(1-t)**3;
 }
 function prepareScoreEntrance(){
  if(!document.createComment||homeReducedMotion())return;
@@ -259,31 +270,31 @@ function startScoreEntrance(){
  const cfg=PLAYER_RULES.scoreEntrance,columns=PLAYER_RULES.grid.columns,colors=resolvedPlayerColors(state.project),blank=cfg.blankMs;
  a.started=performance.now();$('playerView').dataset.scoreEntrance='running';
  const animate=(el,frames,delay,duration,fill='both')=>{const animation=el.animate(frames,{delay,duration,fill,easing:'cubic-bezier(.2,.65,.25,1)'});animation.startTime=a.started;a.animations.push(animation)};
- const cells=[...$('beatGrid').children],rowStride=(columns-1)*cfg.beatStepMs+cfg.beatGrowMs+cfg.rowGapMs;
+ const cells=[...$('beatGrid').children],rowStride=(columns-1)*cfg.beatStepMs+cfg.beatGrowMs+cfg.rowGapMs,span=cfg.durationMs-blank,beatScale=span/(Math.floor((cells.length-1)/columns)*rowStride+((cells.length-1)%columns)*cfg.beatStepMs+cfg.beatGrowMs),beatGrowMs=cfg.beatGrowMs*beatScale;
  cells.forEach((cell,index)=>{
-  const delay=blank+Math.floor(index/columns)*rowStride+(index%columns)*cfg.beatStepMs;a.beats.push({el:cell,delay});
-  animate(cell,[{boxShadow:'0 0 0 transparent'},{offset:.48,boxShadow:'0 0 20px '+colors.accent+'88, inset 0 0 0 1px '+colors.accent},{boxShadow:'0 0 0 transparent'}],delay,cfg.beatGrowMs);
+  const delay=blank+(Math.floor(index/columns)*rowStride+(index%columns)*cfg.beatStepMs)*beatScale;a.beats.push({el:cell,delay,duration:beatGrowMs});
+  animate(cell,[{boxShadow:'0 0 0 transparent'},{offset:.48,boxShadow:'0 0 20px '+colors.accent+'88, inset 0 0 0 1px '+colors.accent},{boxShadow:'0 0 0 transparent'}],delay,beatGrowMs);
   const pattern=cell.querySelector('.mini-keys'),name=cell.querySelector('.beat-name');
   if(pattern){const rect=pattern.getBoundingClientRect(),box=cell.getBoundingClientRect(),overlay=pattern.cloneNode(true);overlay.classList.add('score-arrival-pattern');overlay.style.cssText='left:'+(rect.left-box.left-cell.clientLeft)+'px;top:'+(rect.top-box.top-cell.clientTop)+'px;width:'+rect.width+'px;height:'+rect.height+'px';cell.append(overlay);a.overlays.push(overlay);
-   animate(overlay,[{opacity:0,transform:'translateY(10px) scale(.72)'},{offset:.48,opacity:1,transform:'translateY(-2px) scale(1.08)'},{opacity:1,transform:'none'}],delay,cfg.beatGrowMs);
+   animate(overlay,[{opacity:0,transform:'translateY(10px) scale(.72)'},{offset:.48,opacity:1,transform:'translateY(-2px) scale(1.08)'},{opacity:1,transform:'none'}],delay,beatGrowMs);
   }
-  if(name)animate(name,[{opacity:0,transform:'translateY(5px)'},{opacity:1,transform:'none'}],delay,cfg.beatGrowMs);
+  if(name)animate(name,[{opacity:0,transform:'translateY(5px)'},{opacity:1,transform:'none'}],delay,beatGrowMs);
  });
- const notes=displayedBeat().notes;
+ const notes=displayedBeat().notes,stampScaleTime=span/(cfg.stampDelayMs+Math.max(0,notes.length-1)*cfg.stampStepMs+cfg.stampMs),stampMs=cfg.stampMs*stampScaleTime;
  [...$('keyBoard').children].filter(key=>notes.includes(Number(key.dataset.note))).forEach((key,index)=>{
-  const delay=blank+cfg.stampDelayMs+index*cfg.stampStepMs,n=Number(key.dataset.note)-1,column=n%5,row=Math.floor(n/5);a.keys.push({el:key,delay});key.style.zIndex='3';key.style.transformOrigin=(column===0?'left':column===4?'right':'center')+' '+(row===0?'top':row===2?'bottom':'center');
-  animate(key,[{opacity:.6,transform:'translateY(-10px) scale('+cfg.stampScale+')',boxShadow:'0 0 38px '+colors.accent+'99'},{offset:.42,opacity:1,transform:'translateY(2px) scale(.87)',boxShadow:'0 0 24px '+colors.accent+'aa'},{offset:.7,opacity:1,transform:'translateY(-1px) scale(1.12)'},{opacity:1,transform:'none',boxShadow:'0 0 12px '+colors.accent+'44'}],delay,cfg.stampMs,'forwards');
+  const delay=blank+(cfg.stampDelayMs+index*cfg.stampStepMs)*stampScaleTime,n=Number(key.dataset.note)-1,column=n%5,row=Math.floor(n/5);a.keys.push({el:key,delay});key.style.zIndex='3';key.style.transformOrigin=(column===0?'left':column===4?'right':'center')+' '+(row===0?'top':row===2?'bottom':'center');
+  animate(key,[{opacity:.6,transform:'translateY(-10px) scale('+cfg.stampScale+')',boxShadow:'0 0 38px '+colors.accent+'99'},{offset:.42,opacity:1,transform:'translateY(2px) scale(.87)',boxShadow:'0 0 24px '+colors.accent+'aa'},{offset:.7,opacity:1,transform:'translateY(-1px) scale(1.12)'},{opacity:1,transform:'none',boxShadow:'0 0 12px '+colors.accent+'44'}],delay,stampMs,'forwards');
  });
- const duration=Math.max(blank+cfg.rollSpreadMs+cfg.rollFloatMs,...a.beats.map(item=>item.delay+cfg.beatGrowMs),...a.keys.map(item=>item.delay+cfg.stampMs));
+ const duration=cfg.durationMs;
  // Start one shared clock after layout work, preserving the blank opening on slower devices.
  a.started=performance.now();for(const animation of a.animations)animation.startTime=a.started;
  const frame=()=>{
   if(scoreEntrance.current!==a)return;
   if(state.project!==a.project||state.mode!=='player'||state.editMode||state.isPlaying){cancelScoreEntrance();return}
   const elapsed=performance.now()-a.started;
-  for(const item of a.beats){if(elapsed>=item.delay&&!item.el.classList.contains('score-grown')){item.el.classList.add('score-grown');if(Number(item.el.dataset.index)===beatDisplayIndex())item.el.classList.add('active','select')}if(elapsed>=item.delay+cfg.beatGrowMs&&!item.settled){item.settled=true;item.el.classList.add('score-settled')}}
+  for(const item of a.beats){if(elapsed>=item.delay&&!item.el.classList.contains('score-grown')){item.el.classList.add('score-grown');if(Number(item.el.dataset.index)===beatDisplayIndex())item.el.classList.add('active','select')}if(elapsed>=item.delay+item.duration&&!item.settled){item.settled=true;item.el.classList.add('score-settled')}}
   for(const item of a.keys)if(elapsed>=item.delay&&!item.el.classList.contains('score-stamped'))item.el.classList.add('score-stamped','active');
-  drawRoll();if(elapsed>=duration){finishScoreEntrance();return}a.raf=requestAnimationFrame(frame);
+  drawRoll();if(elapsed>=duration&&a.animations.every(animation=>animation.effect.getComputedTiming().progress===1)){finishScoreEntrance();return}a.raf=requestAnimationFrame(frame);
  };
  a.raf=requestAnimationFrame(frame);
 }
@@ -292,4 +303,18 @@ function bindScoreEntranceInterrupts(){
  for(const type of ['pointerdown','keydown','wheel','input','change'])document.addEventListener(type,interrupt,true);
  window.addEventListener('resize',cancelScoreEntrance);
  document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelScoreEntrance()});
+}
+
+function syncLoopControl(){const on=state.project?.playback.loop===true;$('loopOneBtn').setAttribute('aria-pressed',String(on));$('loopOneBtn').title=on?'关闭单曲循环':'开启单曲循环'}
+function actionNoticeLabel(el){
+ const labels={playBtn:'播放 / 暂停',restartBtn:'已重置播放位置',loopOneBtn:'单曲循环',backLibrary:'返回音乐馆',scoreEditorBtn:'打开曲谱编辑控制台',exportProject:'打开导出窗口',songInfoBtn:'查看歌曲信息',keyRangeToggle:'选择音域',speedToggle:'选择倍速',instrumentPicker:'音色',volumePicker:'音量',sustainPicker:'延音',rollWindow:'卷帘窗口',seekSlider:'播放位置',rollSeekSlider:'谱面位置',rollCanvas:'定位播放位置',homeThemeNext:'切换下一个主题',homeThemePrev:'切换上一个主题'};
+ if(el.dataset.close)return '关闭窗口';
+ if(el.id==='seekSlider'||el.id==='rollSeekSlider'||el.id==='rollCanvas')return '播放位置 '+positionFmt(state.position);
+ if(el.matches?.('[role="spinbutton"]'))return (labels[el.id]||el.getAttribute('aria-label')||'设置')+'：'+(el.getAttribute('aria-valuetext')||el.value);
+ if(el.tagName==='SELECT')return (labels[el.id]||el.getAttribute('aria-label')||'设置')+'：'+(el.selectedOptions[0]?.textContent||el.value);
+ return labels[el.id]||el.getAttribute('aria-label')||el.title||el.placeholder||el.labels?.[0]?.textContent.trim().slice(0,70)||el.textContent.trim().replace(/\s+/g,' ').slice(0,90)||'已更新设置';
+}
+function bindActionNotifications(){
+ const notify=event=>{const el=event.target.closest?.('button,[role="button"],[role="spinbutton"],label[for],input,select,textarea,canvas,a[href]');if(!el||el.disabled)return;const revision=actionNoticeRevision,label=actionNoticeLabel(el);queueMicrotask(()=>{if(revision===actionNoticeRevision)toast(label,1600)})};
+ document.addEventListener('click',notify,true);document.addEventListener('change',notify,true);
 }
