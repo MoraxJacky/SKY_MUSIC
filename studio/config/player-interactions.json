@@ -66,6 +66,7 @@
       "fine",
       "generate"
     ],
-    "beatRowsPerSection": 2
+    "beatRowsPerSection": 2,
+    "selectionOutline": "#ff5964"
   }
 }

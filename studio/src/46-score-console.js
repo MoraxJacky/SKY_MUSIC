@@ -6,7 +6,7 @@ function setConsoleMode(mode){
  for(const button of document.querySelectorAll('[data-console-mode]')){const on=button.dataset.consoleMode===mode;button.setAttribute('aria-selected',String(on));button.tabIndex=on?0:-1}
  $('consoleLayout').setAttribute('aria-labelledby',mode==='fine'?'consoleFineTab':generate?'consoleGenerateTab':'consoleRecordTab');
  $('consoleKeysSlot').hidden=mode!=='record';$('consoleGridSlot').hidden=!generate;$('consoleRecordControls').hidden=mode!=='record';$('consoleGenerateControls').hidden=!generate;$('consoleBatchControls').hidden=!fine;$('consoleInspectorSlot').hidden=!fine;
- renderBeatGrid(true);renderKeyBoard();requestAnimationFrame(()=>{drawRoll();initializeScene()});
+ renderBeatGrid(true);renderKeyBoard();updateVisual();requestAnimationFrame(()=>{drawRoll();initializeScene()});
 }
 function openScoreConsole(){
  if(!state.editMode||!document.createComment)return;
@@ -15,7 +15,7 @@ function openScoreConsole(){
 }
 function closeScoreConsole(){
  if(!document.createComment)return;stopConsoleRecording();pauseSong();scoreConsole.fine=null;
- if($('scoreConsole').open)$('scoreConsole').close();for(const {panel,marker} of scoreConsole.homes){marker.replaceWith(panel)}scoreConsole.homes=[];renderBeatGrid(true);renderKeyBoard();requestAnimationFrame(()=>{drawRoll();initializeScene()});
+ if($('scoreConsole').open)$('scoreConsole').close();for(const {panel,marker} of scoreConsole.homes){marker.replaceWith(panel)}scoreConsole.homes=[];renderBeatGrid(true);renderKeyBoard();updateVisual();requestAnimationFrame(()=>{drawRoll();initializeScene()});
 }
 function updateScoreConsole(){
  if(!$('scoreConsole')?.open)return;$('consoleClock').textContent=positionFmt(state.position);$('consolePlay').textContent=state.isPlaying?'暂停':'播放';$('consoleTuning').value=state.tuning;
@@ -47,7 +47,7 @@ function beginFineNoteDrag(event,canvas){
  const hit=[...list].reverse().find(e=>e.notes.includes(note)&&time>=e.timeMs&&time<=e.timeMs+Math.max(e.durationMs,frame.windowMs/g.plotW*4));if(!hit)return false;
  event.preventDefault();pauseSong();let chosen=hit,split=false;if(hit.notes.length>1){rememberEdit();chosen={...copy(hit),notes:[note]};hit.notes=hit.notes.filter(n=>n!==note);list.push(chosen);list.sort((a,b)=>a.timeMs-b.timeMs);saveLibrary();split=true}const endX=g.left+(hit.timeMs+hit.durationMs-frame.begin)/frame.windowMs*g.plotW;
  scoreConsole.fine={pointerId:event.pointerId,canvas,event:chosen,note,frame,g,rect,x,y,time:hit.timeMs,duration:hit.durationMs,resize:Math.abs(x-endX)<Math.min(5,Math.max(1,hit.durationMs/frame.windowMs*g.plotW*.25)),changed:split};
- state.selected=list.indexOf(chosen);state.position=hit.timeMs;state.lastSelected=state.selected;renderBeatGrid(true);renderKeyBoard();updateVisual();syncEditorFields();canvas.setPointerCapture(event.pointerId);return true;
+ scoreConsole.selectedNote=note;scoreConsole.selection={project:state.project,event:chosen,note};state.selected=list.indexOf(chosen);state.position=hit.timeMs;state.lastSelected=state.selected;renderBeatGrid(true);renderKeyBoard();updateVisual();syncEditorFields();canvas.setPointerCapture(event.pointerId);return true;
 }
 function bindScoreConsole(){
  if(!document.createComment)return;
@@ -67,4 +67,4 @@ function bindScoreConsole(){
  const end=()=>{if(scoreConsole.fine){scoreConsole.fine=null;refreshWorkspace()}};canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);canvas.addEventListener('lostpointercapture',end);
 }
 
-function stepConsoleEvent(direction){pauseSong();const events=scoreEvents(state.project),index=clamp(state.selected+direction,0,events.length-1);if(!events[index])return;seekTo(events[index].timeMs);state.selected=index;state.lastSelected=index;renderKeyBoard();updateVisual();syncEditorFields()}
+function stepConsoleEvent(direction){pauseSong();const events=scoreEvents(state.project),index=clamp(state.selected+direction,0,events.length-1);if(!events[index])return;seekTo(events[index].timeMs);state.selected=index;scoreConsole.selection={project:state.project,event:events[index],note:events[index].notes[0]};state.lastSelected=index;renderKeyBoard();updateVisual();syncEditorFields()}
