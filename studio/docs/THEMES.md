@@ -33,13 +33,13 @@
 
 `tests/theme_system.py` 验证六套主题的暂停重绘、实际背景像素、15行配色、同一处理器、主页面粒子/控制台禁用、主题资源往返、均匀面板间距、桌面两行卡片和减少动态效果。`tests/config_separation.py` 验证三首歌 × 六款主题、独立修改配置及新主题发现。此为自动化验证，不能替代人工听感或 Gear Link 验收。
 
-## 素材与平台首页
+## v1兼容素材与平台首页
 
-新增 `app/assets/themes/*.svg` 是可编辑源素材。两张生成图片使用内置 `imagegen` 工具生成，原始输出保留在 Codex 的 generated_images 目录，项目使用未修改的副本：
+早期 `app/assets/themes/*.svg` 是保留的可编辑兼容素材。v1阶段的两张生成图片使用内置 `imagegen` 工具生成，原始输出保留在 Codex 的 generated_images 目录，旧副本继续保留：
 
-- `app/assets/platform/sky-pianist-v1.png`，1312×1199，RGBA透明演奏小景；供五款非圣诞主题共用，页面中宽度28%，保持主题场景的辨识度。
-- `app/assets/platform/music-islands-v1.png`，1672×941，首页独立“云海乐屿”插图。首页蓝青 UI、云海图片、呼吸/漂移光晕独立于单曲主题；减少动态效果时光晕静止。
+- `app/assets/platform/sky-pianist-v1.png`，1312×1199，RGBA透明演奏小景；曾供五款非圣诞主题共用；v2预设已改用各自的双人小景，旧资源保留兼容。
+- `app/assets/platform/music-islands-v1.png`，1672×941，首页独立“云海乐屿”插图。首页蓝青 UI、云海图片与不规则流动光雾独立于单曲主题；减少动态效果时光雾关闭。
 
-生成提示词保存在 [ASSET_PROMPTS.md](ASSET_PROMPTS.md)。对比记录存放在本机新的 validation 目录，不覆盖历史图；最终选择较小的演奏小景版本，避免把背景插画变成页面主体。
+生成提示词保存在 [ASSET_PROMPTS.md](ASSET_PROMPTS.md)。对比记录存放在本机新的 validation 目录，不覆盖历史图；v1的原始选择记录继续保留；v2的场景、双人和挂件由统一构图参数控制，详见下方素材契约。
 
 2026-11-07起，六套预设使用 `app/assets/themes/v2/` 的18张生成插画，不再共用v1演奏者。旧SVG、共用钢琴小景和24帧动画作为兼容素材保留。`decorations.layout` 的sceneFit及百分比角色/挂件构图参数经白名单校验、导出与导入保留；详见 [v2素材契约](THEME_ART_V2.md)。
