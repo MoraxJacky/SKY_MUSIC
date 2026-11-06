@@ -16,7 +16,13 @@
       20
     ],
     "initialSeconds": 12,
-    "subdivisionsPerSecond": 6
+    "subdivisionsPerSecond": 6,
+    "labelIntervalSecondsByWindow": {
+      "8": 1,
+      "10": 1,
+      "12": 5,
+      "20": 5
+    }
   },
   "keyboard": {
     "playPause": "Space",

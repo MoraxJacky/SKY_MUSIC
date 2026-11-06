@@ -741,7 +741,19 @@ function finishRollScan(){
  state.rollFinish={begin:frame.begin,windowMs:frame.windowMs,phase:frame.windowMs,at:performance.now(),rate:state.rate};
  pauseSong();drawRoll();
 }
-function drawRoll(){if(!state.project||state.mode!=='player')return;let cv=$('rollCanvas'),rect=cv.getBoundingClientRect();if(rect.width<30||rect.height<30)return;let dpr=Math.min(2,devicePixelRatio||1);if(cv.width!==Math.round(rect.width*dpr)||cv.height!==Math.round(rect.height*dpr)){cv.width=Math.round(rect.width*dpr);cv.height=Math.round(rect.height*dpr)}const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);let W=rect.width,H=rect.height,left=59,top=25,bottom=23,plotW=W-left-13,rowH=(H-top-bottom)/15,sec=state.windowSec,{begin,end,windowMs,phase}=rollFrame();
+function rollTimeLabels(frame=rollFrame()){
+ const {begin,end}=frame,step=PLAYER_RULES.roll.labelIntervalSecondsByWindow[state.windowSec]*1000,labels=[];
+ for(let timeMs=Math.max(0,Math.ceil(begin/step)*step);timeMs<=end;timeMs+=step)labels.push({timeMs,terminal:false});
+ const events=platformController.events();let last=null;for(let i=events.length-1;i>=0;i--)if(events[i].notes.length){last=events[i];break}
+ if(last&&last.timeMs>=begin&&last.timeMs<=end){
+  let timeMs=Math.max(Math.ceil(begin/1000)*1000,Math.min(Math.floor(end/1000)*1000,Math.round(last.timeMs/1000)*1000));
+  if(timeMs<begin||timeMs>end)timeMs=last.timeMs;
+  const existing=labels.find(label=>label.timeMs===timeMs);if(existing)existing.terminal=true;else labels.push({timeMs,terminal:true});
+ }
+ return labels.sort((a,b)=>a.timeMs-b.timeMs);
+}
+function rollTimeText(timeMs){return Number((timeMs/1000).toFixed(3))+'s'}
+function drawRoll(){if(!state.project||state.mode!=='player')return;let cv=$('rollCanvas'),rect=cv.getBoundingClientRect();if(rect.width<30||rect.height<30)return;let dpr=Math.min(2,devicePixelRatio||1);if(cv.width!==Math.round(rect.width*dpr)||cv.height!==Math.round(rect.height*dpr)){cv.width=Math.round(rect.width*dpr);cv.height=Math.round(rect.height*dpr)}const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);let W=rect.width,H=rect.height,left=59,top=25,bottom=23,sec=state.windowSec,{begin,end,windowMs,phase}=rollFrame();c.font='10px ui-monospace,monospace';const right=Math.max(13,c.measureText(rollTimeText(end)).width/2+4),plotW=W-left-right,rowH=(H-top-bottom)/15;
  const colors=state.playerColors||PLAYER_APPEARANCE[APP_CONFIG.defaultTheme];
  const paper=themeDefinition().rollPalette||{base:colors.surfaceEnd,light:colors.surfaceStart,medium:colors.gridEnd,dark:colors.rest,label:colors.muted,anchor:colors.accent};
  c.clearRect(0,0,W,H);c.fillStyle=paper.base;c.fillRect(0,0,W,H);
@@ -750,7 +762,17 @@ function drawRoll(){if(!state.project||state.mode!=='player')return;let cv=$('ro
  for(let row=0;row<15;row++){let n=15-row,y=top+row*rowH,anchor=n===1||n===8||n===15;c.fillStyle=[1,8,15].includes(n)?paper.light:row%2?paper.dark:paper.medium;c.fillRect(left,y,plotW,rowH);c.fillStyle=anchor?paper.anchor:paper.label;c.font=`600 ${Math.min(11,Math.max(9,rowH*.54))}px Georgia,serif`;c.textAlign='right';c.textBaseline='middle';c.fillText(n+' '+noteName(n),left-7,y+rowH/2)}
  // Draw subdivisions after opaque lane fills in every supported window.
  if(cellGrid){const divisions=PLAYER_RULES.roll.subdivisionsPerSecond,stepMs=1000/divisions;for(let i=Math.ceil(begin/stepMs);i*stepMs<=end;i++){if(i%divisions===0)continue;let x=left+(i*stepMs-begin)/windowMs*plotW;c.strokeStyle=i%3===0?'#55786872':'#43665932';c.lineWidth=.6;c.beginPath();c.moveTo(x,top);c.lineTo(x,H-bottom);c.stroke()}c.lineWidth=1;for(let row=0;row<=15;row++){let y=top+row*rowH;c.strokeStyle='#43665932';c.beginPath();c.moveTo(left,y);c.lineTo(left+plotW,y);c.stroke()}}
- for(let t=Math.max(0,Math.ceil(begin/1000)*1000);t<=end;t+=1000){let x=left+(t-begin)/windowMs*plotW;c.strokeStyle=cellGrid?'#79927b88':'#cce2b725';c.beginPath();c.moveTo(x,top);c.lineTo(x,H-bottom);c.stroke();c.textAlign='left';c.textBaseline='middle';c.fillStyle='#d1c298';c.font='10px ui-monospace,monospace';c.fillText(Math.round(t/1000)+'s',x+3,12)}
+ // Keep second grid lines independent of the sparser time labels.
+ for(let t=Math.max(0,Math.ceil(begin/1000)*1000);t<=end;t+=1000){const x=left+(t-begin)/windowMs*plotW;c.strokeStyle=cellGrid?'#79927b88':'#cce2b725';c.beginPath();c.moveTo(x,top);c.lineTo(x,H-bottom);c.stroke()}
+ c.textAlign='center';c.textBaseline='middle';c.fillStyle='#d1c298';c.font='10px ui-monospace,monospace';
+ const labels=rollTimeLabels({begin,end}),terminal=labels.find(label=>label.terminal),labelX=label=>left+(label.timeMs-begin)/windowMs*plotW;
+ for(const label of labels){
+  const text=rollTimeText(label.timeMs),x=labelX(label);
+  // Preserve the final-note label when a short last page would crowd a regular tick.
+  if(terminal&&label!==terminal&&Math.abs(x-labelX(terminal))<(c.measureText(text).width+c.measureText(rollTimeText(terminal.timeMs)).width)/2+6)continue;
+  if(label.timeMs%1000!==0){c.strokeStyle='#79927b88';c.beginPath();c.moveTo(x,top);c.lineTo(x,H-bottom);c.stroke()}
+  c.fillText(text,x,12);
+ }
  c.save();c.beginPath();c.rect(left,top,plotW,H-top-bottom);c.clip();const ev=platformController.events(),start=lowerBound(ev,begin-10000);for(let i=start;i<ev.length;i++){let e=ev[i];if(e.timeMs>end)break;if(!e.notes.length)continue;let x=left+(e.timeMs-begin)/windowMs*plotW;let width=Math.max(3,Math.min(windowMs<state.windowSec*1000?Infinity:22,(e.durationMs||180)/windowMs*plotW));for(let n of e.notes){let tileWidth=Math.max(2,width-1.8),tileHeight=Math.max(3,rowH*.5),tileX=x+.8,y=top+(15-n)*rowH+(rowH-tileHeight)/2;
  // Keep repeated notes distinct even when their sounding durations overlap.
  for(let j=i+1;j<ev.length&&ev[j].timeMs<e.timeMs+(width+2)/plotW*windowMs;j++){if(ev[j].notes.includes(n)){tileWidth=Math.min(tileWidth,Math.max(.8,(ev[j].timeMs-e.timeMs)/windowMs*plotW-1.8));break}}
@@ -875,6 +897,6 @@ function install(){restorePlatformThemes();state.library=BUILTINS.map(p=>normali
  }
 // Avoid editing the user-provided v7 backup: all transforms occur on copied score objects.
 
-window.__SKY_STUDIO_TEST__={state,openSong,goHome,normalize,makeZip,readZip,unpackProject,parseMIDI,parseCSV,parseMusicXML,exportProject,exportMIDI,exportCSV,importFile,createProject,renameSong,renameConfirmed,duplicateSong,deleteSong,deleteConfirmed,completeEdit,openEditor,requestFinishEdit,KEY_ROOTS,noteMidi,noteName,rollFrame,platformController,importFiles,importPlatformFile,readMusicResource,exportPlatformEntry,projectEntry,PLAYER_RULES,THEME_DEFINITIONS,bindPlayerInteractions,INSTRUMENTS,loadInstrumentBank,preloadPiano,triggerSample,chooseInstrument,undo,redo,eventInsert,eventRemove,applyThemeFields,analyseSkyGrid,applyPlayerTemplate,PLAYER_TEMPLATE_ID};
+window.__SKY_STUDIO_TEST__={state,openSong,goHome,normalize,makeZip,readZip,unpackProject,parseMIDI,parseCSV,parseMusicXML,exportProject,exportMIDI,exportCSV,importFile,createProject,renameSong,renameConfirmed,duplicateSong,deleteSong,deleteConfirmed,completeEdit,openEditor,requestFinishEdit,KEY_ROOTS,noteMidi,noteName,rollFrame,rollTimeLabels,platformController,importFiles,importPlatformFile,readMusicResource,exportPlatformEntry,projectEntry,PLAYER_RULES,THEME_DEFINITIONS,bindPlayerInteractions,INSTRUMENTS,loadInstrumentBank,preloadPiano,triggerSample,chooseInstrument,undo,redo,eventInsert,eventRemove,applyThemeFields,analyseSkyGrid,applyPlayerTemplate,PLAYER_TEMPLATE_ID};
 install();startDbBackup();
 })();
