@@ -490,6 +490,51 @@ body:has(dialog[open]){overflow:hidden}
  .console-note-keys button{min-height:22px;padding:1px}.console-side .edit-summary{font-size:10px;padding:2px;margin-bottom:5px}
  .console-side #inspectorPane .pane-top{margin-bottom:4px}.console-side .inspector-actions{margin-top:5px}.console-note-keys{margin-top:6px}
 }
+/* Let the editing surface fill available height instead of shrinking to its content. */
+@media(min-width:851px){
+ .console-side{grid-template-rows:auto auto minmax(0,1fr);align-content:stretch}
+ .console-side #consoleRecordControls,.console-side #consoleGenerateControls{display:flex;flex-direction:column;justify-content:space-between;gap:10px;min-height:0}
+ .console-side #consoleGenerateControls>label:first-of-type{display:flex;flex:1;min-height:90px}
+ .console-side #consoleNumberScore{flex:1;min-height:80px;resize:none}
+ .console-side #consoleInspectorSlot{display:flex;flex-direction:column;justify-content:space-between;min-height:0}
+ .console-side #consoleBatchControls{display:flex;flex-direction:column;min-height:0}
+ .console-side .console-batch-grid{flex:1;grid-template-rows:repeat(2,minmax(0,1fr))}
+ .console-batch-grid article{display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+ .console-side .console-note-keys{margin-top:12px;gap:5px}
+}
+@media(min-width:851px) and (min-height:721px){
+ .console-transport time{font-size:24px}.console-transport button,.console-edit-actions button{min-height:34px}
+ .console-side input,.console-side select{min-height:32px;padding:6px 7px}
+ .console-side .fields-grid label{font-size:12px}.console-side .inspector-actions button{min-height:30px;font-size:12px}
+ .console-note-keys button{min-height:30px;font-size:13px}.console-batch-grid label{font-size:12px}.console-batch-grid button{min-height:32px;font-size:12px}
+ .console-side .console-help{font-size:12px!important;line-height:1.65!important}
+}
+@media(min-width:851px) and (min-height:821px){
+ .player-view .score-console{padding:22px;gap:16px}.console-head h2{font-size:23px}.console-tabs button{min-height:44px}
+ .console-side{gap:14px}.console-side>section,.console-side>.console-transport,.console-side #consoleInspectorSlot{padding:13px}
+ .console-side h3{font-size:14px;margin-bottom:12px}.console-side label{font-size:13px;gap:6px;margin-bottom:10px}
+ .console-side input,.console-side select,.console-side textarea{font-size:13px;padding:7px 8px;min-height:36px}
+ .console-transport{gap:10px 12px}.console-transport time{font-size:26px}.console-transport button,.console-edit-actions button{min-height:38px;font-size:13px}
+ .console-side #inspectorPane .pane-top{margin-bottom:9px;min-height:28px}.console-side #inspectorPane h2{font-size:14px}
+ .console-side .edit-summary{padding:8px;font-size:12px;margin-bottom:10px}.console-side .fields-grid{gap:10px}
+ .console-side .fields-grid label{font-size:12px}.console-side .inspector-actions{gap:6px;margin-top:10px}.console-side .inspector-actions button{min-height:34px;padding:6px}
+ .console-note-keys button{min-height:36px;padding:6px}.console-batch-grid{gap:10px}.console-batch-grid article{padding:10px}.console-batch-grid button{min-height:36px}
+}
+@media(min-width:851px) and (min-height:821px){
+ .console-transport{grid-template-columns:1fr}.console-transport time{text-align:center}.console-transport>div{justify-content:center}
+}
+@media(min-width:851px) and (max-height:720px){
+ .console-side #consoleRecordControls,.console-side #consoleGenerateControls{gap:4px}
+ .console-side .console-note-keys{margin-top:6px;gap:3px}.console-batch-grid article{gap:4px}
+ .console-side #consoleGenerateControls>label:first-of-type{min-height:60px}.console-side #consoleNumberScore{min-height:60px}
+}
+@media(min-width:851px) and (min-height:821px){
+ .console-side #inspectorPane{flex:none}
+ .console-side .console-note-keys{flex:1;min-height:88px;grid-template-rows:repeat(3,minmax(0,1fr))}
+ .console-note-keys button{min-height:26px}
+ .console-side .console-batch-grid{min-height:0}
+}
+@media(min-width:851px) and (max-width:1150px) and (min-height:821px){.console-layout{grid-template-columns:minmax(0,1fr) 400px}}
 
 </style>
 </head>
