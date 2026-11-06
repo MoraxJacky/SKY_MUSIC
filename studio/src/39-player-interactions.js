@@ -55,7 +55,7 @@ function setTuningButtons(){
  for(const button of document.querySelectorAll('#keyRangeMenu [data-key]'))button.setAttribute('aria-selected',String(button.dataset.key===key));
  syncConsoleRangePicker();
 }
-let cancelRangeWheel=()=>{};
+let cancelRangeWheel=()=>{},rangeTrack=null;
 function cancelRangeScroll(){cancelRangeWheel()}
 function closeRangePicker(returnFocus=false){cancelRangeScroll();$('keyRangeMenu').hidden=true;$('keyRangeToggle').setAttribute('aria-expanded','false');if(returnFocus)$('keyRangeToggle').focus()}
 function positionRangePicker(){
@@ -67,26 +67,14 @@ function positionRangePicker(){
 }
 function openRangePicker(){
  closeInstrumentPicker();closeSpeedPicker();setTuningButtons();$('keyRangeMenu').hidden=false;$('keyRangeToggle').setAttribute('aria-expanded','true');positionRangePicker();
- const selected=$('keyRangeMenu').querySelector('[aria-selected="true"]');selected?.focus({preventScroll:true});selected?.scrollIntoView({block:'nearest',inline:'nearest'});
+ rangeTrack.center(state.tuning);
 }
 function bindRangePicker(){
  const trigger=$('keyRangeToggle'),menu=$('keyRangeMenu'),track=$('keyRangeTrack');
  trigger.onclick=()=>menu.hidden?openRangePicker():closeRangePicker();
- cancelRangeWheel=bindSmoothWheel(track,menu,'x',PLAYER_RULES.selectors.rangeMaxStepPx);
+ rangeTrack=createCircularRangeTrack(track,menu,key=>{$('keySelect').value=key;$('keySelect').onchange({target:$('keySelect')});closeRangePicker(true)},closeRangePicker);
+ cancelRangeWheel=()=>rangeTrack.cancel();
  trigger.onkeydown=event=>{if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();openRangePicker()}};
- for(const button of menu.querySelectorAll('[data-key]'))button.onclick=()=>{
-  $('keySelect').value=button.dataset.key;$('keySelect').onchange({target:$('keySelect')});closeRangePicker(true);
- };
- menu.onkeydown=event=>{
-  cancelRangeScroll();
-  const options=[...menu.querySelectorAll('[data-key]')],index=options.indexOf(document.activeElement);let next;
-  if(event.key==='ArrowLeft')next=(index-1+options.length)%options.length;
-  if(event.key==='ArrowRight')next=(index+1)%options.length;
-  if(event.key==='Home')next=0;if(event.key==='End')next=options.length-1;
-  if(next!==undefined){event.preventDefault();options[next].focus({preventScroll:true});options[next].scrollIntoView({block:'nearest',inline:'nearest'})}
-  if(event.key==='Escape'){event.preventDefault();closeRangePicker(true)}
-  if(event.key==='Tab')closeRangePicker();
- };
  document.addEventListener('pointerdown',event=>{if(!menu.hidden&&!menu.contains(event.target)&&!trigger.contains(event.target))closeRangePicker()});
  window.addEventListener('resize',()=>{if(!menu.hidden)positionRangePicker()});
  window.addEventListener('scroll',event=>{if(!menu.hidden&&event.target!==menu&&!menu.contains(event.target))closeRangePicker()},true);
@@ -119,31 +107,37 @@ function bindSmoothWheel(track,host,axis='x',limit=24,model=null){
  host.addEventListener('pointerdown',cancel);host.addEventListener('keydown',cancel);
  return cancel;
 }
-// Inline circular variant of the shared range strip. Each key has one semantic option;
-// offscreen cells wrap outside the faded viewport, so there are no ends or duplicate IDs.
+// Both range pickers share one circular strip; only their opening layout differs.
+function createCircularRangeTrack(track,menu,choose,close){
+ const buttons=[...track.querySelectorAll('[data-key]')],step=49,count=buttons.length,wrap=n=>((n%count)+count)%count;
+ const view={position:0,touch:null,suppressClick:false};
+ function render(){for(let index=0;index<count;index++){const offset=wrap(index-view.position/step+count/2)-count/2;buttons[index].style.transform='translateX('+(offset*step)+'px)'}menu.dataset.position=String(view.position/step)}
+ const cancelWheel=bindSmoothWheel(track,menu,'x',PLAYER_RULES.selectors.rangeMaxStepPx,{loop:true,read:()=>view.position,write:value=>{view.position=value;render()}});
+ function cancel(){cancelWheel();const drag=view.touch;view.touch=null;if(drag&&menu.hasPointerCapture(drag.id))menu.releasePointerCapture(drag.id)}
+ function center(key){cancel();view.suppressClick=false;const index=Math.max(0,buttons.findIndex(button=>button.dataset.key===key));view.position=index*step;render();buttons[index].focus({preventScroll:true})}
+ for(const button of buttons)button.onclick=()=>{if(view.suppressClick){view.suppressClick=false;return}choose(button.dataset.key)};
+ menu.onkeydown=event=>{view.suppressClick=false;let index=buttons.indexOf(document.activeElement),next;
+  if(event.key==='ArrowLeft'||event.key==='ArrowUp')next=wrap(index-1);if(event.key==='ArrowRight'||event.key==='ArrowDown')next=wrap(index+1);if(event.key==='Home')next=0;if(event.key==='End')next=count-1;
+  if(next!==undefined){event.preventDefault();event.stopPropagation();cancel();const current=Math.round(view.position/step);let delta=wrap(next-wrap(current));if(delta>count/2)delta-=count;view.position=(current+delta)*step;render();buttons[next].focus({preventScroll:true})}
+  if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close(true)}if(event.key==='Tab')close(true);
+ };
+ menu.addEventListener('pointerdown',event=>{if(event.button!==0)return;view.suppressClick=false;view.touch={id:event.pointerId,x:event.clientX,y:event.clientY,start:view.position,moved:false}});
+ menu.addEventListener('pointermove',event=>{const drag=view.touch;if(!drag||drag.id!==event.pointerId)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;if(!drag.moved&&Math.abs(dy)>Math.abs(dx)+4){view.touch=null;return}if(!drag.moved&&Math.abs(dx)<4)return;drag.moved=true;view.suppressClick=true;menu.setPointerCapture(event.pointerId);view.position=drag.start-dx;render();event.preventDefault()});
+ const endDrag=event=>{if(view.touch?.id!==event.pointerId)return;view.touch=null;if(menu.hasPointerCapture(event.pointerId))menu.releasePointerCapture(event.pointerId)};menu.addEventListener('pointerup',endDrag);menu.addEventListener('pointercancel',endDrag);
+ return {center,cancel};
+}
 let consoleRangePicker=null;
 function syncConsoleRangePicker(){consoleRangePicker?.sync()}
 function closeConsoleRangePicker(returnFocus=false){consoleRangePicker?.close(returnFocus)}
 function bindConsoleRangePicker(){
  const trigger=$('consoleRangeToggle'),menu=$('consoleRangeMenu'),track=$('consoleRangeTrack');
  const items=[...$('keySelect').options].map(option=>({key:option.value,label:option.textContent}));
- const step=49,count=items.length,wrap=n=>((n%count)+count)%count;
- const view={position:0,touch:null,suppressClick:false};let cancelWheel=()=>{};
- const buttons=items.map((item,index)=>{const button=document.createElement('button');button.type='button';button.dataset.key=item.key;button.textContent=item.key==='sky-original'?'光遇':KEY_DEGREES[item.key][0];button.title=item.label;button.setAttribute('role','option');button.tabIndex=-1;button.onclick=()=>{if(view.suppressClick){view.suppressClick=false;return}if(!canEditScore())return;$('consoleTuning').value=item.key;$('consoleTuning').onchange({target:$('consoleTuning')});close(true)};track.append(button);return button});
- function render(){for(let index=0;index<count;index++){const offset=wrap(index-view.position/step+count/2)-count/2;buttons[index].style.transform='translateX('+(offset*step)+'px)'}menu.dataset.position=String(view.position/step)}
- function sync(){const index=items.findIndex(item=>item.key===state.tuning),selected=items[index]||items[1];$('consoleRangeValue').textContent=selected.label;for(const [i,button]of buttons.entries())button.setAttribute('aria-selected',String(items[i].key===selected.key))}
- function close(returnFocus=false){cancelWheel();const drag=view.touch;view.touch=null;if(drag&&menu.hasPointerCapture(drag.id))menu.releasePointerCapture(drag.id);menu.hidden=true;trigger.hidden=false;trigger.setAttribute('aria-expanded','false');if(returnFocus)trigger.focus()}
- function open(){if(!canEditScore())return;closeRangePicker();sync();view.suppressClick=false;view.position=Math.max(0,items.findIndex(item=>item.key===state.tuning))*step;trigger.hidden=true;menu.hidden=false;trigger.setAttribute('aria-expanded','true');render();buttons[wrap(Math.round(view.position/step))].focus({preventScroll:true})}
- cancelWheel=bindSmoothWheel(track,menu,'x',PLAYER_RULES.selectors.rangeMaxStepPx,{loop:true,read:()=>view.position,write:value=>{view.position=value;render()}});
+ for(const item of items){const button=document.createElement('button');button.type='button';button.dataset.key=item.key;button.textContent=item.key==='sky-original'?'光遇':KEY_DEGREES[item.key][0];button.title=item.label;button.setAttribute('role','option');button.tabIndex=-1;track.append(button)}
+ const ring=createCircularRangeTrack(track,menu,key=>{if(!canEditScore())return;$('consoleTuning').value=key;$('consoleTuning').onchange({target:$('consoleTuning')});close(true)},close);
+ function sync(){const selected=items.find(item=>item.key===state.tuning)||items[1];$('consoleRangeValue').textContent=selected.label;for(const button of track.querySelectorAll('[data-key]'))button.setAttribute('aria-selected',String(button.dataset.key===selected.key))}
+ function close(returnFocus=false){ring.cancel();menu.hidden=true;trigger.hidden=false;trigger.setAttribute('aria-expanded','false');if(returnFocus)trigger.focus()}
+ function open(){if(!canEditScore())return;closeRangePicker();sync();trigger.hidden=true;menu.hidden=false;trigger.setAttribute('aria-expanded','true');ring.center(state.tuning)}
  trigger.onclick=open;trigger.onkeydown=event=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();open()}};
- menu.onkeydown=event=>{view.suppressClick=false;let index=buttons.indexOf(document.activeElement),next;
-  if(event.key==='ArrowLeft'||event.key==='ArrowUp')next=wrap(index-1);if(event.key==='ArrowRight'||event.key==='ArrowDown')next=wrap(index+1);if(event.key==='Home')next=0;if(event.key==='End')next=count-1;
-  if(next!==undefined){event.preventDefault();event.stopPropagation();cancelWheel();const center=Math.round(view.position/step);let delta=wrap(next-wrap(center));if(delta>count/2)delta-=count;view.position=(center+delta)*step;render();buttons[next].focus({preventScroll:true})}
-  if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close(true)}if(event.key==='Tab')close(true);
- };
- menu.addEventListener('pointerdown',event=>{if(event.button!==0)return;view.suppressClick=false;view.touch={id:event.pointerId,x:event.clientX,y:event.clientY,start:view.position,moved:false}});
- menu.addEventListener('pointermove',event=>{const drag=view.touch;if(!drag||drag.id!==event.pointerId)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;if(!drag.moved&&Math.abs(dy)>Math.abs(dx)+4){view.touch=null;return}if(!drag.moved&&Math.abs(dx)<4)return;drag.moved=true;view.suppressClick=true;menu.setPointerCapture(event.pointerId);view.position=drag.start-dx;render();event.preventDefault()});
- const endDrag=event=>{if(view.touch?.id!==event.pointerId)return;view.touch=null;if(menu.hasPointerCapture(event.pointerId))menu.releasePointerCapture(event.pointerId)};menu.addEventListener('pointerup',endDrag);menu.addEventListener('pointercancel',endDrag);
  document.addEventListener('pointerdown',event=>{if(!menu.hidden&&!menu.contains(event.target)&&!trigger.contains(event.target))close()});
  consoleRangePicker={sync,close};sync();
 }

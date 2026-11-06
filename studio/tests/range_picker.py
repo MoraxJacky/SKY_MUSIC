@@ -41,27 +41,38 @@ with sync_playwright() as pw:
         assert visible == 5, visible
         menu.hover()
         vertical = page.evaluate('scrollY')
-        scroll = track.evaluate('(e)=>e.scrollLeft')
+        scroll = float(menu.get_attribute('data-position'))*49
         page.mouse.wheel(0, 100)
-        page.wait_for_function('document.getElementById("keyRangeTrack").scrollLeft > 0')
+        page.wait_for_function('(v)=>Number(document.getElementById("keyRangeMenu").dataset.position)*49 > v',arg=scroll)
         page.wait_for_timeout(350)
-        distance = track.evaluate('(e)=>e.scrollLeft') - scroll
+        distance = float(menu.get_attribute('data-position'))*49 - scroll
         assert 0 < distance <= 24, distance
         assert page.evaluate('scrollY') == vertical
         page.mouse.wheel(0, -100)
-        page.wait_for_function('document.getElementById("keyRangeTrack").scrollLeft === 0')
+        page.wait_for_function('(v)=>Math.abs(Number(document.getElementById("keyRangeMenu").dataset.position)*49-v)<1',arg=scroll)
         if width == 1366:
             positions = page.evaluate('''async () => {
-              const track=document.getElementById('keyRangeTrack'),samples=[];
+              const track=document.getElementById('keyRangeTrack'),menu=document.getElementById('keyRangeMenu'),base=Number(menu.dataset.position)*49,samples=[];
               track.dispatchEvent(new WheelEvent('wheel',{deltaY:1200,bubbles:true,cancelable:true}));
-              for(let i=0;i<28;i++){await new Promise(requestAnimationFrame);samples.push(track.scrollLeft)}
+              for(let i=0;i<28;i++){await new Promise(requestAnimationFrame);samples.push(Number(menu.dataset.position)*49-base)}
               return samples;
             }''')
             assert max(positions) <= 24, positions
             assert any(0 < p < max(positions) for p in positions), positions
             assert max(b-a for a,b in zip(positions, positions[1:])) < 12, positions
         assert all(abs(w-44) < .1 for w in page.locator('#keyRangeMenu [role=option]').evaluate_all('(es)=>es.map(e=>e.getBoundingClientRect().width)'))
+        if width == 1366:
+            menu.hover();start=float(menu.get_attribute('data-position'))
+            for _ in range(65):page.mouse.wheel(0,120);page.wait_for_timeout(8)
+            page.wait_for_timeout(400);forward=float(menu.get_attribute('data-position'));assert forward-start>26
+            for _ in range(130):page.mouse.wheel(0,-120);page.wait_for_timeout(8)
+            page.wait_for_timeout(400);assert float(menu.get_attribute('data-position'))-forward < -52
+        page.keyboard.press('End');page.keyboard.press('ArrowRight');assert page.evaluate('document.activeElement.dataset.key')=='sky-original'
+        page.keyboard.press('ArrowLeft');assert page.evaluate('document.activeElement.dataset.key')=='B'
+        page.keyboard.press('Home')
+        for _ in range(6):page.keyboard.press('ArrowRight')
         option = page.locator('#keyRangeMenu [data-key=F]')
+        option.evaluate('(e)=>e.blur()')
         page.locator('h1#songTitle').hover()
         page.wait_for_timeout(220)
         color = option.evaluate('(e)=>getComputedStyle(e).borderTopColor')
@@ -101,6 +112,7 @@ with sync_playwright() as pw:
             page.locator('#playBtn').click()
             page.wait_for_function('window.__SKY_STUDIO_TEST__.state.isPlaying')
             page.locator('#keyRangeToggle').click()
+            for _ in range(4):page.keyboard.press('ArrowLeft')
             page.locator('#keyRangeMenu [data-key=G]').click()
             page.wait_for_function('window.__SKY_STUDIO_TEST__.state.isPlaying')
             assert page.evaluate('window.__SKY_STUDIO_TEST__.state.tuning') == 'G'
@@ -113,4 +125,4 @@ with sync_playwright() as pw:
         page.close()
     browser.close()
 (out / 'results.json').write_text(json.dumps({'status': 'PASS', 'checks': evidence}, indent=2), encoding='utf-8')
-print('PASS left-opening range picker, gold selection, hover, keyboard, 12 keys, persistence and playback')
+print('PASS left-opening circular range picker, multiple wheel cycles, keyboard wrap, gold selection, hover, 12 keys, persistence and playback')

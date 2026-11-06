@@ -345,9 +345,9 @@ body:has(dialog[open]){overflow:hidden}
 .player-view .key-range-toggle:hover,.player-view .key-range-toggle[aria-expanded=true]{background:linear-gradient(125deg,#f1daa8,#d0aa70);box-shadow:0 0 13px #f0c88255;border-color:#fff0c4}
 /* Five fixed cells, fading directly to transparency at either edge. */
 .player-view .key-range-menu{position:fixed;z-index:100;height:42px;border:0;border-radius:0;background:transparent;box-shadow:none;transform-origin:right center;animation:range-open .16s ease-out;-webkit-mask-image:linear-gradient(to right,transparent,#000 16px,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(to right,transparent,#000 16px,#000 calc(100% - 16px),transparent)}
-.player-view .key-range-track{display:flex;align-items:center;gap:5px;width:100%;height:100%;padding:6px 16px;scroll-padding-inline:16px;overflow-x:auto;overscroll-behavior:contain;scrollbar-width:none}
+.player-view .key-range-track{position:relative;display:block;width:100%;height:100%;padding:0;overflow:hidden;touch-action:pan-y;cursor:grab;overscroll-behavior:contain;scrollbar-width:none}
 .player-view .key-range-track::-webkit-scrollbar{display:none}
-.player-view .key-range-menu button{flex:0 0 44px;min-height:30px;padding:4px 9px;border-radius:7px;border:1px solid #8b9e8b55;background:var(--player-button,#204239);color:var(--player-text,#f7edcf);font-size:12px}
+.player-view .key-range-menu button{position:absolute;left:calc(50% - 22px);top:6px;width:44px;min-width:44px;height:30px;will-change:transform;transition:background .18s,border-color .18s;min-height:30px;padding:4px 9px;border-radius:7px;border:1px solid #8b9e8b55;background:var(--player-button,#204239);color:var(--player-text,#f7edcf);font-size:12px}
 .player-view .key-range-menu button:hover,.player-view .key-range-menu button:focus-visible{background:#715b37;color:#fff0c4;border-color:#f3d29e;box-shadow:inset 0 0 0 1px #f3d29e55;outline:none}
 .player-view .key-range-menu button[aria-selected=true]{background:linear-gradient(125deg,#e1c78f,#b88c58);color:#203a2a;border-color:#f3d29e;box-shadow:0 0 9px #f0c88244;font-weight:700}
 @keyframes range-open{from{opacity:0;transform:translateX(8px) scaleX(.94)}to{opacity:1;transform:none}}
@@ -512,7 +512,6 @@ body:has(dialog[open]){overflow:hidden}
 .console-transport>.console-range-control{grid-column:1 / -1;position:relative;display:grid;place-items:center;justify-self:center;width:min(272px,100%);height:42px;margin:0;gap:0;min-width:0}
 .player-view .console-range-control .key-range-toggle{min-width:110px;height:34px}
 .player-view .console-range-control .key-range-menu{position:absolute;inset:0;width:100%;height:42px;animation:console-range-fade .15s ease-out;transform:none}
-.player-view .console-range-control .key-range-track{position:relative;display:block;padding:0;overflow:hidden;touch-action:pan-y;cursor:grab}
-.player-view .console-range-control .key-range-track button{position:absolute;left:calc(50% - 22px);top:6px;width:44px;min-width:44px;height:30px;min-height:30px;padding:4px 2px;white-space:nowrap;will-change:transform;transition:background .18s,border-color .18s}
+.player-view .console-range-control .key-range-track button{min-height:30px;padding:4px 2px;white-space:nowrap}
 @keyframes console-range-fade{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.player-view .console-range-control .key-range-menu{animation:none}}
