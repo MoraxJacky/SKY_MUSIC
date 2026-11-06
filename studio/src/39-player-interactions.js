@@ -10,7 +10,7 @@ function bindPlayerInteractions(){
  $('rollWindow').innerHTML='';for(const seconds of PLAYER_RULES.roll.windowsSeconds){const option=document.createElement('option');option.value=String(seconds);option.textContent=seconds+'秒';$('rollWindow').append(option)}
  $('playBtn').onclick=()=>playPause();$('restartBtn').onclick=()=>seekTo(0);
  $('sustainSlider').oninput=ev=>{state.sustain=Number(ev.target.value)/100;$('sustainValue').textContent=Math.round(state.sustain*100)+'%';if(state.project){state.project.playback.sustain=state.sustain;saveLibrary()}updateSustainAudio()};
- $('speedSelect').onchange=ev=>{let was=state.isPlaying;if(was)pauseSong();state.rate=Number(ev.target.value);if(state.project){state.project.playback.rate=state.rate;saveLibrary()}if(was)playPause()};
+ $('speedSelect').onchange=ev=>{let was=state.isPlaying;if(was)pauseSong();state.rate=Number(ev.target.value);syncSpeedPicker();if(state.project){state.project.playback.rate=state.rate;saveLibrary()}if(was)playPause()};
  $('rollWindow').onchange=ev=>{const finishing=Boolean(state.rollFinish),frame=rollFrame(),fraction=frame.phase/frame.windowMs;cancelRollFinish();state.windowSec=Number(ev.target.value);state.rollPageStart=rollSeekOrigin(state.position,fraction);if(finishing)finishRollScan();else drawRoll()};
  $('rollWindow').value=String(state.windowSec);$('stepPrev').onclick=()=>stepEvent(-1);$('stepNext').onclick=()=>stepEvent(1);
  $('seekSlider').oninput=ev=>seekTo(Number(ev.target.value));
@@ -39,7 +39,7 @@ function positionRangePicker(){
  menu.style.width=width+'px';menu.style.left=left+'px';menu.style.top=Math.max(8,Math.min(innerHeight-46,rect.top+(rect.height-42)/2))+'px';
 }
 function openRangePicker(){
- closeInstrumentPicker();setTuningButtons();$('keyRangeMenu').hidden=false;$('keyRangeToggle').setAttribute('aria-expanded','true');positionRangePicker();
+ closeInstrumentPicker();closeSpeedPicker();setTuningButtons();$('keyRangeMenu').hidden=false;$('keyRangeToggle').setAttribute('aria-expanded','true');positionRangePicker();
  const selected=$('keyRangeMenu').querySelector('[aria-selected="true"]');selected?.focus({preventScroll:true});selected?.scrollIntoView({block:'nearest',inline:'nearest'});
 }
 function bindRangePicker(){
@@ -91,67 +91,55 @@ function bindSmoothWheel(track,host,axis='x',limit=24,model=null){
  host.addEventListener('pointerdown',cancel);host.addEventListener('keydown',cancel);
  return cancel;
 }
-let cancelInstrumentWheel=()=>{};
-const instrumentViewport={position:0,row:31,step:36,touch:null,suppressClick:false};
-function closeInstrumentPicker(returnFocus=false){cancelInstrumentWheel();$('instrumentMenu').hidden=true;$('instrumentToggle').setAttribute('aria-expanded','false');if(returnFocus)$('instrumentToggle').focus()}
-function syncInstrumentPicker(){
- const spec=instrumentSpec(state.project?.playback?.instrument);
- $('instrumentSelect').value=spec.id;$('instrumentValue').textContent=spec.name;
- for(const button of $('instrumentOptions').querySelectorAll('[data-instrument]'))button.setAttribute('aria-selected',String(button.dataset.instrument===spec.id));
-}
-function positionInstrumentPicker(){
- const rect=$('instrumentToggle').getBoundingClientRect(),menu=$('instrumentMenu'),view=instrumentViewport;
- view.row=rect.height;view.step=rect.height+PLAYER_RULES.selectors.instrumentRowGapPx;
- const above=0; // Expand downward from the original control, never above it.
- const below=Math.min(PLAYER_RULES.selectors.instrumentRowsBelow*view.step,(INSTRUMENTS.length-1-view.position)*view.step,Math.max(0,innerHeight-rect.bottom-8));
- menu.style.width=rect.width+'px';menu.style.left=rect.left+'px';menu.style.top=(rect.top-above)+'px';menu.style.height=(above+rect.height+below)+'px';
- const focus=$('instrumentCurrent');focus.style.top=above+'px';focus.style.height=rect.height+'px';
- const buttons=$('instrumentOptions').querySelectorAll('[data-instrument]');
- for(let i=0;i<buttons.length;i++){
-  const y=above+(i-view.position)*view.step,visible=y+view.row>0&&y<above+view.row+below;
-  buttons[i].style.top=y+'px';buttons[i].style.height=view.row+'px';buttons[i].style.visibility=visible?'visible':'hidden';
+// One downward picker template for instruments and playback speed.
+function createDownwardPicker(config){
+ const trigger=$(config.trigger),menu=$(config.menu),options=$(config.options),focus=$(config.focus),items=config.items;
+ const view={position:0,row:31,step:36,touch:null,suppressClick:false};let cancelWheel=()=>{};
+ const buttons=items.map(item=>{const button=document.createElement('button');button.type='button';button.dataset.value=item.value;button.dataset[config.attribute]=item.value;button.setAttribute('role','option');button.setAttribute('aria-selected','false');button.tabIndex=-1;button.textContent=item.label;button.onclick=()=>{if(view.suppressClick){view.suppressClick=false;return}config.choose(item.value)};options.append(button);return button});
+ function sync(){for(const button of buttons)button.setAttribute('aria-selected',String(button.dataset.value===config.selected()))}
+ function close(returnFocus=false){cancelWheel();menu.hidden=true;trigger.setAttribute('aria-expanded','false');if(returnFocus)trigger.focus()}
+ function position(){
+  const rect=trigger.getBoundingClientRect();view.row=rect.height;view.step=rect.height+PLAYER_RULES.selectors.instrumentRowGapPx;
+  const below=Math.min(config.rowsBelow()*view.step,(items.length-1-view.position)*view.step,Math.max(0,innerHeight-rect.bottom-8));
+  menu.style.width=rect.width+'px';menu.style.left=rect.left+'px';menu.style.top=rect.top+'px';menu.style.height=(rect.height+below)+'px';focus.style.top='0px';focus.style.height=rect.height+'px';
+  buttons.forEach((button,i)=>{const y=(i-view.position)*view.step;button.style.top=y+'px';button.style.height=view.row+'px';button.style.visibility=y+view.row>0&&y<view.row+below?'visible':'hidden'});menu.dataset.position=String(view.position);
  }
- menu.dataset.position=String(view.position);
+ function move(value){view.position=clamp(value,0,items.length-1);position();if(options.contains(document.activeElement)&&document.activeElement.style.visibility==='hidden')menu.focus({preventScroll:true})}
+ function open(){config.beforeOpen();sync();cancelWheel();view.position=Math.max(0,items.findIndex(item=>item.value===config.selected()));menu.hidden=false;trigger.setAttribute('aria-expanded','true');position();buttons.find(button=>button.dataset.value===config.selected())?.focus({preventScroll:true})}
+ menu.tabIndex=-1;
+ cancelWheel=bindSmoothWheel(options,menu,'y',PLAYER_RULES.selectors.instrumentMaxStepPx,{read:()=>view.position*view.step,write:pixels=>move(pixels/view.step),max:()=>(items.length-1)*view.step,snap:pixels=>Math.round(pixels/view.step)*view.step});
+ trigger.onclick=()=>menu.hidden?open():close();trigger.onkeydown=event=>{if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();open()}};
+ menu.onkeydown=event=>{
+  const focused=buttons.indexOf(document.activeElement),index=focused>=0?focused:Math.round(view.position);let next;
+  if(event.key==='ArrowDown')next=Math.min(buttons.length-1,index+1);if(event.key==='ArrowUp')next=Math.max(0,index-1);if(event.key==='Home')next=0;if(event.key==='End')next=buttons.length-1;
+  if(next!==undefined){event.preventDefault();cancelWheel();move(next);buttons[next].focus({preventScroll:true})}
+  if(['Enter',' '].includes(event.key)){event.preventDefault();event.stopPropagation();config.choose(items[index].value)}
+  if(event.key==='Escape'){event.preventDefault();close(true)}if(event.key==='Tab')close();
+ };
+ menu.addEventListener('pointerdown',event=>{if(event.pointerType==='touch'){view.touch={id:event.pointerId,y:event.clientY,position:view.position};view.suppressClick=false}});
+ menu.addEventListener('pointermove',event=>{if(!view.touch||view.touch.id!==event.pointerId)return;const dy=event.clientY-view.touch.y;if(Math.abs(dy)>6){view.suppressClick=true;menu.setPointerCapture(event.pointerId);move(view.touch.position-dy/view.step)}});
+ const endTouch=()=>{if(view.touch&&view.suppressClick)cancelWheel.to(Math.round(view.position)*view.step);view.touch=null;setTimeout(()=>view.suppressClick=false,0)};
+ menu.addEventListener('pointerup',endTouch);menu.addEventListener('pointercancel',endTouch);
+ document.addEventListener('pointerdown',event=>{if(!menu.hidden&&!menu.contains(event.target)&&!trigger.contains(event.target))close()});
+ window.addEventListener('resize',()=>{if(!menu.hidden){cancelWheel();position()}});window.addEventListener('scroll',event=>{if(!menu.hidden&&event.target!==menu&&!menu.contains(event.target))close()},true);
+ return {open,close,sync};
 }
-function openInstrumentPicker(){
- closeRangePicker();syncInstrumentPicker();cancelInstrumentWheel();
- instrumentViewport.position=Math.max(0,INSTRUMENTS.findIndex(spec=>spec.id===state.project?.playback?.instrument));
- $('instrumentMenu').hidden=false;$('instrumentToggle').setAttribute('aria-expanded','true');positionInstrumentPicker();
- $('instrumentOptions').querySelector('[aria-selected="true"]')?.focus({preventScroll:true});
-}
+let instrumentPicker=null,speedPicker=null;
+function closeInstrumentPicker(returnFocus=false){instrumentPicker?.close(returnFocus)}
+function closeSpeedPicker(returnFocus=false){speedPicker?.close(returnFocus)}
+function syncInstrumentPicker(){const spec=instrumentSpec(state.project?.playback?.instrument);$('instrumentSelect').value=spec.id;$('instrumentValue').textContent=spec.name;instrumentPicker?.sync()}
+function syncSpeedPicker(){$('speedSelect').value=String(state.rate);$('speedValue').textContent=state.rate.toFixed(2)+'×';speedPicker?.sync()}
 async function chooseInstrument(id){
  if(!state.project)return;const project=state.project,selection=++instrumentSelection,was=state.isPlaying||instrumentResume;
  instrumentResume=was;if(state.isPlaying)pauseSong();project.playback.instrument=instrumentSpec(id).id;saveLibrary();syncInstrumentPicker();closeInstrumentPicker(true);
  toast('正在准备'+instrumentSpec(id).name+'…',1300);
  try{const ready=await preloadPiano();if(selection!==instrumentSelection||project!==state.project)return;instrumentResume=false;if(ready&&was&&!state.isPlaying)await playPause()}catch(error){if(selection===instrumentSelection)instrumentResume=false;console.warn(error);toast('音源加载异常：'+error.message,5000)}
 }
+
 function bindInstrumentPicker(){
- const menu=$('instrumentMenu'),trigger=$('instrumentToggle'),options=$('instrumentOptions'),view=instrumentViewport;
- for(const spec of INSTRUMENTS){
-  const button=document.createElement('button');button.type='button';button.dataset.instrument=spec.id;button.setAttribute('role','option');button.setAttribute('aria-selected','false');button.tabIndex=-1;button.textContent=spec.name+' · '+(spec.mode==='offline'?'离线':'在线');
-  button.onclick=()=>{if(view.suppressClick){view.suppressClick=false;return}if(state.project?.playback?.instrument===spec.id)closeInstrumentPicker(true);else chooseInstrument(spec.id)};options.append(button);
- }
- menu.tabIndex=-1;
- const move=position=>{view.position=clamp(position,0,INSTRUMENTS.length-1);positionInstrumentPicker();if(options.contains(document.activeElement)&&document.activeElement.style.visibility==='hidden')menu.focus({preventScroll:true})};
- cancelInstrumentWheel=bindSmoothWheel(options,menu,'y',PLAYER_RULES.selectors.instrumentMaxStepPx,{read:()=>view.position*view.step,write:pixels=>move(pixels/view.step),max:()=>(INSTRUMENTS.length-1)*view.step,snap:pixels=>Math.round(pixels/view.step)*view.step});
- trigger.onclick=()=>menu.hidden?openInstrumentPicker():closeInstrumentPicker();
- trigger.onkeydown=event=>{if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();openInstrumentPicker()}};
- menu.onkeydown=event=>{
-  const buttons=[...options.querySelectorAll('[data-instrument]')],focused=buttons.indexOf(document.activeElement),index=focused>=0?focused:Math.round(view.position);let next;
-  if(event.key==='ArrowDown')next=Math.min(buttons.length-1,index+1);if(event.key==='ArrowUp')next=Math.max(0,index-1);
-  if(event.key==='Home')next=0;if(event.key==='End')next=buttons.length-1;
-  if(next!==undefined){event.preventDefault();cancelInstrumentWheel();move(next);buttons[next].focus({preventScroll:true})}
-  if(event.key==='Escape'){event.preventDefault();closeInstrumentPicker(true)}if(event.key==='Tab')closeInstrumentPicker();
- };
- menu.addEventListener('pointerdown',event=>{if(event.pointerType==='touch'){view.touch={id:event.pointerId,y:event.clientY,position:view.position};view.suppressClick=false}});
- menu.addEventListener('pointermove',event=>{
-  if(!view.touch||view.touch.id!==event.pointerId)return;
-  const dy=event.clientY-view.touch.y;
-  if(Math.abs(dy)>6){view.suppressClick=true;menu.setPointerCapture(event.pointerId);move(view.touch.position-dy/view.step)}
- });
- const endTouch=()=>{if(view.touch&&view.suppressClick)cancelInstrumentWheel.to(Math.round(view.position)*view.step);view.touch=null;setTimeout(()=>view.suppressClick=false,0)};
- menu.addEventListener('pointerup',endTouch);menu.addEventListener('pointercancel',endTouch);
- document.addEventListener('pointerdown',event=>{if(!menu.hidden&&!menu.contains(event.target)&&!trigger.contains(event.target))closeInstrumentPicker()});
- window.addEventListener('resize',()=>{if(!menu.hidden){cancelInstrumentWheel();positionInstrumentPicker()}});
- window.addEventListener('scroll',event=>{if(!menu.hidden&&event.target!==menu&&!menu.contains(event.target))closeInstrumentPicker()},true);
+ instrumentPicker=createDownwardPicker({trigger:'instrumentToggle',menu:'instrumentMenu',options:'instrumentOptions',focus:'instrumentCurrent',attribute:'instrument',items:INSTRUMENTS.map(spec=>({value:spec.id,label:spec.name+' · '+(spec.mode==='offline'?'离线':'在线')})),selected:()=>instrumentSpec(state.project?.playback?.instrument).id,rowsBelow:()=>PLAYER_RULES.selectors.instrumentRowsBelow,beforeOpen:()=>{closeRangePicker();closeSpeedPicker()},choose:id=>{if(state.project?.playback?.instrument===id)closeInstrumentPicker(true);else chooseInstrument(id)}});
+}
+function bindSpeedPicker(){
+ $('speedSelect').innerHTML='';for(const rate of PLAYER_RULES.playbackRates){const option=document.createElement('option');option.value=String(rate);option.textContent=rate.toFixed(2)+'×';$('speedSelect').append(option)}
+ speedPicker=createDownwardPicker({trigger:'speedToggle',menu:'speedMenu',options:'speedOptions',focus:'speedCurrent',attribute:'speed',items:PLAYER_RULES.playbackRates.map(rate=>({value:String(rate),label:rate.toFixed(2)+'×'})),selected:()=>String(state.rate),rowsBelow:()=>PLAYER_RULES.selectors.speedRowsBelow,beforeOpen:()=>{closeRangePicker();closeInstrumentPicker()},choose:value=>{$('speedSelect').value=value;$('speedSelect').onchange({target:$('speedSelect')});closeSpeedPicker(true)}});
 }

@@ -118,3 +118,5 @@
 卷帘时间轴：8s/10s 窗口每 1 秒标注，12s/20s 每 5 秒标注，配置归 `roll.labelIntervalSecondsByWindow`。每秒竖线及细分格保留；最终音符附近补充可见范围内最近的整秒标签（无整秒时显示精确时间），必要时让相邻常规标签避让。文字中心与对应竖线共用同一横坐标，右侧留足文字空间，最终谱面不增加空白时长。
 
 音色菜单的下方可见数量由 `selectors.instrumentRowsBelow` 控制，基准框上方始终没有扩展区域。
+
+倍速和音色共用 `createDownwardPicker()`、同一组样式及平滑滚轮/触摸/键盘处理，均固定原选择框并仅向下展开。倍速保留 0.25×–2.00×，下方可见两项由 `selectors.speedRowsBelow` 控制；选中即收回，播放中更换继续同步音乐。UI 识别入口为 `speedToggle`（名称“选择倍速”）和 `speedMenu`（listbox，名称“倍速选项”），原 `speedSelect` 保留作隐藏兼容适配。音域、音色、倍速打开时相互收起。

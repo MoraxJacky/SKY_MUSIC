@@ -407,3 +407,6 @@ body:has(dialog[open]){overflow:hidden}
 /* Volume and sustain share the same themed range and percentage colors. */
 .player-view :is(.volume-control,.sustain-control) input[type=range]{accent-color:var(--gold)}
 .player-view :is(.volume-control,.sustain-control) output{color:#f0d8b5}
+
+/* Playback speed shares the instrument picker template at its original compact width. */
+.player-view .speed-control .instrument-toggle{width:72px;gap:6px}

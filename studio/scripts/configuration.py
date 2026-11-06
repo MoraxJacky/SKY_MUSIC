@@ -13,7 +13,8 @@ def render(root):
     assert player['grid'] == {'columns': 8, 'rows': 4, 'keyCount': 15}, 'The shared Sky layout is 8x4 / 15 keys'
     assert player['roll']['initialSeconds'] in player['roll']['windowsSeconds']
     assert all(player['roll']['labelIntervalSecondsByWindow'][str(window)] > 0 for window in player['roll']['windowsSeconds'])
-    assert player['selectors']['instrumentRowsBelow'] >= 0
+    assert player['playbackRates'] and all(0.25 <= rate <= 2 for rate in player['playbackRates'])
+    assert player['selectors']['instrumentRowsBelow'] >= 0 and player['selectors']['speedRowsBelow'] >= 0
     assert 0 <= player['volume']['default'] <= 1 and 0 < player['volume']['maxGain'] <= 8
     assert 0 < player['volume']['rampSeconds'] <= 0.1
     elements = load('themes/elements.json')['elements']

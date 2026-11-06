@@ -36,7 +36,8 @@
     "instrumentMaxStepPx": 18,
     "instrumentRowGapPx": 5,
     "instrumentSnapDelayMs": 110,
-    "instrumentRowsBelow": 2
+    "instrumentRowsBelow": 2,
+    "speedRowsBelow": 2
   },
   "volume": {
     "default": 0.25,
@@ -45,5 +46,15 @@
     "sliderId": "volumeSlider",
     "outputId": "volumeValue",
     "label": "音量"
-  }
+  },
+  "playbackRates": [
+    0.25,
+    0.5,
+    0.75,
+    1,
+    1.25,
+    1.5,
+    1.75,
+    2
+  ]
 }
