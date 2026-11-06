@@ -24,6 +24,9 @@ for decoration in ['legacy-tree.png']:
 home_art='assets/platform/music-islands-v1.png'
 home_uri='data:image/png;base64,'+base64.b64encode((APP/home_art).read_bytes()).decode()
 site=site.replace('src="'+home_art+'"','src="'+home_uri+'"')
+islet_art='assets/platform/home-islet.svg'
+islet_uri='data:image/svg+xml;base64,'+base64.b64encode((APP/islet_art).read_bytes()).decode()
+site=site.replace('src="'+islet_art+'"','src="'+islet_uri+'"')
 theme_assets={}
 config_text=(APP/'js/studio-config.js').read_text(encoding='utf-8')
 config_data=json.loads(config_text.split('window.SKY_STUDIO_CONFIG=',1)[1].rstrip(';\n'))

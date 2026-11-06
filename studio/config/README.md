@@ -14,7 +14,7 @@
 |---|---|---|
 | `.skymusic` | 完整单曲，主要传播文件 | `format: skymusic`、`schemaVersion: 2`；歌曲信息、首页卡片、播放初值、完整内嵌 `music` 谱面对象、`theme: {id}` |
 | `.skytrack` | 独立数字谱面 | `format: skytrack`、`schemaVersion: 1`；15 键数字音符、毫秒时间、长度、力度、网格间隔、调性；不含主题或交互 |
-| `.skytheme` | 平台主题 | 主题定义、元素编号映射、配色、装饰与资源；先在首页“录入主题”导入，歌曲才可引用其 ID |
+| `.skytheme` | 平台主题 | 主题定义、元素编号映射、配色、装饰与资源；先在首页“主题仓库”导入，歌曲才可引用其 ID |
 
 `.skymusic` 的 `music` 对象就是 `.skytrack` 全文，不依赖接收方额外找到谱面文件；`theme` 仅允许一个 `id`，不携带主题定义、资源或脚本。主题未录入时导入失败且不新增歌曲。六个内置主题预先安装。新主题使用独立 ID，不能以同 ID 静默覆盖已有主题。用户主题独立保存在 `sky-music-studio-themes-v1`；原曲库键保持不变。浏览器存储容量不足时录入会失败，不会假装成功。
 
@@ -84,7 +84,7 @@ python -X utf8 scripts/configuration.py --check
 
 ## 平台首页交互
 
-`home-interactions.json` 单独保存首页轮播计时、卡片弹簧/翻转/视差与噪声光雾参数，入口为 `src/41-home-experience.js`。它不包含数字谱、播放器状态或主题处理器；主题横幅仅读取六款平台预设作展示，不更改歌曲主题。详细行为见 [HOME_EXPERIENCE.md](../docs/HOME_EXPERIENCE.md)。
+`home-interactions.json` 单独保存首页轮播计时、卡片弹簧/翻转/视差、卡片进入播放器的展开/显露计时与噪声光雾参数，入口为 `src/41-home-experience.js`。它不包含数字谱、播放器状态或主题处理器；主题横幅仅读取六款平台预设作展示，不更改歌曲主题。详细行为见 [HOME_EXPERIENCE.md](../docs/HOME_EXPERIENCE.md)。
 
 六主题插画v2的资源索引在 `themes/elements.json`，每套预设通过 `elementRefs` 引用自己的场景、双人小景和挂件。`decorations.layout` 只控制场景填充与角色/挂件百分比构图，由共享模板校验并应用；不能携带音乐或处理器。详细路径、来源及提示词见 [THEME_ART_V2.md](../docs/THEME_ART_V2.md)。
 

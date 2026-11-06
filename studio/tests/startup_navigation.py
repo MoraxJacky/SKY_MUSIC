@@ -74,6 +74,7 @@ try:
             page.goto(url)
             assert_home(page)
             page.locator('.card-play').first.click()
+            page.wait_for_function("document.getElementById('songEntryTransition').hidden")
             assert_song_start(page)
             song_id = state(page)['project']
             # Returning to a song must ignore both the previous player view and editor view.
@@ -85,6 +86,7 @@ try:
             page.locator('#discardChanges').click()
             page.evaluate('window.__SKY_STUDIO_TEST__.goHome()')
             page.locator('.card-play').first.click()
+            page.wait_for_function("document.getElementById('songEntryTransition').hidden")
             assert_song_start(page)
             page.locator('#scoreEditorBtn').click()
             assert page.evaluate('window.__SKY_STUDIO_TEST__.state.position') == 0
@@ -92,7 +94,7 @@ try:
             page.locator('#consoleClose').click()
             page.locator('#discardChanges').click()
             # A saved score and playback preference survive; an unsaved console edit does not.
-            page.locator('#volumeSlider').fill('37')
+            page.locator('#volumePicker').evaluate("e=>{e.value=37;e.dispatchEvent(new Event('input',{bubbles:true}))}")
             page.locator('#scoreEditorBtn').click()
             page.locator('#consoleFineTab').click()
             page.locator('#eventDuration').fill('410')
@@ -131,7 +133,7 @@ try:
                 (out/f'{name}-saved.json').write_text(saved, 'utf-8')
                 (out/f'{name}-restored.json').write_text(restored, 'utf-8')
             assert restored == saved
-            assert page.locator('#volumeSlider').input_value() == '37'
+            assert page.locator('#volumePicker').get_attribute('aria-valuenow') == '37'
             assert page.locator('#consoleNumberScore').input_value() == ''
             # An intentionally opened song link starts at zero; reloading that link goes home.
             fresh = context.new_page()

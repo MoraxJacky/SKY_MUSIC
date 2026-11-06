@@ -44,7 +44,7 @@ with sync_playwright() as pw:
  page.mouse.move(0,0);page.wait_for_timeout(1100);assert card.evaluate('e=>Math.abs(Number(e.dataset.tiltX))<.04&&Math.abs(Number(e.dataset.tiltY))<.04')
  # A flip changes presentation only; its reverse face contains data and no imagery.
  score=page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.library.map(p=>[p.score,p.playback]))')
- trigger=card.locator('.cone-flip-trigger');trigger.click();page.wait_for_timeout(340);assert card.locator('.cone-flip').evaluate('e=>e.getAnimations().some(a=>a.playState==="running")');assert card.locator('.cone-flip').bounding_box()['width']<r['width']*.65;page.wait_for_timeout(560);assert card.get_attribute('data-face')=='back'
+ trigger=card.locator('.cone-flip-trigger');trigger.click();page.wait_for_timeout(150);assert card.locator('.cone-flip').evaluate('e=>e.getAnimations().some(a=>a.playState==="running")');assert card.locator('.cone-flip').bounding_box()['width']<r['width']*.65;page.wait_for_timeout(320);assert card.get_attribute('data-face')=='back'
  assert card.locator('.cone-back img').count()==0 and 'url(' not in card.locator('.cone-back').evaluate('e=>getComputedStyle(e).backgroundImage')
  assert card.locator('.cone-info dd').count()==3 and card.locator('.cone-info dt').all_text_contents()==['音符数','音域','作者'] and trigger.get_attribute('aria-pressed')=='true'
  assert page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.library.map(p=>[p.score,p.playback]))')==score
@@ -58,7 +58,7 @@ with sync_playwright() as pw:
  page.locator('.light-cone').first.get_by_role('button',name='制作副本',exact=True).click();assert page.locator('.light-cone').count()==4
  page.locator('.light-cone').first.get_by_role('button',name='删除项目',exact=True).click();page.locator('#deleteConfirm').click();assert page.locator('.light-cone').count()==3
  # The dedicated play button works on the back without toggling the card.
- page.locator('.light-cone').first.locator('.card-play').click();assert page.locator('#playerView').is_visible();assert page.evaluate('window.__SKY_STUDIO_TEST__.state.position')==0
+ page.locator('.light-cone').first.locator('.card-play').click();page.wait_for_function("document.getElementById('songEntryTransition').hidden");assert page.locator('#playerView').is_visible();assert page.evaluate('window.__SKY_STUDIO_TEST__.state.position')==0
  page.locator('#backLibrary').click();page.locator('#songSearch').fill('不存在的乐曲');assert page.locator('.light-cone').count()==0;page.locator('#songSearch').fill('')
  # Three columns keep their original full cell width and fill two usable rows.
  page.evaluate('''()=>{const t=window.__SKY_STUDIO_TEST__;while(t.state.library.length<6)t.duplicateSong(t.state.library[0].id)}''')
@@ -77,7 +77,7 @@ with sync_playwright() as pw:
  # Symmetric heading insets, comfortable separation, and white navigation gradients.
  geometry=page.evaluate('''()=>{const r=s=>document.querySelector(s).getBoundingClientRect(),g=r('#libraryCards'),h=r('.library-heading'),t=r('.library-heading h2'),c=r('.library-tools'),hero=r('.theme-carousel');return {left:t.left-g.left,right:g.right-c.right,gap:h.top-hero.bottom,arrow:getComputedStyle(document.getElementById('homeThemePrev')).backgroundImage,glow:getComputedStyle(document.querySelector('.theme-carousel')).boxShadow}}''')
  assert abs(geometry['left']-geometry['right'])<1 and geometry['left']==12 and geometry['gap']>=27,geometry
- assert '241, 250, 255' in geometry['arrow'] and geometry['glow']!='none',geometry
+ assert '255, 255, 255' in geometry['arrow'] and geometry['glow']!='none',geometry
  # Each slide carries its own settings button; a preview is isolated from musical state.
  library=page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.library)')
  for index,theme in enumerate(ids):

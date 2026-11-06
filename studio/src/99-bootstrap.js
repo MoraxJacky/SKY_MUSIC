@@ -6,6 +6,7 @@ function install(){restorePlatformThemes();state.library=BUILTINS.map(p=>normali
  }
 // Browsers can restore a complete page or its form controls independently of app data.
 function resetStartupNavigation(home=true){
+ cancelSongEntry();
  stopConsoleRecording();cancelRollDrag();pauseSong();cancelRollFinish();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();
  if($('scoreConsole').open)closeScoreConsole();
  if(state.editMode&&state.editSource)state.project=state.editSource;

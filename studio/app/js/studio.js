@@ -812,21 +812,22 @@ function renderLibrary(){
   const card=document.createElement('article'),definition=themeDefinition(song),palette=definition.appearance;card.className='song-card light-cone';card.dataset.songId=song.id;
   for(const key of ['stageStart','stageEnd','accent'])card.style.setProperty('--card-'+key.replace(/[A-Z]/g,c=>'-'+c.toLowerCase()),palette[key]);
   card.innerHTML='<div class="cone-tilt"><div class="cone-flip"><div class="cone-face cone-front"><div class="song-cover"><span class="cover-tag"></span></div><div class="song-details"><div><h3></h3><p></p></div></div></div><div class="cone-face cone-back" aria-hidden="true"><span class="cone-back-label">SCORE ARCHIVE</span><h3></h3><dl class="cone-info"></dl><span class="cone-return">再次点击 · 返回封面</span></div></div><button class="cone-flip-trigger" type="button" aria-pressed="false"></button><div class="cone-foil" aria-hidden="true"></div><div class="cone-sheen" aria-hidden="true"></div><div class="cone-etch" aria-hidden="true"></div><div class="cone-edge" aria-hidden="true"></div><button class="card-play" type="button">▶</button><div class="song-card-actions"></div></div>';
+  for(const decoration of card.querySelectorAll('.cone-foil,.cone-sheen,.cone-etch,.cone-edge')){card.querySelector('.cone-back').append(decoration.cloneNode(true));card.querySelector('.cone-front').append(decoration)}
   card.querySelector('.cone-front h3').textContent=song.card?.title||song.title;card.querySelector('.cone-back h3').textContent=song.title;
   card.querySelector('.song-details p').textContent=definition.displayName+' · '+durationFmt(song.durationMs);
   card.querySelector('.cover-tag').textContent=song.originKind==='builtin'?'内置曲谱':song.originKind==='imported'?'导入曲谱':'我的曲谱';
   const coverPath=platformCover(song)||song._imageUrl||definition.decorations.cover;if(coverPath){const image=document.createElement('img');image.alt='';image.src=coverPath.startsWith('data:')?coverPath:themeAsset(coverPath,song);card.querySelector('.song-cover').append(image)}
   const tuning=song.playback?.tuning||'C',details=[['音符数',String(songNotes(song))],['音域',tuning==='sky-original'?'光遇原调':(KEY_DEGREES[tuning]||KEY_DEGREES.C)[0]+' 大调'],['作者',song.author||'未署名']];
   for(const [label,value]of details){const group=document.createElement('div'),term=document.createElement('dt'),content=document.createElement('dd');term.textContent=label;content.textContent=value;content.title=value;group.append(term,content);card.querySelector('.cone-info').append(group)}
-  const play=card.querySelector('.card-play');play.setAttribute('aria-label','演奏'+song.title);play.onclick=event=>{event.stopPropagation();openSong(song.id)};
+  const play=card.querySelector('.card-play');play.setAttribute('aria-label','演奏'+song.title);play.onclick=event=>{event.stopPropagation();enterSongFromCard(song.id,card)};
   const actions=card.querySelector('.song-card-actions');for(const [label,action,title]of [[song.favorite?'★':'☆',()=>favoriteSong(song.id),'收藏'],['✎',()=>renameSong(song.id),'重命名'],['⧉',()=>duplicateSong(song.id),'制作副本'],['×',()=>deleteSong(song.id),'删除项目']]){const button=document.createElement('button');button.textContent=label;button.title=title;button.setAttribute('aria-label',title);button.onclick=event=>{event.stopPropagation();action()};actions.append(button)}
   attachHomeCard(card,song);container.append(card);
  }
  const add=document.createElement('button');add.className='song-card add-card';add.innerHTML='<span class="plus">＋</span><strong>导入新的乐曲</strong><span>SKYMUSIC · MIDI · MUSICXML · AUDIO</span>';add.onclick=openImport;container.append(add);resumeHomePresentation();
 }
 function openImport(){$('importDialog').showModal()}
-function mountPlatformProject(id){cancelPlayerValueScroll();pauseHomePresentation();cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();pauseSong();let p=state.library.find(p=>p.id===id);if(!p){toast('找不到歌曲');return}state.project=p;state.editMode=false;state.editDirty=false;state.editSource=null;state.editBaseline=null;updateEditButton();p.lastOpened=Date.now();saveLibrary();state.position=0;state.rollPageStart=0;state.windowSec=PLAYER_RULES.roll.initialSeconds;$('rollWindow').value=String(state.windowSec);scoreConsole.views.delete(id);scoreConsole.mode=PLAYER_RULES.editor.initialMode;state.selected=0;state.lastSelected=-1;state.page=-1;state.rate=p.playback.rate||1;state.tuning=p.playback.tuning||'C';state.sustain=Number.isFinite(p.playback.sustain)?p.playback.sustain:.45;state.volume=normalizeVolume(p.playback.volume);syncVolumeControl();$('homeView').hidden=true;$('playerView').hidden=false;state.mode='player';$('playBtn').textContent='▶ 播放';$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';syncSpeedPicker();syncSustainControl();$('instrumentSelect').value=p.playback.instrument||'offline';$('keySelect').value=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs);$('playBtn').disabled=false;applyTheme();initializeScene();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();try{localStorage.setItem('sky-last-song',id)}catch(e){console.warn('最近播放缓存不可用',e)}requestAnimationFrame(drawRoll);try{history.replaceState(null,'','#song='+encodeURIComponent(id))}catch(e){}}
-function goHome(){cancelPlayerValueScroll();cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();if(state.editMode){requestFinishEdit('home');return}pauseSong();state.mode='home';$('playerView').hidden=true;$('homeView').hidden=false;try{history.replaceState(null,'',location.pathname)}catch(e){};renderLibrary();toast('已返回音乐馆',1000)}
+function mountPlatformProject(id){if(!homeExperience.entry?.mounting)cancelSongEntry();cancelPlayerValueScroll();pauseHomePresentation();cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();pauseSong();let p=state.library.find(p=>p.id===id);if(!p){toast('找不到歌曲');return}state.project=p;state.editMode=false;state.editDirty=false;state.editSource=null;state.editBaseline=null;updateEditButton();p.lastOpened=Date.now();saveLibrary();state.position=0;state.rollPageStart=0;state.windowSec=PLAYER_RULES.roll.initialSeconds;$('rollWindow').value=String(state.windowSec);scoreConsole.views.delete(id);scoreConsole.mode=PLAYER_RULES.editor.initialMode;state.selected=0;state.lastSelected=-1;state.page=-1;state.rate=p.playback.rate||1;state.tuning=p.playback.tuning||'C';state.sustain=Number.isFinite(p.playback.sustain)?p.playback.sustain:.45;state.volume=normalizeVolume(p.playback.volume);syncVolumeControl();$('homeView').hidden=true;$('playerView').hidden=false;state.mode='player';$('playBtn').textContent='▶ 播放';$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';syncSpeedPicker();syncSustainControl();$('instrumentSelect').value=p.playback.instrument||'offline';$('keySelect').value=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs);$('playBtn').disabled=false;applyTheme();initializeScene();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();try{localStorage.setItem('sky-last-song',id)}catch(e){console.warn('最近播放缓存不可用',e)}requestAnimationFrame(drawRoll);try{history.replaceState(null,'','#song='+encodeURIComponent(id))}catch(e){}}
+function goHome(){cancelSongEntry();cancelPlayerValueScroll();cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();if(state.editMode){requestFinishEdit('home');return}pauseSong();state.mode='home';$('playerView').hidden=true;$('homeView').hidden=false;resetHomePresentation();$('songSearch').value='';$('libraryFilter').value='all';$('homeView').scrollTop=0;try{history.replaceState(null,'',location.pathname)}catch(e){};renderLibrary();toast('已返回音乐馆',1000)}
 function applyTheme(){let p=state.project;if(!p)return;let theme=sceneId(p),host=$('playerView');applyPlayerTemplate(p,host);if($('scoreConsole')?.open)applyPlayerTemplate(p,$('scoreConsole'));applyPlayerTemplate(p,$('sceneDialog'));$('keyFeedbackLayer').innerHTML='';initializeScene();requestAnimationFrame(drawRoll)}
 function beatIndex(time){let events=scoreEvents(state.project);return clamp(lowerBound(events,time+1)-1,0,Math.max(events.length-1,0))}
 // A grid cell represents a time slot, not one independently editable audio event.
@@ -944,7 +945,7 @@ function drawRoll(){if(!state.project||state.mode!=='player')return;let cv=$('ro
 
 /* 41-home-experience.js */
 // Homepage presentation is separate from the player, score and theme controllers.
-const homeExperience={cards:new Set(),views:new Set(),flipped:new Set(),flips:new Map(),raf:0,last:0,carousel:null,flow:null,preview:null};
+const homeExperience={cards:new Set(),views:new Set(),flipped:new Set(),flips:new Map(),raf:0,last:0,carousel:null,flow:null,preview:null,entry:null};
 const homeReducedMotion=()=>Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
 
 function clearHomeCardPhysics(){
@@ -993,7 +994,7 @@ function setHomeCardFlip(el,song,flipped,animate=false){
   const end=flipped?180:0,sign=flipped?1:-1,matrix=current&&current!=='none'?new DOMMatrixReadOnly(current):null;
   let start=matrix?Math.atan2(-matrix.m13,matrix.m11)*180/Math.PI:0;if(start<0)start+=360;
   el.classList.add('is-turning');
-  const animation=face.animate([{transform:current==='none'?'rotateY(0deg)':current,easing:'cubic-bezier(.42,0,.58,1)'},{offset:.46,transform:'translateZ(22px) rotateY('+((start+end)/2)+'deg) rotateZ('+(-sign*.7)+'deg)',easing:'cubic-bezier(.18,.55,.3,1)'},{offset:.88,transform:'translateZ(2px) rotateY('+(end+sign*2)+'deg)',easing:'ease-out'},{transform:'rotateY('+end+'deg)'}],{duration:Math.max(300,APP_CONFIG.home.cardPhysics.flipMs*Math.min(1,Math.abs(end-start)/180)),easing:'linear'});
+  const animation=face.animate([{transform:current==='none'?'rotateY(0deg)':current,easing:'cubic-bezier(.42,0,.58,1)'},{offset:.46,transform:'translateZ(10px) rotateY('+((start+end)/2)+'deg) rotateZ('+(-sign*.35)+'deg)',easing:'cubic-bezier(.18,.55,.3,1)'},{offset:.88,transform:'translateZ(2px) rotateY('+(end+sign*2)+'deg)',easing:'ease-out'},{transform:'rotateY('+end+'deg)'}],{duration:Math.max(140,APP_CONFIG.home.cardPhysics.flipMs*Math.min(1,Math.abs(end-start)/180)),easing:'linear'});
   homeExperience.flips.set(el,animation);animation.onfinish=()=>{if(homeExperience.flips.get(el)===animation){homeExperience.flips.delete(el);el.classList.remove('is-turning')}};
  }
 }
@@ -1042,7 +1043,7 @@ function goHomeTheme(index,manual=true,direction=0){
 }
 function moveHomeTheme(direction,manual=true){const c=homeExperience.carousel;if(c)goHomeTheme(c.index+direction,manual,direction)}
 function resetHomePresentation(){
- clearHomeCardPhysics();homeExperience.flipped.clear();const c=homeExperience.carousel;if(!c)return;stopHomeCarousel();clearTimeout(c.settleTimer);c.index=0;c.physical=1;c.busy=false;c.pending=null;paintHomeCarousel(false);scheduleHomeCarousel();
+ clearHomeCardPhysics();homeExperience.flipped.clear();const c=homeExperience.carousel;if(!c)return;stopHomeCarousel();clearTimeout(c.settleTimer);c.index=0;c.physical=1;c.busy=false;c.pending=null;c.hover=false;c.focus=false;paintHomeCarousel(false);scheduleHomeCarousel();
 }
 function pauseHomePresentation(){stopHomeCarousel();clearHomeCardPhysics();stopHomeFlow()}
 function resumeHomePresentation(){scheduleHomeCarousel();startHomeFlow()}
@@ -1075,7 +1076,8 @@ function bindHomeExperience(){
   host.addEventListener('keydown',event=>{if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();moveHomeTheme(event.key==='ArrowRight'?1:-1)}});
  }
  document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseHomePresentation();else resumeHomePresentation()});
- window.matchMedia?.('(prefers-reduced-motion: reduce)')?.addEventListener?.('change',()=>{clearHomeCardPhysics();if(homeReducedMotion()){stopHomeCarousel();finishHomeThemeMove();stopHomeFlow()}else resumeHomePresentation()});
+ window.addEventListener('pagehide',cancelSongEntry);window.addEventListener('resize',()=>{if(homeExperience.entry)cancelSongEntry()});
+ window.matchMedia?.('(prefers-reduced-motion: reduce)')?.addEventListener?.('change',()=>{cancelSongEntry();clearHomeCardPhysics();if(homeReducedMotion()){stopHomeCarousel();finishHomeThemeMove();stopHomeFlow()}else resumeHomePresentation()});
  bindHomeThemePreview();paintHomeCarousel(false);resumeHomePresentation();
 }
 
@@ -1095,7 +1097,7 @@ function renderHomeFlow(now){
   for(let y=0;y<h;y++)for(let x=0;x<w;x++){
    const px=x/w*3.2*ratio,py=y/h*3.2,a=homeNoise(px*.65+t*.4,py*.65-t*.18),b=homeNoise(px*.7-t*.23+31,py*.7+t*.32+13);
    const field=homeFbm(px+a*1.7+t*.17,py+b*1.7-t*.11),filament=Math.pow(Math.max(0,1-Math.abs(field-.54)*7),3),cloud=Math.max(0,field-.35);
-   const i=(y*w+x)*4;data[i]=172+Math.round(a*35);data[i+1]=218+Math.round(b*20);data[i+2]=232;data[i+3]=Math.round((filament*35+cloud*50)*cfg.opacity);
+   const i=(y*w+x)*4;data[i]=172+Math.round(a*35);data[i+1]=218+Math.round(b*20);data[i+2]=232;data[i+3]=Math.round((filament*82+cloud*76)*cfg.opacity);
   }
   f.ctx.putImageData(f.image,0,0);f.canvas.dataset.frames=String(++f.frames);
  }
@@ -1134,6 +1136,41 @@ function bindHomeThemePreview(){
  for(const id of ['homePreviewName','homePreviewAccent','homePreviewBackground','homePreviewGlow','homePreviewMotion'])$(id).addEventListener('input',paintHomeThemePreview);
  $('homePreviewReset').onclick=resetHomeThemePreview;$('homePreviewExport').onclick=()=>{if(homeExperience.preview)exportTheme(homeExperience.preview.project)};
  $('homeThemeDialog').addEventListener('close',()=>{homeExperience.preview=null;syncStatusNotificationAppearance();scheduleHomeCarousel()});
+}
+
+// Card entry is presentation only; the shared platform controller still mounts every song.
+function cancelSongEntry(){
+ const entry=homeExperience.entry;if(!entry)return;homeExperience.entry=null;
+ for(const animation of entry.animations)animation.cancel();
+ $('songEntryTransition').hidden=true;$('songEntryTransition').dataset.phase='idle';
+ document.querySelector('.site-wrap').classList.remove('song-entry-reveal');
+ $('homeView').inert=false;$('playerView').inert=false;$('playerView').removeAttribute('aria-busy');
+ if(state.mode==='home'&&!document.hidden)resumeHomePresentation();
+}
+async function enterSongFromCard(id,card){
+ if(homeExperience.entry)return;
+ const project=state.library.find(song=>song.id===id);if(!project)return toast('找不到歌曲');
+ const overlay=$('songEntryTransition');
+ if(homeReducedMotion()||!overlay.animate){openSong(id);$('songTitle').focus?.({preventScroll:true});return}
+ const entry={animations:[],mounting:false};homeExperience.entry=entry;
+ const active=()=>homeExperience.entry===entry,animate=async(el,frames,duration)=>{const animation=el.animate(frames,{duration,easing:'cubic-bezier(.22,.65,.25,1)',fill:'forwards'});entry.animations.push(animation);await animation.finished.catch(()=>{})};
+ const colors=resolvedPlayerColors(project),rect=card.getBoundingClientRect(),rules=APP_CONFIG.home.songEntry;
+ for(const [name,value]of [['start',colors.surfaceStart],['end',colors.backdrop],['accent',colors.accent]])overlay.style.setProperty('--entry-'+name,value);
+ $('songEntryTitle').textContent=project.title;const art=platformCover(project)||themeDefinition(project).decorations.cover;
+ $('songEntryArt').hidden=!art;if(art)$('songEntryArt').src=themeAsset(art,project);
+ $('homeView').inert=true;pauseHomePresentation();overlay.hidden=false;overlay.dataset.phase='expand';
+ try{
+  await animate(overlay,[{clipPath:`inset(${Math.max(0,rect.top)}px ${Math.max(0,innerWidth-rect.right)}px ${Math.max(0,innerHeight-rect.bottom)}px ${Math.max(0,rect.left)}px round 16px)`,opacity:.7},{clipPath:'inset(0px 0px 0px 0px round 0px)',opacity:1}],rules.expandMs);
+  if(!active())return;
+  overlay.dataset.phase='loading';entry.mounting=true;openSong(id);entry.mounting=false;
+  const player=$('playerView');player.inert=true;player.setAttribute('aria-busy','true');
+  // Paint the assembled roll and grid under the cover before revealing the real player.
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(!active())return;
+  overlay.dataset.phase='reveal';document.querySelector('.site-wrap').classList.add('song-entry-reveal');
+  const bounds=player.getBoundingClientRect(),cx=clamp(innerWidth/2-bounds.left,0,player.clientWidth),cy=clamp(innerHeight/2-bounds.top,0,player.clientHeight),radius=Math.ceil(Math.hypot(Math.max(cx,player.clientWidth-cx),Math.max(cy,player.clientHeight-cy)));
+  await animate(player,[{clipPath:`circle(0px at ${cx}px ${cy}px)`},{clipPath:`circle(${radius}px at ${cx}px ${cy}px)`}],rules.revealMs);
+  if(!active())return;cancelSongEntry();$('songTitle').focus({preventScroll:true});
+ }catch(error){if(active()){cancelSongEntry();toast('打开单曲失败：'+error.message,5000)}}
 }
 
 /* 45-workspace.js */
@@ -1360,6 +1397,7 @@ function install(){restorePlatformThemes();state.library=BUILTINS.map(p=>normali
  }
 // Browsers can restore a complete page or its form controls independently of app data.
 function resetStartupNavigation(home=true){
+ cancelSongEntry();
  stopConsoleRecording();cancelRollDrag();pauseSong();cancelRollFinish();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();
  if($('scoreConsole').open)closeScoreConsole();
  if(state.editMode&&state.editSource)state.project=state.editSource;

@@ -732,7 +732,6 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
 .home-view .light-cone{--cone-outline:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);perspective:1400px}
 .home-view .cone-tilt{transform:translateY(var(--card-lift,0px)) rotateX(var(--tilt-x,0deg)) rotateY(var(--tilt-y,0deg)) scale(var(--card-scale,1));filter:drop-shadow(0 8px 10px #030e2355)}
 .home-view .cone-flip{transition:none}
-.home-view .is-turning .cone-edge,.home-view .is-turning .cone-etch,.home-view .is-turning .cone-sheen,.home-view .is-turning .cone-foil{visibility:hidden}
 .home-view .is-turning .song-card-actions,.home-view .is-turning .card-play{visibility:hidden}
 .home-view .cone-face,.home-view .cone-edge,.home-view .cone-sheen,.home-view .cone-foil,.home-view .cone-etch{clip-path:var(--cone-outline)}
 .home-view .cone-face{border:0;box-shadow:inset 0 0 0 1px #e9ffff5c,inset 0 0 0 5px #19263e33}
@@ -825,3 +824,45 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
 .value-picker-track b{display:flex;align-items:center;justify-content:center;height:32px;width:44px;box-sizing:border-box;border-radius:7px;border:1px solid var(--player-border);background:var(--player-button);font-weight:600;transition:background .18s,border-color .18s}
 /* Global status is painted by the same theme resolver as player panels. */
 .toast{inset:auto auto 22px 50%;margin:0;width:max-content;max-width:min(550px,calc(100vw - 32px));pointer-events:none;border-color:var(--notice-border,#718ba3);background:linear-gradient(135deg,var(--notice-surfaceStart,#273e56),var(--notice-surfaceEnd,#172b42));color:var(--notice-text,#edf6ff);box-shadow:0 9px 32px #0006,inset 0 1px var(--notice-accent,#d8eaf8)}
+
+/* A little breathing room above the identity, retaining two full card rows. */
+.home-view{--home-top-space:max(14px,env(safe-area-inset-top));padding-top:var(--home-top-space);box-sizing:border-box}
+.home-view .wordmark .mark{width:44px;height:44px;flex:none;display:grid;place-items:center;border:0;padding:0;text-shadow:none;background:radial-gradient(circle,#d7e7ee0d,transparent 72%)}
+.brand-emblem{width:44px;height:44px;display:block;filter:drop-shadow(0 0 5px #e1d5b51a)}
+.home-view .home-top-actions>button{height:34px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;padding:0 14px;white-space:nowrap;line-height:normal}
+@media(min-width:901px){.home-view{--home-top-space:max(clamp(16px,2dvh,24px),env(safe-area-inset-top));--home-card-height:max(160px,calc((100dvh - var(--home-top-space) - 64px - var(--home-hero-height) - 170px)/2))}}
+/* Acrylic follows the physical front face, with no solid horizontal top edge. */
+.home-view .light-cone .song-cover{bottom:0}
+.home-view .light-cone .song-details{background:transparent;border:0;isolation:isolate}
+.home-view .light-cone .song-details::before{content:'';position:absolute;inset:-32px 0 0;z-index:-1;background:linear-gradient(to top,#101215df 0%,#25282ca3 42%,#373b4044 72%,transparent 100%);backdrop-filter:blur(14px) saturate(.65);-webkit-backdrop-filter:blur(14px) saturate(.65);mask-image:linear-gradient(to top,#000 0%,#000 38%,transparent 100%);-webkit-mask-image:linear-gradient(to top,#000 0%,#000 38%,transparent 100%);pointer-events:none}
+.home-view .light-cone .song-details h3,.home-view .light-cone .song-details p{text-shadow:0 1px 5px #03070ccc}
+/* Translucent lens, bright meniscus and inset reflection; no opaque fill. */
+.home-view .light-cone .card-play{background:linear-gradient(145deg,#ffffff52,#e1eef51c 45%,#d8eff02e);border:1px solid #f3ffff8a;color:#f4fcff;backdrop-filter:blur(12px) saturate(1.5);-webkit-backdrop-filter:blur(12px) saturate(1.5);box-shadow:inset 0 1px 1px #ffffffb3,inset 0 -1px 2px #c6ecff44,0 3px 12px #07111e55,0 0 0 1px #f5ffff0d;text-shadow:0 1px 4px #0a233c88;transition:box-shadow .18s,background .18s,transform .18s}
+.home-view .light-cone .card-play::before{content:'';position:absolute;inset:3px 5px 52%;border-radius:50%;background:linear-gradient(#ffffff8c,#ffffff00);pointer-events:none}
+.home-view .light-cone .card-play:hover,.home-view .light-cone .card-play:focus-visible{background:linear-gradient(145deg,#ffffff70,#dbeefa2b 48%,#dbf5f347);box-shadow:inset 0 1px 2px #fff,inset 0 -1px 3px #d9f4ff66,0 4px 15px #07111e66,0 0 12px #d1edff33;transform:scale(1.055);outline:2px solid #edffffa6;outline-offset:3px}
+.home-view .cone-face :is(.cone-edge,.cone-etch,.cone-sheen,.cone-foil){backface-visibility:hidden;-webkit-backface-visibility:hidden}
+/* Card expands into a preparation cover; the assembled player then opens from its center. */
+.song-entry-transition{position:fixed;inset:0;z-index:1000;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 50% 45%,var(--entry-start),var(--entry-end));color:#edf7ff;pointer-events:all}
+.song-entry-transition>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.21;filter:blur(5px);transform:scale(1.03)}
+.song-entry-transition::after{content:'';position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at center,color-mix(in srgb,var(--entry-accent) 14%,transparent),transparent 65%)}
+.song-entry-content{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;text-align:center;padding:24px;text-shadow:0 3px 16px #031323aa}
+.song-entry-content strong{font:500 clamp(23px,3vw,38px)/1.4 Georgia,'Microsoft YaHei',serif;max-width:90%;overflow-wrap:anywhere}
+.song-entry-content>span:last-child{font-size:12px;letter-spacing:3px;color:#d5e5ef}
+.entry-orbit{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;border:1px solid color-mix(in srgb,var(--entry-accent) 45%,transparent);font-size:35px;color:var(--entry-accent);box-shadow:0 0 32px color-mix(in srgb,var(--entry-accent) 12%,transparent)}
+.site-wrap.song-entry-reveal{position:relative;z-index:1001}
+@media(prefers-reduced-motion:reduce){.song-entry-transition{display:none!important}.home-view .light-cone .card-play{transition:none}}
+.home-view .home-flow-canvas{filter:blur(8px);opacity:.95;mask-image:radial-gradient(ellipse at 50% 52%,#0004 0%,#0007 42%,#000 78%);-webkit-mask-image:radial-gradient(ellipse at 50% 52%,#0004 0%,#0007 42%,#000 78%)}
+.home-islet{position:absolute;left:-30px;bottom:-26px;width:clamp(260px,32vw,470px);height:auto;opacity:.52;filter:drop-shadow(0 0 14px #9cc9dc14);mask-image:linear-gradient(90deg,#000 0%,#000 43%,transparent 98%);-webkit-mask-image:linear-gradient(90deg,#000 0%,#000 43%,transparent 98%);animation:home-islet-float 13s ease-in-out infinite;pointer-events:none}
+@keyframes home-islet-float{0%,100%{transform:translate3d(0,4px,0)}50%{transform:translate3d(3px,-5px,0)}}
+@media(max-width:600px){.home-islet{width:280px;left:-95px;opacity:.32}}
+@media(prefers-reduced-motion:reduce){.home-islet{animation:none}}
+/* Only a hint of white at the outer edge, vanishing toward the banner center. */
+.home-view .home-theme-arrow{background:linear-gradient(90deg,#ffffff16,#ffffff06 42%,transparent);opacity:.8}
+.home-view .home-theme-arrow.theme-next{background:linear-gradient(270deg,#ffffff16,#ffffff06 42%,transparent)}
+.home-view .home-theme-arrow:hover,.home-view .home-theme-arrow:focus-visible{background-color:transparent;opacity:1}
+@media(max-width:720px){
+ .home-view .home-top{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:14px;width:100%;height:auto;min-height:0;margin:0;padding:12px 20px 14px}
+ .home-view .home-top .wordmark{align-self:flex-start}
+ .home-view .home-top-actions{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:8px}
+ .home-view .home-top-actions>button{width:100%;min-width:0}
+}

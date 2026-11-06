@@ -14,13 +14,17 @@
     "maxFrameSeconds": 0.033,
     "restAngleDeg": 0.015,
     "restVelocityDegPerSec": 0.03,
-    "flipMs": 820,
+    "flipMs": 360,
     "parallaxPx": 7
   },
   "atmosphere": {
-    "fps": 16,
+    "fps": 20,
     "maxWidth": 240,
-    "speed": 0.075,
-    "opacity": 0.48
+    "speed": 0.16,
+    "opacity": 0.72
+  },
+  "songEntry": {
+    "expandMs": 240,
+    "revealMs": 420
   }
 }
