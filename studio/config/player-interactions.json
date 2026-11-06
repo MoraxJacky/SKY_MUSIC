@@ -57,5 +57,14 @@
     1.5,
     1.75,
     2
-  ]
+  ],
+  "editor": {
+    "entry": "src/46-score-console.js",
+    "initialMode": "record",
+    "modes": [
+      "record",
+      "fine",
+      "generate"
+    ]
+  }
 }

@@ -2,7 +2,7 @@ function install(){restorePlatformThemes();state.library=BUILTINS.map(p=>normali
  $('fileInput').onchange=async ev=>{let files=[...(ev.target.files||[])],file=files[0];ev.target.value='';if(!file)return;toast('正在检查 '+file.name,1200);try{await importFiles(files)}catch(err){console.error('Import failed',err);toast('导入失败：'+err.message,7500)}};
  $('importThemeLibrary').onclick=()=>$('themeLibraryInput').click();$('themeLibraryInput').onchange=async ev=>{const file=ev.target.files?.[0];ev.target.value='';if(file)try{await importFile(file)}catch(error){toast('主题录入失败：'+error.message,7500)}};
  bindPlayerInteractions();
- bindRangePicker();bindInstrumentPicker();bindSpeedPicker();bindWorkspace();bindVideo();renderLibrary();if(location.hash.startsWith('#song=')){let id=decodeURIComponent(location.hash.slice(6));if(state.library.some(x=>x.id===id))openSong(id)}
+ bindRangePicker();bindInstrumentPicker();bindSpeedPicker();bindWorkspace();bindScoreConsole();bindVideo();renderLibrary();if(location.hash.startsWith('#song=')){let id=decodeURIComponent(location.hash.slice(6));if(state.library.some(x=>x.id===id))openSong(id)}
  }
 // Avoid editing the user-provided v7 backup: all transforms occur on copied score objects.
 

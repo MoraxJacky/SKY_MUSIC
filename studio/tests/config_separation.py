@@ -96,9 +96,13 @@ with sync_playwright() as pw:
         original = page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.project.score)')
         page.locator('#scoreEditorBtn').click()
         for theme in themes:
+            if not page.locator('#scoreConsole').is_visible(): page.locator('#reopenConsole').click()
+            page.locator('#consoleFineTab').click()
+            page.locator('#consoleInspectorSlot').evaluate('e=>e.open=true')
             page.locator('#sceneEditorBtn').click()
             page.locator(f'[data-scene="{theme}"]').click()
             page.locator('[data-close="sceneDialog"]').click()
+            page.locator('#consoleClose').click()
             assert page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.project.score)') == original
             assert page.locator('#playerView').get_attribute('data-theme') == theme
             assert page.locator('#beatGrid .beat').count() == 32
@@ -125,9 +129,12 @@ with sync_playwright() as pw:
         page.goto(f'http://127.0.0.1:{server.server_port}/')
         page.locator('.card-play').first.click()
         page.locator('#scoreEditorBtn').click()
+        page.locator('#consoleFineTab').click()
+        page.locator('#consoleInspectorSlot').evaluate('e=>e.open=true')
         page.locator('#sceneEditorBtn').click()
         page.locator('[data-scene="moonlight-test"]').click()
         page.locator('[data-close="sceneDialog"]').click()
+        page.locator('#consoleClose').click()
         assert page.locator('#playerView').get_attribute('data-theme') == 'moonlight-test'
         assert page.evaluate('window.__SKY_STUDIO_TEST__.state.playerColors.note') == '#123456'
         page.locator('#scoreEditorBtn').click()

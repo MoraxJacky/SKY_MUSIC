@@ -15,7 +15,7 @@ function requestFinishEdit(action='exit'){
 }
 function completeEdit(kind){
  if(!state.editMode)return;
- pauseSong();
+ closeScoreConsole();pauseSong();
  const action=state.pendingEditAction||'exit',working=state.project,original=state.editSource;
  let chosen=original;
  if(kind==='direct'||kind==='new')trimTrailingRests(working);
