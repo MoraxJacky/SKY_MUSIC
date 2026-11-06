@@ -20,6 +20,7 @@ function syncStatusNotificationAppearance(){
  const el=$('toast');if(!el?.style?.setProperty)return;
  const preview=$('homeThemeDialog')?.open?homeExperience.preview?.project:null,project=preview||(state.mode==='player'?state.project:null);
  const colors=project?resolvedPlayerColors(project):{surfaceStart:'#273e56',surfaceEnd:'#172b42',text:'#edf6ff',border:'#718ba3',accent:'#d8eaf8'};
+ document.body.style.setProperty('--control-focus-accent',colors.accent);
  for(const key of ['surfaceStart','surfaceEnd','text','border','accent'])el.style.setProperty('--notice-'+key,colors[key]);el.dataset.theme=project?sceneId(project):'platform';
 }
 function applyPlayerTemplate(project,host){
@@ -46,11 +47,13 @@ function applyPlayerTemplate(project,host){
 }
 
 function populateThemeChoices(){
+ const selected=$('createTheme').value;
  $('themeChoices').innerHTML='';$('createTheme').innerHTML='';
  for(const definition of Object.values(THEME_DEFINITIONS)){
   const button=document.createElement('button');button.dataset.scene=definition.id;button.onclick=()=>chooseTheme(definition.id);button.textContent=definition.displayName;const description=document.createElement('small');description.textContent=definition.description||definition.name;button.append(description);$('themeChoices').append(button);
   const option=document.createElement('option');option.value=definition.id;option.textContent=definition.displayName;$('createTheme').append(option);
  }
+ $('createTheme').value=THEME_DEFINITIONS[selected]?selected:APP_CONFIG.defaultTheme;syncCreateThemePicker();
 }
 
 // UI pictograms use the same vector geometry on every platform. Legacy theme glyphs

@@ -10,7 +10,7 @@
   "playback": {
     "tuning": "sky",
     "rate": 1,
-    "sustain": 0.45,
+    "sustain": 0,
     "instrument": "piano"
   },
   "provenance": {

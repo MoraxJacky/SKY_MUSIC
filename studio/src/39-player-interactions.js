@@ -277,7 +277,7 @@ function startScoreEntrance(){
  const cells=[...$('beatGrid').children],rowStride=(columns-1)*cfg.beatStepMs+cfg.beatGrowMs+cfg.rowGapMs,span=cfg.durationMs-blank,beatScale=span/(Math.floor((cells.length-1)/columns)*rowStride+((cells.length-1)%columns)*cfg.beatStepMs+cfg.beatGrowMs),beatGrowMs=cfg.beatGrowMs*beatScale;
  cells.forEach((cell,index)=>{
   const delay=blank+(Math.floor(index/columns)*rowStride+(index%columns)*cfg.beatStepMs)*beatScale;a.beats.push({el:cell,delay,duration:beatGrowMs});
-  animate(cell,[{boxShadow:'0 0 0 transparent'},{offset:.48,boxShadow:'0 0 20px '+colors.accent+'88, inset 0 0 0 1px '+colors.accent},{boxShadow:'0 0 0 transparent'}],delay,beatGrowMs);
+  if(index===beatDisplayIndex())animate(cell,[{boxShadow:'0 0 0 transparent'},{offset:.48,boxShadow:'0 0 20px '+colors.accent+'88, inset 0 0 0 1px '+colors.accent},{boxShadow:'0 0 0 transparent'}],delay,beatGrowMs);
   const pattern=cell.querySelector('.mini-keys'),name=cell.querySelector('.beat-name');
   if(pattern){const rect=pattern.getBoundingClientRect(),box=cell.getBoundingClientRect(),overlay=pattern.cloneNode(true);overlay.classList.add('score-arrival-pattern');overlay.style.cssText='left:'+(rect.left-box.left-cell.clientLeft)+'px;top:'+(rect.top-box.top-cell.clientTop)+'px;width:'+rect.width+'px;height:'+rect.height+'px';cell.append(overlay);a.overlays.push(overlay);
    animate(overlay,[{opacity:0,transform:'translateY(10px) scale(.72)'},{offset:.48,opacity:1,transform:'translateY(-2px) scale(1.08)'},{opacity:1,transform:'none'}],delay,beatGrowMs);
@@ -287,7 +287,7 @@ function startScoreEntrance(){
  const notes=displayedBeat().notes,stampScaleTime=span/(cfg.stampDelayMs+Math.max(0,notes.length-1)*cfg.stampStepMs+cfg.stampMs),stampMs=cfg.stampMs*stampScaleTime;
  [...$('keyBoard').children].filter(key=>notes.includes(Number(key.dataset.note))).forEach((key,index)=>{
   const delay=blank+(cfg.stampDelayMs+index*cfg.stampStepMs)*stampScaleTime,n=Number(key.dataset.note)-1,column=n%5,row=Math.floor(n/5);a.keys.push({el:key,delay});key.style.zIndex='3';key.style.transformOrigin=(column===0?'left':column===4?'right':'center')+' '+(row===0?'top':row===2?'bottom':'center');
-  animate(key,[{opacity:.6,transform:'translateY(-10px) scale('+cfg.stampScale+')',boxShadow:'0 0 38px '+colors.accent+'99'},{offset:.42,opacity:1,transform:'translateY(2px) scale(.87)',boxShadow:'0 0 24px '+colors.accent+'aa'},{offset:.7,opacity:1,transform:'translateY(-1px) scale(1.12)'},{opacity:1,transform:'none',boxShadow:'0 0 12px '+colors.accent+'44'}],delay,stampMs,'forwards');
+  animate(key,[{opacity:0,transform:'translateY(0px) scale(1)',boxShadow:'0 0 0 '+colors.accent+'00',easing:'cubic-bezier(.16,.8,.3,1)'},{offset:cfg.stampGrowEnd,opacity:1,transform:'translateY(-'+cfg.stampRisePx+'px) scale('+cfg.stampScale+')',boxShadow:'0 0 28px '+colors.accent+'99',easing:'cubic-bezier(.2,.6,.3,1)'},{offset:cfg.stampHighlightEnd,opacity:1,transform:'translateY(-'+cfg.stampRisePx+'px) scale('+cfg.stampScale+')',boxShadow:'0 0 20px '+colors.accent+'77',easing:'cubic-bezier(.3,.05,.35,1)'},{opacity:1,transform:'translateY(0px) scale(1)',boxShadow:'0 0 10px '+colors.accent+'33'}],delay,stampMs,'forwards');
  });
  const duration=cfg.durationMs;
  // Start one shared clock after layout work, preserving the blank opening on slower devices.

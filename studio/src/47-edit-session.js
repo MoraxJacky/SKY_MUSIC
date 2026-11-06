@@ -37,7 +37,7 @@ function completeEdit(kind){
  if(action==='home'){returnHomeFromPlayer();return}
  try{history.replaceState(null,'','#song='+encodeURIComponent(chosen.id))}catch(error){}
  state.rate=chosen.playback?.rate||1;state.volume=normalizeVolume(chosen.playback?.volume);syncSpeedPicker();syncVolumeControl();
- state.tuning=chosen.playback?.tuning||'C';state.sustain=chosen.playback?.sustain??.45;
+ state.tuning=chosen.playback?.tuning||'C';state.sustain=chosen.playback?.sustain??PLAYER_RULES.sustain.default;
  refreshWorkspace();renderLibrary();saveLibrary();
  toast(kind==='new'?'已另存为新曲谱，已结束编辑':kind==='direct'?'已保存，已结束编辑':'已结束编辑，未保存修改');
 }

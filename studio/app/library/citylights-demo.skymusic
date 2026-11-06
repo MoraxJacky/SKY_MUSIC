@@ -10,7 +10,7 @@
   "playback": {
     "tuning": "C",
     "rate": 1,
-    "sustain": 0.48,
+    "sustain": 0,
     "instrument": "piano"
   },
   "provenance": {

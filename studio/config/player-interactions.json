@@ -73,7 +73,9 @@
   },
   "sustain": {
     "controlId": "sustainPicker",
-    "label": "延音"
+    "label": "延音",
+    "default": 0,
+    "resetOnSongEntry": true
   },
   "valuePicker": {
     "rowHeightPx": 36,
@@ -96,8 +98,11 @@
     "stampDelayMs": 0,
     "stampStepMs": 75,
     "stampMs": 1200,
-    "stampScale": 1.55,
-    "durationMs": 2400
+    "stampScale": 1.28,
+    "durationMs": 2400,
+    "stampGrowEnd": 0.18,
+    "stampHighlightEnd": 0.5,
+    "stampRisePx": 8
   },
   "loop": {
     "controlId": "loopOneBtn",

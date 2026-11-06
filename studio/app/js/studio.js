@@ -18,7 +18,7 @@ const LOCALLY_LOADED_IDS=new Set();
 const SAMPLES=window.SKY_SAMPLES||{};
 const SCENE_EMBEDS=window.SKY_EMBED_SCENES||{};
 const PRESETS=Object.fromEntries(Object.entries(THEME_DEFINITIONS).map(([id,t])=>[id,{id,name:t.name,accent:t.defaults.accent,stage:id}]));
-const state={library:BUILTINS,project:null,mode:'home',isPlaying:false,position:0,rate:1,tuning:'C',sustain:.45,volume:PLAYER_RULES.volume.default,selected:0,page:-1,windowSec:PLAYER_RULES.roll.initialSeconds,rollPageStart:0,rollFinish:null,rollFinishRaf:0,raf:0,interval:0,clockAnchor:0,mediaAnchor:0,scheduleIndex:0,activeVoices:new Set(),sceneFrame:0,sceneTick:0,sceneBase:0,toastTimer:0,assetCache:new Map(),lastSelected:-1,importStatus:'',audioCtx:null,pianoBuffers:new Map(),loadedSamplePromise:null,stageImages:[],history:new Map(),future:new Map(),editorOpen:false,editMode:false,editDirty:false,editBaseline:null,editSource:null,pendingEditAction:null,pendingSongId:null,pendingDeleteId:null,onlinePianoBuffers:new Map(),onlineSamplePromise:null,videoFile:null,videoScanAbort:false,stageMotionEnabled:true,importBusy:false};
+const state={library:BUILTINS,project:null,mode:'home',isPlaying:false,position:0,rate:1,tuning:'C',sustain:PLAYER_RULES.sustain.default,volume:PLAYER_RULES.volume.default,selected:0,page:-1,windowSec:PLAYER_RULES.roll.initialSeconds,rollPageStart:0,rollFinish:null,rollFinishRaf:0,raf:0,interval:0,clockAnchor:0,mediaAnchor:0,scheduleIndex:0,activeVoices:new Set(),sceneFrame:0,sceneTick:0,sceneBase:0,toastTimer:0,assetCache:new Map(),lastSelected:-1,importStatus:'',audioCtx:null,pianoBuffers:new Map(),loadedSamplePromise:null,stageImages:[],history:new Map(),future:new Map(),editorOpen:false,editMode:false,editDirty:false,editBaseline:null,editSource:null,pendingEditAction:null,pendingSongId:null,pendingDeleteId:null,onlinePianoBuffers:new Map(),onlineSamplePromise:null,videoFile:null,videoScanAbort:false,stageMotionEnabled:true,importBusy:false};
 const positionFmt=ms=>{let x=Math.max(0,Math.floor(ms));return String(Math.floor(x/60000)).padStart(2,'0')+':'+String(Math.floor(x/1000)%60).padStart(2,'0')+'.'+String(x%1000).padStart(3,'0')};
 const durationFmt=ms=>positionFmt(ms).slice(0,5);
 const scoreEvents=p=>p?.score?.events||[];
@@ -60,7 +60,7 @@ function normalize(raw){
   card:source.card?{title:String(source.card.title||'').slice(0,120),subtitle:String(source.card.subtitle||'').slice(0,180),coverElement:typeof source.card.coverElement==='string'?source.card.coverElement.slice(0,100):null}:null,entry:source.entry?copy(source.entry):null,
   description:String(source.description||'').slice(0,600),durationMs:Math.max(total,normalEvents.at(-1)?.timeMs||0),keyCount:15,
   score:{mode:source.score?.mode==='free'?'free':'grid',gridIntervalMs:clamp(Number(source.score?.gridIntervalMs)||166.6667,20,5000),events:normalEvents},
-  playback:{loop:source.playback?.loop===true,volume:normalizeVolume(source.playback?.volume),tuning:Object.hasOwn(KEY_ROOTS,source.playback?.tuning)?source.playback.tuning:'C',rate:clamp(Number(source.playback?.rate)||1,.25,2),sustain:clamp(Number(source.playback?.sustain ?? .45),0,1),instrument:instrumentSpec(source.playback?.instrument).id},
+  playback:{loop:source.playback?.loop===true,volume:normalizeVolume(source.playback?.volume),tuning:Object.hasOwn(KEY_ROOTS,source.playback?.tuning)?source.playback.tuning:'C',rate:clamp(Number(source.playback?.rate)||1,.25,2),sustain:clamp(Number(source.playback?.sustain ?? PLAYER_RULES.sustain.default),0,1),instrument:instrumentSpec(source.playback?.instrument).id},
   theme:{id:themeId,accent:/^#[0-9a-fA-F]{6}$/.test(source.theme?.accent||'')?source.theme.accent:PRESETS[themeId].accent,stage:themeId,motion:source.theme?.motion||'ambient',name:String(source.theme?.name||PRESETS[themeId].name).slice(0,80),snow:clamp(Number(source.theme?.snow ?? themeDefaults.snow),0,100),glow:clamp(Number(source.theme?.glow ?? themeDefaults.glow),0,100),backgroundColor:/^#[0-9a-fA-F]{6}$/.test(source.theme?.backgroundColor||'')?source.theme.backgroundColor:null,customStage:Boolean(source.theme?.customStage),appearance:sanitizePlayerAppearance(source.theme?.appearance),...(definition?{definition}:{}),...(source.theme?.assets?{assets:copy(source.theme.assets)}:{})},
   provenance:copy(source.provenance||{source:'导入'}),
   _imageUrl:source._imageUrl||null,
@@ -370,6 +370,7 @@ function projectEntry(project){
 }
 const PLATFORM_THEME_KEY='sky-music-studio-themes-v1';
 const PLATFORM_THEME_ASSETS={};
+const PLATFORM_BUILTIN_THEMES=new Set(Object.keys(THEME_DEFINITIONS));
 function restorePlatformThemes(){
  try{const records=JSON.parse(localStorage.getItem(PLATFORM_THEME_KEY)||'[]');for(const record of records){const definition=sanitizeThemeDefinition(record.definition);registerThemeDefinition(definition);PLATFORM_THEME_ASSETS[definition.id]=record.assets||{}}}catch(error){console.warn('主题库恢复失败',error)}
 }
@@ -380,7 +381,7 @@ function savePlatformTheme(pack){
  const records=JSON.parse(localStorage.getItem(PLATFORM_THEME_KEY)||'[]').filter(item=>item.definition.id!==definition.id);
  records.push({definition,assets:pack.assets||{}});
  localStorage.setItem(PLATFORM_THEME_KEY,JSON.stringify(records));
- registerThemeDefinition(definition);PLATFORM_THEME_ASSETS[definition.id]=pack.assets||{};populateThemeChoices();
+ registerThemeDefinition(definition);PLATFORM_THEME_ASSETS[definition.id]=pack.assets||{};populateThemeChoices();if($('themeRepositoryDialog').open)renderThemeRepository();
 }
 function sanitizeThemeDefinition(raw){
  if(!raw||typeof raw!=='object'||!/^[-a-zA-Z0-9_]{1,80}$/.test(raw.id||''))throw Error('主题定义缺少有效 ID');
@@ -560,6 +561,7 @@ function syncStatusNotificationAppearance(){
  const el=$('toast');if(!el?.style?.setProperty)return;
  const preview=$('homeThemeDialog')?.open?homeExperience.preview?.project:null,project=preview||(state.mode==='player'?state.project:null);
  const colors=project?resolvedPlayerColors(project):{surfaceStart:'#273e56',surfaceEnd:'#172b42',text:'#edf6ff',border:'#718ba3',accent:'#d8eaf8'};
+ document.body.style.setProperty('--control-focus-accent',colors.accent);
  for(const key of ['surfaceStart','surfaceEnd','text','border','accent'])el.style.setProperty('--notice-'+key,colors[key]);el.dataset.theme=project?sceneId(project):'platform';
 }
 function applyPlayerTemplate(project,host){
@@ -586,11 +588,13 @@ function applyPlayerTemplate(project,host){
 }
 
 function populateThemeChoices(){
+ const selected=$('createTheme').value;
  $('themeChoices').innerHTML='';$('createTheme').innerHTML='';
  for(const definition of Object.values(THEME_DEFINITIONS)){
   const button=document.createElement('button');button.dataset.scene=definition.id;button.onclick=()=>chooseTheme(definition.id);button.textContent=definition.displayName;const description=document.createElement('small');description.textContent=definition.description||definition.name;button.append(description);$('themeChoices').append(button);
   const option=document.createElement('option');option.value=definition.id;option.textContent=definition.displayName;$('createTheme').append(option);
  }
+ $('createTheme').value=THEME_DEFINITIONS[selected]?selected:APP_CONFIG.defaultTheme;syncCreateThemePicker();
 }
 
 // UI pictograms use the same vector geometry on every platform. Legacy theme glyphs
@@ -908,7 +912,7 @@ function startScoreEntrance(){
  const cells=[...$('beatGrid').children],rowStride=(columns-1)*cfg.beatStepMs+cfg.beatGrowMs+cfg.rowGapMs,span=cfg.durationMs-blank,beatScale=span/(Math.floor((cells.length-1)/columns)*rowStride+((cells.length-1)%columns)*cfg.beatStepMs+cfg.beatGrowMs),beatGrowMs=cfg.beatGrowMs*beatScale;
  cells.forEach((cell,index)=>{
   const delay=blank+(Math.floor(index/columns)*rowStride+(index%columns)*cfg.beatStepMs)*beatScale;a.beats.push({el:cell,delay,duration:beatGrowMs});
-  animate(cell,[{boxShadow:'0 0 0 transparent'},{offset:.48,boxShadow:'0 0 20px '+colors.accent+'88, inset 0 0 0 1px '+colors.accent},{boxShadow:'0 0 0 transparent'}],delay,beatGrowMs);
+  if(index===beatDisplayIndex())animate(cell,[{boxShadow:'0 0 0 transparent'},{offset:.48,boxShadow:'0 0 20px '+colors.accent+'88, inset 0 0 0 1px '+colors.accent},{boxShadow:'0 0 0 transparent'}],delay,beatGrowMs);
   const pattern=cell.querySelector('.mini-keys'),name=cell.querySelector('.beat-name');
   if(pattern){const rect=pattern.getBoundingClientRect(),box=cell.getBoundingClientRect(),overlay=pattern.cloneNode(true);overlay.classList.add('score-arrival-pattern');overlay.style.cssText='left:'+(rect.left-box.left-cell.clientLeft)+'px;top:'+(rect.top-box.top-cell.clientTop)+'px;width:'+rect.width+'px;height:'+rect.height+'px';cell.append(overlay);a.overlays.push(overlay);
    animate(overlay,[{opacity:0,transform:'translateY(10px) scale(.72)'},{offset:.48,opacity:1,transform:'translateY(-2px) scale(1.08)'},{opacity:1,transform:'none'}],delay,beatGrowMs);
@@ -918,7 +922,7 @@ function startScoreEntrance(){
  const notes=displayedBeat().notes,stampScaleTime=span/(cfg.stampDelayMs+Math.max(0,notes.length-1)*cfg.stampStepMs+cfg.stampMs),stampMs=cfg.stampMs*stampScaleTime;
  [...$('keyBoard').children].filter(key=>notes.includes(Number(key.dataset.note))).forEach((key,index)=>{
   const delay=blank+(cfg.stampDelayMs+index*cfg.stampStepMs)*stampScaleTime,n=Number(key.dataset.note)-1,column=n%5,row=Math.floor(n/5);a.keys.push({el:key,delay});key.style.zIndex='3';key.style.transformOrigin=(column===0?'left':column===4?'right':'center')+' '+(row===0?'top':row===2?'bottom':'center');
-  animate(key,[{opacity:.6,transform:'translateY(-10px) scale('+cfg.stampScale+')',boxShadow:'0 0 38px '+colors.accent+'99'},{offset:.42,opacity:1,transform:'translateY(2px) scale(.87)',boxShadow:'0 0 24px '+colors.accent+'aa'},{offset:.7,opacity:1,transform:'translateY(-1px) scale(1.12)'},{opacity:1,transform:'none',boxShadow:'0 0 12px '+colors.accent+'44'}],delay,stampMs,'forwards');
+  animate(key,[{opacity:0,transform:'translateY(0px) scale(1)',boxShadow:'0 0 0 '+colors.accent+'00',easing:'cubic-bezier(.16,.8,.3,1)'},{offset:cfg.stampGrowEnd,opacity:1,transform:'translateY(-'+cfg.stampRisePx+'px) scale('+cfg.stampScale+')',boxShadow:'0 0 28px '+colors.accent+'99',easing:'cubic-bezier(.2,.6,.3,1)'},{offset:cfg.stampHighlightEnd,opacity:1,transform:'translateY(-'+cfg.stampRisePx+'px) scale('+cfg.stampScale+')',boxShadow:'0 0 20px '+colors.accent+'77',easing:'cubic-bezier(.3,.05,.35,1)'},{opacity:1,transform:'translateY(0px) scale(1)',boxShadow:'0 0 10px '+colors.accent+'33'}],delay,stampMs,'forwards');
  });
  const duration=cfg.durationMs;
  // Start one shared clock after layout work, preserving the blank opening on slower devices.
@@ -966,7 +970,7 @@ function renderLibrary(){
  const add=document.createElement('button');add.className='song-card add-card';add.innerHTML='<span class="plus">'+appIcon('plus')+'</span><strong>导入新的乐曲</strong><span>SKYMUSIC · MIDI · MUSICXML · AUDIO</span>';add.onclick=openImport;container.append(add);resumeHomePresentation();
 }
 function openImport(){$('importDialog').showModal()}
-function mountPlatformProject(id){cancelScoreEntrance();if(!homeExperience.entry?.mounting)cancelSongEntry();cancelPlayerValueScroll();pauseHomePresentation();cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();pauseSong();let p=state.library.find(p=>p.id===id);if(!p){toast('找不到歌曲');return}state.project=p;state.editMode=false;state.editDirty=false;state.editSource=null;state.editBaseline=null;updateEditButton();p.lastOpened=Date.now();saveLibrary();state.position=0;state.rollPageStart=0;state.windowSec=PLAYER_RULES.roll.initialSeconds;$('rollWindow').value=String(state.windowSec);scoreConsole.views.delete(id);scoreConsole.mode=PLAYER_RULES.editor.initialMode;state.selected=0;state.lastSelected=-1;state.page=-1;state.rate=p.playback.rate||1;state.tuning=p.playback.tuning||'C';state.sustain=Number.isFinite(p.playback.sustain)?p.playback.sustain:.45;state.volume=normalizeVolume(p.playback.volume);syncVolumeControl();$('homeView').hidden=true;$('playerView').hidden=false;state.mode='player';if(homeExperience.entry?.mounting)prepareScoreEntrance();setControlContent($('playBtn'),'play','播放');$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';syncSpeedPicker();syncLoopControl();syncSustainControl();$('instrumentSelect').value=p.playback.instrument||'offline';$('keySelect').value=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs);$('playBtn').disabled=false;applyTheme();initializeScene();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();try{localStorage.setItem('sky-last-song',id)}catch(e){console.warn('最近播放缓存不可用',e)}requestAnimationFrame(drawRoll);try{history.replaceState(null,'','#song='+encodeURIComponent(id))}catch(e){}}
+function mountPlatformProject(id){cancelScoreEntrance();if(!homeExperience.entry?.mounting)cancelSongEntry();cancelPlayerValueScroll();pauseHomePresentation();cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();pauseSong();let p=state.library.find(p=>p.id===id);if(!p){toast('找不到歌曲');return}state.project=p;state.editMode=false;state.editDirty=false;state.editSource=null;state.editBaseline=null;updateEditButton();p.lastOpened=Date.now();if(PLAYER_RULES.sustain.resetOnSongEntry)p.playback.sustain=PLAYER_RULES.sustain.default;saveLibrary();state.position=0;state.rollPageStart=0;state.windowSec=PLAYER_RULES.roll.initialSeconds;$('rollWindow').value=String(state.windowSec);scoreConsole.views.delete(id);scoreConsole.mode=PLAYER_RULES.editor.initialMode;state.selected=0;state.lastSelected=-1;state.page=-1;state.rate=p.playback.rate||1;state.tuning=p.playback.tuning||'C';state.sustain=Number.isFinite(p.playback.sustain)?p.playback.sustain:PLAYER_RULES.sustain.default;state.volume=normalizeVolume(p.playback.volume);syncVolumeControl();$('homeView').hidden=true;$('playerView').hidden=false;state.mode='player';if(homeExperience.entry?.mounting)prepareScoreEntrance();setControlContent($('playBtn'),'play','播放');$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';syncSpeedPicker();syncLoopControl();syncSustainControl();$('instrumentSelect').value=p.playback.instrument||'offline';$('keySelect').value=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs);$('playBtn').disabled=false;applyTheme();initializeScene();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();try{localStorage.setItem('sky-last-song',id)}catch(e){console.warn('最近播放缓存不可用',e)}requestAnimationFrame(drawRoll);try{history.replaceState(null,'','#song='+encodeURIComponent(id))}catch(e){}}
 function goHome(){cancelScoreEntrance();if(!homeExperience.entry?.mounting)cancelSongEntry();cancelPlayerValueScroll();cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();if(state.editMode){requestFinishEdit('home');return}pauseSong();state.mode='home';$('playerView').hidden=true;$('homeView').hidden=false;resetHomePresentation();$('songSearch').value='';$('libraryFilter').value='all';$('homeView').scrollTop=0;try{history.replaceState(null,'',location.pathname)}catch(e){};renderLibrary();toast('已返回音乐馆',1000)}
 function applyTheme(){let p=state.project;if(!p)return;let theme=sceneId(p),host=$('playerView');applyPlayerTemplate(p,host);if($('scoreConsole')?.open)applyPlayerTemplate(p,$('scoreConsole'));applyPlayerTemplate(p,$('sceneDialog'));$('keyFeedbackLayer').innerHTML='';initializeScene();requestAnimationFrame(drawRoll)}
 function beatIndex(time){let events=scoreEvents(state.project);return clamp(lowerBound(events,time+1)-1,0,Math.max(events.length-1,0))}
@@ -1151,7 +1155,7 @@ function attachHomeCard(el,song){
 function stopHomeCarousel(){const c=homeExperience.carousel;if(c){clearTimeout(c.timer);c.timer=0}}
 function scheduleHomeCarousel(){
  stopHomeCarousel();const c=homeExperience.carousel;
- if(!c||c.busy||c.hover||c.focus||$('homeThemeDialog')?.open||document.hidden||state.mode!=='home'||$('homeView').hidden||homeReducedMotion())return;
+ if(!c||c.busy||c.hover||c.focus||$('homeThemeDialog')?.open||$('themeRepositoryDialog')?.open||document.hidden||state.mode!=='home'||$('homeView').hidden||homeReducedMotion())return;
  c.timer=setTimeout(()=>{c.timer=0;if(!document.hidden&&state.mode==='home'&&!c.hover&&!c.focus)moveHomeTheme(1,false)},APP_CONFIG.home.carousel.intervalMs);
 }
 function paintHomeCarousel(animate=true){
@@ -1345,12 +1349,64 @@ async function returnHomeFromPlayer(){
  }catch(error){if(active()){cancelSongEntry();goHome()}}
 }
 
+// A platform-owned theme shelf; registry mutations never alter scores or player handlers.
+let pendingThemeRemoval=null;
+function themeUsage(id){return state.library.filter(p=>sceneId(p)===id)}
+function renderThemeRepository(){
+ const grid=$('themeRepositoryGrid');grid.replaceChildren();const definitions=Object.values(THEME_DEFINITIONS);$('themeRepositoryCount').textContent=`已加载 ${definitions.length} 款主题`;
+ for(const d of definitions){
+  const builtin=PLATFORM_BUILTIN_THEMES.has(d.id),usage=themeUsage(d.id),card=document.createElement('article');card.className='theme-repository-card';card.dataset.themeId=d.id;
+  const image=document.createElement('img'),path=d.decorations.cover||d.decorations.scene.image;image.alt='';image.loading='lazy';if(path)image.src=themeAsset(path,{theme:{id:d.id}});else image.hidden=true;
+  const body=document.createElement('div'),title=document.createElement('h3'),badge=document.createElement('small'),desc=document.createElement('p'),actions=document.createElement('div');title.textContent=d.displayName;badge.textContent=(builtin?'内置主题':'已添加')+' · '+usage.length+' 首乐曲使用';desc.textContent=d.description||d.name;actions.className='theme-repository-actions';
+  const preview=document.createElement('button');preview.className='btn-outline';preview.textContent='预览';preview.onclick=()=>openHomeThemePreview(d.id);actions.append(preview);
+  const backup=document.createElement('button');backup.className='btn-outline';backup.textContent='导出';backup.onclick=()=>exportTheme({title:d.displayName,theme:{id:d.id,...copy(d.defaults),...copy(d.initialOverrides)}});actions.append(backup);
+  const remove=document.createElement('button');remove.className='btn-outline';remove.textContent=builtin?'内置保留':'移除';remove.disabled=builtin||usage.length>0;remove.title=builtin?'平台内置主题':usage.length?'请先为使用此主题的乐曲更换主题':'';remove.onclick=()=>{pendingThemeRemoval=d.id;$('themeRemoveMessage').textContent=`移除「${d.displayName}」？你可以先导出备份，之后再重新添加。`;$('themeRemoveDialog').showModal()};actions.append(remove);
+  body.append(title,badge,desc,actions);card.append(image,body);grid.append(card);
+ }
+}
+function openThemeRepository(){stopHomeCarousel();renderThemeRepository();$('themeRepositoryDialog').showModal()}
+function bindThemeRepository(){
+ if(!document.createComment)return;
+ $('themeRepositoryAdd').onclick=()=>$('themeLibraryInput').click();$('themeRepositoryDialog').addEventListener('close',scheduleHomeCarousel);
+ $('confirmThemeRemoval').onclick=()=>{
+  const id=pendingThemeRemoval,d=THEME_DEFINITIONS[id];if(!d)return;
+  if(PLATFORM_BUILTIN_THEMES.has(id)||themeUsage(id).length||(state.editMode&&sceneId(state.project)===id)){toast('此主题仍被乐曲使用，不能移除');return}
+  try{const records=JSON.parse(localStorage.getItem(PLATFORM_THEME_KEY)||'[]').filter(item=>item.definition.id!==id);localStorage.setItem(PLATFORM_THEME_KEY,JSON.stringify(records))}catch(error){toast('主题移除失败：'+error.message,6000);return}
+  delete THEME_DEFINITIONS[id];delete PRESETS[id];delete PLAYER_APPEARANCE[id];delete PLATFORM_THEME_ASSETS[id];populateThemeChoices();renderThemeRepository();$('themeRemoveDialog').close();toast('已移除主题「'+d.displayName+'」');
+ };$('themeRemoveDialog').addEventListener('close',()=>{pendingThemeRemoval=null});
+}
+
+// A single custom listbox keeps the creation form independent of native OS select menus.
+function closeCreateThemePicker(restoreFocus=false){
+ const menu=$('createThemeMenu');if(menu.matches(':popover-open'))menu.hidePopover();$('createThemeToggle').setAttribute('aria-expanded','false');if(restoreFocus)$('createThemeToggle').focus();
+}
+function syncCreateThemePicker(){
+ if(!document.createComment)return;
+ const selected=$('createTheme').value,menu=$('createThemeMenu');$('createThemeValue').textContent=THEME_DEFINITIONS[selected]?.displayName||'选择主题';menu.replaceChildren();
+ for(const d of Object.values(THEME_DEFINITIONS)){
+  const option=document.createElement('button');option.type='button';option.role='option';option.dataset.theme=d.id;option.setAttribute('aria-selected',String(d.id===selected));option.tabIndex=d.id===selected?0:-1;
+  const swatch=document.createElement('span');swatch.className='theme-color-chip';swatch.style.backgroundColor=d.appearance.accent;const name=document.createElement('span');name.textContent=d.displayName;option.append(swatch,name);const check=document.createElement('span');check.innerHTML=appIcon('check');check.className='theme-choice-check';option.append(check);
+  option.onclick=()=>{$('createTheme').value=d.id;closeCreateThemePicker(true);syncCreateThemePicker()};menu.append(option);
+ }
+}
+function openCreateThemePicker(){
+ syncCreateThemePicker();const menu=$('createThemeMenu'),rect=$('createThemeToggle').getBoundingClientRect(),below=innerHeight-rect.bottom-12,above=rect.top-12;
+ const height=Math.min(260,Math.max(below,above));menu.style.width=rect.width+'px';menu.style.left=rect.left+'px';menu.style.maxHeight=height+'px';menu.style.top=below>=Math.min(260,menu.children.length*42+12)?rect.bottom+6+'px':'auto';menu.style.bottom=menu.style.top==='auto'?innerHeight-rect.top+6+'px':'auto';
+ menu.showPopover();$('createThemeToggle').setAttribute('aria-expanded','true');const selected=menu.querySelector('[aria-selected=true]')||menu.firstElementChild;selected?.focus({preventScroll:true});selected?.scrollIntoView({block:'nearest'});
+}
+function bindCreateThemePicker(){
+ if(!document.createComment)return;
+ const toggle=$('createThemeToggle'),menu=$('createThemeMenu');toggle.onclick=()=>menu.matches(':popover-open')?closeCreateThemePicker():openCreateThemePicker();toggle.onkeydown=e=>{if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();openCreateThemePicker()}};
+ menu.onkeydown=e=>{const options=[...menu.children],index=options.indexOf(document.activeElement);let next=index;if(e.key==='ArrowDown')next=(index+1)%options.length;else if(e.key==='ArrowUp')next=(index+options.length-1)%options.length;else if(e.key==='Home')next=0;else if(e.key==='End')next=options.length-1;else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeCreateThemePicker(true);return}else if(e.key==='Tab'){closeCreateThemePicker(true);return}else return;e.preventDefault();options[next].focus()};
+ document.addEventListener('pointerdown',e=>{if(menu.matches(':popover-open')&&!menu.contains(e.target)&&!toggle.contains(e.target))closeCreateThemePicker()});window.addEventListener('resize',()=>closeCreateThemePicker());$('createDialog').addEventListener('close',()=>closeCreateThemePicker());$('createDialog').addEventListener('cancel',e=>{if(menu.matches(':popover-open')){e.preventDefault();closeCreateThemePicker(true)}});$('createTitle').oninput=()=>$('createTitle').setCustomValidity('');$('createTheme').onchange=syncCreateThemePicker;
+}
+
 /* 45-workspace.js */
 // v0.3 project library, non-destructive editor, theme controls and portable exports.
 function escName(s){return (s||'untitled').replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').slice(0,90)}
 function nextId(prefix='song'){return prefix+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)}
-function baseProject(title,theme,dur=60000,interval=250){return normalize({id:nextId(),title,subtitle:'SKY MUSIC · NEW SONG',description:'',durationMs:dur,score:{mode:'grid',gridIntervalMs:interval,events:Array.from({length:Math.min(4000,Math.ceil(dur/interval))},(_,i)=>({timeMs:i*interval,notes:[],durationMs:0,velocity:85,confidence:'manual'}))},theme:{id:theme},playback:{tuning:'C',rate:1,sustain:.45},provenance:{source:'手工新建',status:'未识谱'}})}
-function createProject(){const title=$('createTitle').value.trim().slice(0,100)||'未命名';const dur=clamp(Number($('createDuration').value)||60,5,3600)*1000;const step=clamp(Number($('createInterval').value)||250,40,5000);const theme=$('createTheme').value;let p=baseProject(title,theme,dur,step);state.library.unshift(p);saveLibrary();$('createDialog').close();renderLibrary();openSong(p.id);openEditor();toast('新项目已创建，现已进入曲谱编辑模式')}
+function baseProject(title,theme,dur=60000,interval=250){return normalize({id:nextId(),title,subtitle:'SKY MUSIC · NEW SONG',description:'',durationMs:dur,score:{mode:'grid',gridIntervalMs:interval,events:Array.from({length:Math.min(4000,Math.ceil(dur/interval))},(_,i)=>({timeMs:i*interval,notes:[],durationMs:0,velocity:85,confidence:'manual'}))},theme:{id:theme},playback:{tuning:'C',rate:1,sustain:PLAYER_RULES.sustain.default},provenance:{source:'手工新建',status:'未识谱'}})}
+function createProject(){const title=$('createTitle').value.trim().slice(0,100);if(!title){$('createTitle').focus();$('createTitle').setCustomValidity('请输入乐曲名称');$('createTitle').reportValidity();return}const dur=clamp(Number($('createDuration').value)||60,5,3600)*1000;const step=clamp(Number($('createInterval').value)||250,40,5000);const theme=$('createTheme').value;let p=baseProject(title,theme,dur,step);state.library.unshift(p);saveLibrary();$('createDialog').close();renderLibrary();openSong(p.id);openEditor();toast('新项目已创建，现已进入曲谱编辑模式')}
 function favoriteSong(id){let p=state.library.find(x=>x.id===id);if(!p)return;p.favorite=!p.favorite;saveLibrary();renderLibrary();toast(p.favorite?'已加入收藏':'已取消收藏')}
 function duplicateSong(id){const source=state.library.find(p=>p.id===id);if(!source)return;const p=normalize({...copy(source),id:nextId('copy'),originKind:'user',title:source.title+' · 副本',provenance:{...source.provenance,source:'副本',derivedFrom:source.id}});p._imageUrl=source._imageUrl;p._imageBytes=source._imageBytes;state.library.unshift(p);saveLibrary();renderLibrary();toast('副本已存入「我的曲谱」，可以重命名和删除')}
 function deleteSong(id){const p=state.library.find(x=>x.id===id);if(!p)return;if(p.originKind==='builtin'&&BUILTIN_IDS.has(id)){toast('内置歌曲不可删除，可复制为我的曲谱后删除副本',5000);return}state.pendingDeleteId=id;$('deleteWarning').textContent=`确定删除《${p.title}》？本地删除无法撤销，请先导出备份。`;$('deleteDialog').showModal()}
@@ -1399,7 +1455,7 @@ function exportJSON(p){downloadBytes(escName(p.title)+'.json',ENCODER.encode(JSO
 function openExport(){if(state.project)$('exportDialog').showModal()}
 function bindWorkspace(){
  populateThemeChoices();
- $('newSongBtn').onclick=()=>$('createDialog').showModal();$('libraryFilter').onchange=renderLibrary;$('createConfirm').onclick=createProject;
+ $('newSongBtn').onclick=()=>{$('createTitle').value='';$('createTitle').setCustomValidity('');populateThemeChoices();$('createDialog').showModal();$('createTitle').focus()};$('libraryFilter').onchange=renderLibrary;$('createConfirm').onclick=createProject;bindCreateThemePicker();bindThemeRepository();
  $('scoreEditorBtn').onclick=openEditor;$('consoleUndo').onclick=undo;$('consoleRedo').onclick=redo;
  $('sceneEditorBtn').onclick=themeEditor;$('exportProject').onclick=openExport;
  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$((b.dataset.close)).close());
@@ -1554,7 +1610,7 @@ function completeEdit(kind){
  if(action==='home'){returnHomeFromPlayer();return}
  try{history.replaceState(null,'','#song='+encodeURIComponent(chosen.id))}catch(error){}
  state.rate=chosen.playback?.rate||1;state.volume=normalizeVolume(chosen.playback?.volume);syncSpeedPicker();syncVolumeControl();
- state.tuning=chosen.playback?.tuning||'C';state.sustain=chosen.playback?.sustain??.45;
+ state.tuning=chosen.playback?.tuning||'C';state.sustain=chosen.playback?.sustain??PLAYER_RULES.sustain.default;
  refreshWorkspace();renderLibrary();saveLibrary();
  toast(kind==='new'?'已另存为新曲谱，已结束编辑':kind==='direct'?'已保存，已结束编辑':'已结束编辑，未保存修改');
 }
@@ -1563,7 +1619,7 @@ function openSongInfo(){if(!state.project)return;syncEditorFields();for(let id o
 /* 99-bootstrap.js */
 function install(){bindAppIcons();restorePlatformThemes();state.library=BUILTINS.map(p=>normalize(p));loadLibrary();snowPopulate($('worldSnow'),70);snowPopulate($('stageSnow'),24,'stage');$('showGuide').onclick=()=>$('helpDialog').showModal();for(let b of document.querySelectorAll('[data-import]'))b.onclick=openImport;$('songSearch').oninput=renderLibrary;
  $('fileInput').onchange=async ev=>{let files=[...(ev.target.files||[])],file=files[0];ev.target.value='';if(!file)return;toast('正在检查 '+file.name,1200);try{await importFiles(files)}catch(err){console.error('Import failed',err);toast('导入失败：'+err.message,7500)}};
- $('importThemeLibrary').onclick=()=>$('themeLibraryInput').click();$('themeLibraryInput').onchange=async ev=>{const file=ev.target.files?.[0];ev.target.value='';if(file)try{await importFile(file)}catch(error){toast('主题录入失败：'+error.message,7500)}};
+ $('importThemeLibrary').onclick=openThemeRepository;$('themeLibraryInput').onchange=async ev=>{const file=ev.target.files?.[0];ev.target.value='';if(file)try{await importFile(file)}catch(error){toast('主题录入失败：'+error.message,7500)}};
  bindPlayerInteractions();
  bindRangePicker();bindInstrumentPicker();bindSpeedPicker();bindWorkspace();bindScoreConsole();bindVideo();bindHomeExperience();renderLibrary();const navigation=performance.getEntriesByType?.('navigation')?.[0];if(navigation?.type==='reload'){try{history.replaceState(null,'',location.pathname+location.search)}catch(error){}}else if(location.hash.startsWith('#song=')){let id=decodeURIComponent(location.hash.slice(6));if(state.library.some(x=>x.id===id))openSong(id)}
  }

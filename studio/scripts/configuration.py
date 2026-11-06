@@ -30,12 +30,15 @@ def render(root):
     assert 0 < player['volume']['rampSeconds'] <= 0.1
     assert player['selectors']['speedMinimumRows'] >= 2
     assert 0 < player['valuePicker']['rowHeightPx'] <= 40 and 0 < player['valuePicker']['wheelGain'] <= 1
+    assert 0 <= player['sustain']['default'] <= 1 and isinstance(player['sustain']['resetOnSongEntry'],bool)
     assert player['notifications']['durationMs'] > 0
     assert 200 <= player['notifications']['slowOperationMs'] <= 2000
     entrance=player['scoreEntrance']
     assert 1200 <= entrance['durationMs'] <= 4000
     assert 80 <= entrance['blankMs'] <= 400 and 100 <= entrance['beatGrowMs'] <= 500
     assert 0 < entrance['beatStepMs'] <= 80 and 1 < entrance['stampScale'] <= 1.8
+    assert 0 < entrance['stampGrowEnd'] < entrance['stampHighlightEnd'] < 1 and 1 < entrance['stampScale'] <= 1.35
+    assert 0 <= entrance['stampRisePx'] <= 12
     assert 100 <= entrance['rollFloatMs'] <= 600 and 0 < entrance['rollRisePx'] <= 40
     elements = load('themes/elements.json')['elements']
     template = load('themes/template.json')

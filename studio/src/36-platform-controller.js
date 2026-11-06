@@ -20,6 +20,7 @@ function projectEntry(project){
 }
 const PLATFORM_THEME_KEY='sky-music-studio-themes-v1';
 const PLATFORM_THEME_ASSETS={};
+const PLATFORM_BUILTIN_THEMES=new Set(Object.keys(THEME_DEFINITIONS));
 function restorePlatformThemes(){
  try{const records=JSON.parse(localStorage.getItem(PLATFORM_THEME_KEY)||'[]');for(const record of records){const definition=sanitizeThemeDefinition(record.definition);registerThemeDefinition(definition);PLATFORM_THEME_ASSETS[definition.id]=record.assets||{}}}catch(error){console.warn('主题库恢复失败',error)}
 }
@@ -30,7 +31,7 @@ function savePlatformTheme(pack){
  const records=JSON.parse(localStorage.getItem(PLATFORM_THEME_KEY)||'[]').filter(item=>item.definition.id!==definition.id);
  records.push({definition,assets:pack.assets||{}});
  localStorage.setItem(PLATFORM_THEME_KEY,JSON.stringify(records));
- registerThemeDefinition(definition);PLATFORM_THEME_ASSETS[definition.id]=pack.assets||{};populateThemeChoices();
+ registerThemeDefinition(definition);PLATFORM_THEME_ASSETS[definition.id]=pack.assets||{};populateThemeChoices();if($('themeRepositoryDialog').open)renderThemeRepository();
 }
 function sanitizeThemeDefinition(raw){
  if(!raw||typeof raw!=='object'||!/^[-a-zA-Z0-9_]{1,80}$/.test(raw.id||''))throw Error('主题定义缺少有效 ID');

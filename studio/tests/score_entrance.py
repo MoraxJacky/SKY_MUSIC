@@ -9,6 +9,7 @@ with sync_playwright() as pw:
  b=pw.chromium.launch(channel='msedge',headless=True);page=b.new_page(viewport={'width':1366,'height':900});errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.add_init_script(hook);page.goto(url)
  page.locator('.card-play').first.click();page.wait_for_function("document.getElementById('playerView').dataset.scoreEntrance==='running'")
  assert page.locator('#songEntryTransition').is_hidden()
+ lit=page.locator('#beatGrid>.beat').evaluate_all("es=>es.filter(e=>e.getAnimations().some(a=>a.constructor.name==='Animation'&&a.effect.getKeyframes().some(f=>f.boxShadow))).map(e=>Number(e.dataset.index))");assert lit==[0],lit
  blank=page.evaluate("({roll:window.rollArrivalPaint.length,keys:document.querySelectorAll('#keyBoard .active').length,visibleKeys:[...document.querySelectorAll('#keyBoard .key-tile')].filter(e=>getComputedStyle(e).opacity==='1').length,tiles:[...document.querySelectorAll('#beatGrid>.beat')].filter(e=>Number(getComputedStyle(e).opacity)>0).length,patterns:[...document.querySelectorAll('#beatGrid .score-arrival-pattern')].filter(e=>Number(getComputedStyle(e).opacity)>0).length,labels:[...document.querySelectorAll('#beatGrid .beat-name')].filter(e=>Number(getComputedStyle(e).opacity)>0).length})")
  assert blank=={'roll':0,'keys':0,'visibleKeys':15,'tiles':32,'patterns':0,'labels':0},blank
  baseline=page.evaluate('JSON.stringify([window.__SKY_STUDIO_TEST__.state.project.score,window.__SKY_STUDIO_TEST__.state.project.playback,window.__SKY_STUDIO_TEST__.state.position])')
@@ -19,8 +20,9 @@ with sync_playwright() as pw:
  assert page.locator('#beatGrid .score-grown').evaluate_all('es=>es.every(e=>Number(e.dataset.index)<8)')
  page.screenshot(path=str(out/'first-row-floating-notes.png'))
  page.wait_for_function("document.querySelectorAll('#keyBoard .score-stamped').length>0")
- stamp=page.locator('#keyBoard .score-stamped').first.evaluate("e=>{const a=e.getAnimations().find(a=>a.effect.getKeyframes().some(f=>f.transform?.includes('scale')));return {note:Number(e.dataset.note),frames:a.effect.getKeyframes().map(f=>f.transform||'none')}}")
- assert any('1.55' in frame for frame in stamp['frames']),stamp
+ stamp=page.locator('#keyBoard .score-stamped').first.evaluate("e=>{const a=e.getAnimations().find(a=>a.effect.getKeyframes().some(f=>f.transform?.includes('scale')));return {note:Number(e.dataset.note),frames:a.effect.getKeyframes().map(f=>f.transform||'none'),opacity:a.effect.getKeyframes().map(f=>f.opacity),offsets:a.effect.getKeyframes().map(f=>f.computedOffset)}}")
+ assert stamp['opacity'][0]=='0' and stamp['offsets']==[0,.18,.5,1],stamp
+ assert stamp['frames']==['translateY(0px) scale(1)', 'translateY(-8px) scale(1.28)', 'translateY(-8px) scale(1.28)', 'translateY(0px) scale(1)'],stamp
  page.wait_for_function("document.getElementById('playerView').dataset.scoreEntrance==='done'")
  final=page.evaluate('window.rollArrivalPaint');assert len(final)>len(partial)
  first=partial[0];settled=next(n for n in final if abs(n['x']-first['x'])<.1 and abs(n['h']-first['h'])<.1)

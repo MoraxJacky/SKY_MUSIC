@@ -1,0 +1,28 @@
+{
+  "format": "sky-music-entry",
+  "schemaVersion": 1,
+  "id": "vault-demo",
+  "title": "禁阁星阶 · 试听",
+  "subtitle": "Vault · Stairway of Stars",
+  "author": "Sky Music Studio",
+  "description": "原创主题试听短句，用于检查禁阁星阶主题的配色、场景与播放反馈。",
+  "durationMs": 13440,
+  "keyCount": 15,
+  "playback": {
+    "tuning": "C",
+    "rate": 1,
+    "sustain": 0,
+    "instrument": "offline-music-box"
+  },
+  "provenance": {
+    "source": "原创主题试听",
+    "accuracy": "hand-composed"
+  },
+  "music": "scores/vault-demo.skytrack",
+  "theme": "themes/vault.skytheme",
+  "card": {
+    "title": "禁阁星阶 · 试听",
+    "subtitle": "",
+    "coverElement": null
+  }
+}

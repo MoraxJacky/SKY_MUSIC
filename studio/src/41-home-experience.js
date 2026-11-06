@@ -67,7 +67,7 @@ function attachHomeCard(el,song){
 function stopHomeCarousel(){const c=homeExperience.carousel;if(c){clearTimeout(c.timer);c.timer=0}}
 function scheduleHomeCarousel(){
  stopHomeCarousel();const c=homeExperience.carousel;
- if(!c||c.busy||c.hover||c.focus||$('homeThemeDialog')?.open||document.hidden||state.mode!=='home'||$('homeView').hidden||homeReducedMotion())return;
+ if(!c||c.busy||c.hover||c.focus||$('homeThemeDialog')?.open||$('themeRepositoryDialog')?.open||document.hidden||state.mode!=='home'||$('homeView').hidden||homeReducedMotion())return;
  c.timer=setTimeout(()=>{c.timer=0;if(!document.hidden&&state.mode==='home'&&!c.hover&&!c.focus)moveHomeTheme(1,false)},APP_CONFIG.home.carousel.intervalMs);
 }
 function paintHomeCarousel(animate=true){
@@ -259,4 +259,56 @@ async function returnHomeFromPlayer(){
   await animateSongTransition(entry,overlay,songRevealFrames(overlay,false),rules.revealMs);if(!active())return;
   cancelSongEntry();$('libraryTitle').focus({preventScroll:true});
  }catch(error){if(active()){cancelSongEntry();goHome()}}
+}
+
+// A platform-owned theme shelf; registry mutations never alter scores or player handlers.
+let pendingThemeRemoval=null;
+function themeUsage(id){return state.library.filter(p=>sceneId(p)===id)}
+function renderThemeRepository(){
+ const grid=$('themeRepositoryGrid');grid.replaceChildren();const definitions=Object.values(THEME_DEFINITIONS);$('themeRepositoryCount').textContent=`已加载 ${definitions.length} 款主题`;
+ for(const d of definitions){
+  const builtin=PLATFORM_BUILTIN_THEMES.has(d.id),usage=themeUsage(d.id),card=document.createElement('article');card.className='theme-repository-card';card.dataset.themeId=d.id;
+  const image=document.createElement('img'),path=d.decorations.cover||d.decorations.scene.image;image.alt='';image.loading='lazy';if(path)image.src=themeAsset(path,{theme:{id:d.id}});else image.hidden=true;
+  const body=document.createElement('div'),title=document.createElement('h3'),badge=document.createElement('small'),desc=document.createElement('p'),actions=document.createElement('div');title.textContent=d.displayName;badge.textContent=(builtin?'内置主题':'已添加')+' · '+usage.length+' 首乐曲使用';desc.textContent=d.description||d.name;actions.className='theme-repository-actions';
+  const preview=document.createElement('button');preview.className='btn-outline';preview.textContent='预览';preview.onclick=()=>openHomeThemePreview(d.id);actions.append(preview);
+  const backup=document.createElement('button');backup.className='btn-outline';backup.textContent='导出';backup.onclick=()=>exportTheme({title:d.displayName,theme:{id:d.id,...copy(d.defaults),...copy(d.initialOverrides)}});actions.append(backup);
+  const remove=document.createElement('button');remove.className='btn-outline';remove.textContent=builtin?'内置保留':'移除';remove.disabled=builtin||usage.length>0;remove.title=builtin?'平台内置主题':usage.length?'请先为使用此主题的乐曲更换主题':'';remove.onclick=()=>{pendingThemeRemoval=d.id;$('themeRemoveMessage').textContent=`移除「${d.displayName}」？你可以先导出备份，之后再重新添加。`;$('themeRemoveDialog').showModal()};actions.append(remove);
+  body.append(title,badge,desc,actions);card.append(image,body);grid.append(card);
+ }
+}
+function openThemeRepository(){stopHomeCarousel();renderThemeRepository();$('themeRepositoryDialog').showModal()}
+function bindThemeRepository(){
+ if(!document.createComment)return;
+ $('themeRepositoryAdd').onclick=()=>$('themeLibraryInput').click();$('themeRepositoryDialog').addEventListener('close',scheduleHomeCarousel);
+ $('confirmThemeRemoval').onclick=()=>{
+  const id=pendingThemeRemoval,d=THEME_DEFINITIONS[id];if(!d)return;
+  if(PLATFORM_BUILTIN_THEMES.has(id)||themeUsage(id).length||(state.editMode&&sceneId(state.project)===id)){toast('此主题仍被乐曲使用，不能移除');return}
+  try{const records=JSON.parse(localStorage.getItem(PLATFORM_THEME_KEY)||'[]').filter(item=>item.definition.id!==id);localStorage.setItem(PLATFORM_THEME_KEY,JSON.stringify(records))}catch(error){toast('主题移除失败：'+error.message,6000);return}
+  delete THEME_DEFINITIONS[id];delete PRESETS[id];delete PLAYER_APPEARANCE[id];delete PLATFORM_THEME_ASSETS[id];populateThemeChoices();renderThemeRepository();$('themeRemoveDialog').close();toast('已移除主题「'+d.displayName+'」');
+ };$('themeRemoveDialog').addEventListener('close',()=>{pendingThemeRemoval=null});
+}
+
+// A single custom listbox keeps the creation form independent of native OS select menus.
+function closeCreateThemePicker(restoreFocus=false){
+ const menu=$('createThemeMenu');if(menu.matches(':popover-open'))menu.hidePopover();$('createThemeToggle').setAttribute('aria-expanded','false');if(restoreFocus)$('createThemeToggle').focus();
+}
+function syncCreateThemePicker(){
+ if(!document.createComment)return;
+ const selected=$('createTheme').value,menu=$('createThemeMenu');$('createThemeValue').textContent=THEME_DEFINITIONS[selected]?.displayName||'选择主题';menu.replaceChildren();
+ for(const d of Object.values(THEME_DEFINITIONS)){
+  const option=document.createElement('button');option.type='button';option.role='option';option.dataset.theme=d.id;option.setAttribute('aria-selected',String(d.id===selected));option.tabIndex=d.id===selected?0:-1;
+  const swatch=document.createElement('span');swatch.className='theme-color-chip';swatch.style.backgroundColor=d.appearance.accent;const name=document.createElement('span');name.textContent=d.displayName;option.append(swatch,name);const check=document.createElement('span');check.innerHTML=appIcon('check');check.className='theme-choice-check';option.append(check);
+  option.onclick=()=>{$('createTheme').value=d.id;closeCreateThemePicker(true);syncCreateThemePicker()};menu.append(option);
+ }
+}
+function openCreateThemePicker(){
+ syncCreateThemePicker();const menu=$('createThemeMenu'),rect=$('createThemeToggle').getBoundingClientRect(),below=innerHeight-rect.bottom-12,above=rect.top-12;
+ const height=Math.min(260,Math.max(below,above));menu.style.width=rect.width+'px';menu.style.left=rect.left+'px';menu.style.maxHeight=height+'px';menu.style.top=below>=Math.min(260,menu.children.length*42+12)?rect.bottom+6+'px':'auto';menu.style.bottom=menu.style.top==='auto'?innerHeight-rect.top+6+'px':'auto';
+ menu.showPopover();$('createThemeToggle').setAttribute('aria-expanded','true');const selected=menu.querySelector('[aria-selected=true]')||menu.firstElementChild;selected?.focus({preventScroll:true});selected?.scrollIntoView({block:'nearest'});
+}
+function bindCreateThemePicker(){
+ if(!document.createComment)return;
+ const toggle=$('createThemeToggle'),menu=$('createThemeMenu');toggle.onclick=()=>menu.matches(':popover-open')?closeCreateThemePicker():openCreateThemePicker();toggle.onkeydown=e=>{if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();openCreateThemePicker()}};
+ menu.onkeydown=e=>{const options=[...menu.children],index=options.indexOf(document.activeElement);let next=index;if(e.key==='ArrowDown')next=(index+1)%options.length;else if(e.key==='ArrowUp')next=(index+options.length-1)%options.length;else if(e.key==='Home')next=0;else if(e.key==='End')next=options.length-1;else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeCreateThemePicker(true);return}else if(e.key==='Tab'){closeCreateThemePicker(true);return}else return;e.preventDefault();options[next].focus()};
+ document.addEventListener('pointerdown',e=>{if(menu.matches(':popover-open')&&!menu.contains(e.target)&&!toggle.contains(e.target))closeCreateThemePicker()});window.addEventListener('resize',()=>closeCreateThemePicker());$('createDialog').addEventListener('close',()=>closeCreateThemePicker());$('createDialog').addEventListener('cancel',e=>{if(menu.matches(':popover-open')){e.preventDefault();closeCreateThemePicker(true)}});$('createTitle').oninput=()=>$('createTitle').setCustomValidity('');$('createTheme').onchange=syncCreateThemePicker;
 }

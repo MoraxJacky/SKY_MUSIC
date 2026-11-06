@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);out=p.parse_args().output.resolve();out.mkdir(parents=True,exist_ok=False)
 r=Path(__file__).resolve().parents[1]
 with sync_playwright() as pw:
- b=pw.chromium.launch(channel='msedge',headless=True);page=b.new_page(accept_downloads=True,viewport={'width':1366,'height':768});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+ b=pw.chromium.launch(channel='msedge',headless=True);page=b.new_page(accept_downloads=True,viewport={'width':1366,'height':768},reduced_motion='reduce');errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
  page.goto((r/'SkyMusicStudio_Standalone.html').as_uri());page.locator('.card-play').first.click()
  result=page.evaluate('''async()=>{
  const t=window.__SKY_STUDIO_TEST__,before=JSON.stringify(t.state.project.score.events),entry=t.projectEntry(t.state.project);

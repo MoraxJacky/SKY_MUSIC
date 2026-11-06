@@ -12,6 +12,9 @@
   "entries": [
     "songs/canon-christmas.json",
     "songs/starlight-demo.json",
-    "songs/citylights-demo.json"
+    "songs/citylights-demo.json",
+    "songs/prairie-demo.json",
+    "songs/rainforest-demo.json",
+    "songs/vault-demo.json"
   ]
 }

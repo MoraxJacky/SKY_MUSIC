@@ -13,7 +13,7 @@ with sync_playwright() as pw:
  assert page.locator('.brand-emblem #brandDiamond stop').count()>=6
  assert page.locator('.brand-emblem circle').get_attribute('stroke')=='url(#brandDiamond)'
  acrylic=page.locator('.theme-carousel').evaluate("e=>{const s=getComputedStyle(e,'::before');return {filter:s.backdropFilter,mask:s.maskImage,fill:s.backgroundImage,pointer:s.pointerEvents}}")
- assert 'blur(24px)' in acrylic['filter'] and 'linear-gradient' in acrylic['mask'] and acrylic['pointer']=='none'
+ assert 'blur(2px)' in acrylic['filter'] and 'linear-gradient' in acrylic['mask'] and acrylic['pointer']=='none'
  buttons=page.locator('.home-top-actions>button').evaluate_all("es=>es.map(e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return {top:r.top,bottom:r.bottom,height:r.height,shadow:s.boxShadow}})")
  assert len({x['top'] for x in buttons})==len({x['bottom'] for x in buttons})==1 and {x['height'] for x in buttons}=={34},buttons
  assert all(x['shadow']=='none' for x in buttons)

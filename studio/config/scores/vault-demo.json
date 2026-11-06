@@ -1,0 +1,299 @@
+{
+  "schemaVersion": 1,
+  "keyCount": 15,
+  "mode": "grid",
+  "gridIntervalMs": 420,
+  "tuning": "C",
+  "events": [
+    {
+      "timeMs": 0,
+      "notes": [
+        1
+      ],
+      "durationMs": 328,
+      "velocity": 82,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 420,
+      "notes": [
+        5
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 840,
+      "notes": [
+        8
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 1260,
+      "notes": [
+        10
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 1680,
+      "notes": [
+        12
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 2100,
+      "notes": [
+        10
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 2520,
+      "notes": [
+        8
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 2940,
+      "notes": [
+        5
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 3360,
+      "notes": [
+        2
+      ],
+      "durationMs": 328,
+      "velocity": 82,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 3780,
+      "notes": [
+        6
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 4200,
+      "notes": [
+        9
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 4620,
+      "notes": [
+        11
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 5040,
+      "notes": [
+        13
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 5460,
+      "notes": [
+        11
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 5880,
+      "notes": [
+        9
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 6300,
+      "notes": [
+        6
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 6720,
+      "notes": [
+        3
+      ],
+      "durationMs": 328,
+      "velocity": 82,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 7140,
+      "notes": [
+        7
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 7560,
+      "notes": [
+        10
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 7980,
+      "notes": [
+        12
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 8400,
+      "notes": [
+        14
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 8820,
+      "notes": [
+        12
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 9240,
+      "notes": [
+        10
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 9660,
+      "notes": [
+        7
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 10080,
+      "notes": [
+        5
+      ],
+      "durationMs": 328,
+      "velocity": 82,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 10500,
+      "notes": [
+        8
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 10920,
+      "notes": [
+        10
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 11340,
+      "notes": [
+        12
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 11760,
+      "notes": [
+        15
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 12180,
+      "notes": [
+        12
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 12600,
+      "notes": [
+        10
+      ],
+      "durationMs": 328,
+      "velocity": 72,
+      "confidence": "original-demo"
+    },
+    {
+      "timeMs": 13020,
+      "notes": [
+        1,
+        8,
+        15
+      ],
+      "durationMs": 420,
+      "velocity": 72,
+      "confidence": "original-demo"
+    }
+  ]
+}

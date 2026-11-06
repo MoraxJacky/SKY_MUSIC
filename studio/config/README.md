@@ -95,3 +95,7 @@ python -X utf8 scripts/configuration.py --check
 音色 `instrumentPicker` 现与数值控件共用单格竖向滚轮（首尾循环，停止滚动后提交音源选择），旧音色下拉框已移除；倍速仍保留下拉菜单。`scoreEntrance.durationMs=2400` 统一三块谱面入场进度，其他分段时序按比例归一。`loop` 定义单曲循环按钮，歌曲 `playback.loop` 存布尔开关。点击反馈、循环、粒子订阅与图标均属于共享逻辑，不接受主题定义的动作处理器。
 
 通知采用显式动作提交策略：默认1800ms，`slowOperationMs=600` 延迟显示加载提示；不对任意点击、音量/延音或拖动持续发通知。首页说明与主题预览共用 `platform-dialog` 蓝色玻璃表面，不从歌曲主题复制行为。
+
+`scoreEntrance` 的音高动画使用快速放大、高光停留、缓慢落位三个阶段，`stampScale=1.28`，没有回弹；逐拍谱仅当前拍子发出高光，不逐行扫描。延音 `sustain.default=0`、`resetOnSongEntry=true`；聚焦外观由共用模板提供当前主题色和白光，不写歌曲数据。
+
+内置曲库现有六首，覆盖六种主题；新增 prairie-demo、rainforest-demo、vault-demo 为原创32拍试听，分别使用离线长笛、竖琴、八音盒。每首仅通过 songs/ 引用纯数字 scores/ 与已注册的 themes/，不复制播放器代码。历史 samples/ 文件与验证记录保留。

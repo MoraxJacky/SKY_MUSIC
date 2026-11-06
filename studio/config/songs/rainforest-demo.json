@@ -1,0 +1,28 @@
+{
+  "format": "sky-music-entry",
+  "schemaVersion": 1,
+  "id": "rainforest-demo",
+  "title": "雨林听雨 · 试听",
+  "subtitle": "Rainforest · Quiet Rain",
+  "author": "Sky Music Studio",
+  "description": "原创主题试听短句，用于检查雨林听雨主题的配色、场景与播放反馈。",
+  "durationMs": 16000,
+  "keyCount": 15,
+  "playback": {
+    "tuning": "C",
+    "rate": 1,
+    "sustain": 0,
+    "instrument": "offline-harp"
+  },
+  "provenance": {
+    "source": "原创主题试听",
+    "accuracy": "hand-composed"
+  },
+  "music": "scores/rainforest-demo.skytrack",
+  "theme": "themes/rainforest.skytheme",
+  "card": {
+    "title": "雨林听雨 · 试听",
+    "subtitle": "",
+    "coverElement": null
+  }
+}
