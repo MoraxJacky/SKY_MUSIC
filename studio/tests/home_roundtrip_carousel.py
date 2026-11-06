@@ -12,6 +12,8 @@ with sync_playwright() as pw:
  assert page.locator('.brand-title').evaluate('e=>getComputedStyle(e).backgroundImage').startswith('linear-gradient')
  assert page.locator('.brand-emblem #brandDiamond stop').count()>=6
  assert page.locator('.brand-emblem circle').get_attribute('stroke')=='url(#brandDiamond)'
+ acrylic=page.locator('.theme-carousel').evaluate("e=>{const s=getComputedStyle(e,'::before');return {filter:s.backdropFilter,mask:s.maskImage,fill:s.backgroundImage,pointer:s.pointerEvents}}")
+ assert 'blur(24px)' in acrylic['filter'] and 'linear-gradient' in acrylic['mask'] and acrylic['pointer']=='none'
  buttons=page.locator('.home-top-actions>button').evaluate_all("es=>es.map(e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return {top:r.top,bottom:r.bottom,height:r.height,shadow:s.boxShadow}})")
  assert len({x['top'] for x in buttons})==len({x['bottom'] for x in buttons})==1 and {x['height'] for x in buttons}=={34},buttons
  assert all(x['shadow']=='none' for x in buttons)
@@ -36,7 +38,10 @@ with sync_playwright() as pw:
  assert page.locator('#playerView').evaluate("e=>e.inert&&e.getAnimations().some(a=>a.playState==='running')")
  page.screenshot(path=str(out/'return-cover.png'))
  page.wait_for_function("document.getElementById('songEntryTransition').dataset.phase==='return-reveal'")
- assert page.locator('#homeView').evaluate("e=>e.inert&&getComputedStyle(e).clipPath.startsWith('circle')")
+ assert page.locator('#homeView').evaluate("e=>e.inert&&getComputedStyle(e).clipPath==='none'")
+ for id in ['playerView','songEntryTransition']:
+  inward=page.locator('#'+id).evaluate("e=>{const a=e.getAnimations().find(a=>a.effect.getKeyframes()[0].clipPath?.startsWith('circle')),f=a.effect.getKeyframes(),radius=x=>Number(x.clipPath.match(/circle\\(([\\d.]+)px/)[1]);return radius(f[0])>radius(f[f.length-1])}")
+  assert inward,id
  page.screenshot(path=str(out/'return-reveal.png'));page.wait_for_function("document.getElementById('songEntryTransition').hidden")
  assert page.locator('#homeView').is_visible() and page.locator('#playerView').is_hidden()
  assert page.evaluate('document.activeElement.id')=='libraryTitle'

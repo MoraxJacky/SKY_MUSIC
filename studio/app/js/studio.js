@@ -1198,8 +1198,9 @@ async function returnHomeFromPlayer(){
   document.querySelector('.site-wrap').classList.remove('song-entry-reveal');
   overlay.dataset.phase='return-loading';entry.mounting=true;goHome();entry.mounting=false;$('homeView').inert=true;
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(!active())return;
-  overlay.dataset.phase='return-reveal';document.querySelector('.site-wrap').classList.add('song-entry-reveal');
-  await animateSongTransition(entry,$('homeView'),songRevealFrames($('homeView')),rules.revealMs);if(!active())return;
+  // Shrink the preparation cover too, exposing the home from the edges inward.
+  overlay.dataset.phase='return-reveal';
+  await animateSongTransition(entry,overlay,songRevealFrames(overlay,false),rules.revealMs);if(!active())return;
   cancelSongEntry();$('libraryTitle').focus({preventScroll:true});
  }catch(error){if(active()){cancelSongEntry();goHome()}}
 }

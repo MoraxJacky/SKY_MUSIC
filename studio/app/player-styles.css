@@ -927,3 +927,11 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
 @keyframes brand-prism-drift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 @keyframes brand-facet-shift{0%,100%{filter:drop-shadow(0 0 5px #d2e9ff38) hue-rotate(0deg)}50%{filter:drop-shadow(0 0 6px #eed9ff38) hue-rotate(18deg)}}
 @media(prefers-reduced-motion:reduce){.home-theme-art-track{transition:none!important}.home-view .brand-title,.home-view .brand-emblem{animation:none}}
+/* Clear illustration on the left, graduating into a translucent frosted acrylic surface. */
+.home-view .theme-carousel .home-theme-art-viewport{opacity:1;mask-image:linear-gradient(90deg,#000 0%,#000 40%,#000b 72%,#0006 100%);-webkit-mask-image:linear-gradient(90deg,#000 0%,#000 40%,#000b 72%,#0006 100%)}
+.home-view .theme-carousel::before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,transparent 28%,#c6dce80a 46%,#b4ccd52b 72%,#bdd1dd45);backdrop-filter:blur(24px) saturate(.65);-webkit-backdrop-filter:blur(24px) saturate(.65);mask-image:linear-gradient(90deg,transparent 24%,#0002 42%,#0009 66%,#000 100%);-webkit-mask-image:linear-gradient(90deg,transparent 24%,#0002 42%,#0009 66%,#000 100%);box-shadow:inset -1px 0 #f1fbff1a}
+.home-view .theme-carousel .home-theme-viewport{z-index:2}
+.home-view .home-theme-art-slide .preview-landscape{filter:brightness(.92)}
+@media(min-width:901px){.home-view .home-top{width:min(1160px,calc(100% - 160px));max-width:none;margin-left:auto;margin-right:auto;padding-left:0;padding-right:0}}
+@media(min-width:901px) and (max-width:1150px){.home-view .home-top{width:calc(100% - 64px)}}
+@media(min-width:721px) and (max-width:900px){.home-view .home-top{padding-left:20px;padding-right:20px}}

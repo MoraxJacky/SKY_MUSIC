@@ -65,6 +65,8 @@ with sync_playwright() as pw:
   page.set_viewport_size({'width':w,'height':h});page.wait_for_timeout(100)
   geometry=page.evaluate("""()=>{const cards=[...document.querySelectorAll('.light-cone')].map(e=>e.getBoundingClientRect()),header=document.querySelector('.home-top').getBoundingClientRect();return {w:innerWidth,h:innerHeight,top:header.top,bottom:cards[5].bottom,overflow:document.documentElement.scrollWidth>innerWidth}}""")
   assert not geometry['overflow'] and geometry['top']>=14,geometry
+  edges=page.evaluate("()=>{const hero=document.querySelector('.theme-carousel').getBoundingClientRect(),brand=document.querySelector('.wordmark').getBoundingClientRect(),controls=document.querySelector('.home-top-actions').getBoundingClientRect();return {left:brand.left-hero.left,right:controls.right-hero.right}}")
+  assert abs(edges['left'])<1 and abs(edges['right'])<1,(w,edges)
   assert page.locator('.home-top').evaluate("e=>{const logo=e.querySelector('.wordmark').getBoundingClientRect();return [...e.querySelectorAll('.home-top-actions button')].every(x=>{const r=x.getBoundingClientRect();return Math.min(logo.right,r.right)-Math.max(logo.left,r.left)<=1||Math.min(logo.bottom,r.bottom)-Math.max(logo.top,r.top)<=1})}")
   if w>900:assert 12<=h-geometry['bottom']<=54,geometry
   page.screenshot(path=str(out/f'home-{w}-{h}.png'));layouts.append(geometry)
