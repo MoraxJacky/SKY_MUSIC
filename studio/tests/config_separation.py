@@ -47,7 +47,7 @@ theme_result = render(theme_variant)
 assert theme_result['app/js/builtins.js'] == baseline['app/js/builtins.js']
 assert theme_result['app/js/studio-config.js'] != baseline['app/js/studio-config.js']
 interaction_variant = variant('interaction-only')
-edit(interaction_variant / 'config/player-interactions.json', lambda data: data['selectors'].update(instrumentNeighbors=1))
+edit(interaction_variant / 'config/player-interactions.json', lambda data: data['selectors'].update(instrumentRowsBelow=1))
 interaction_result = render(interaction_variant)
 assert interaction_result['app/js/builtins.js'] == baseline['app/js/builtins.js']
 assert interaction_result['app/player-styles.css'] == baseline['app/player-styles.css']
@@ -138,7 +138,7 @@ with sync_playwright() as pw:
         assert page.locator('.beat.active .beat-number').inner_text() == '002'
         page.screenshot(path=str(out / 'additional-theme.png'), animations='disabled')
         # A behavior setting changes only the interaction layer, without changing music or appearance.
-        page.evaluate('window.__SKY_STUDIO_TEST__.PLAYER_RULES.selectors.instrumentNeighbors=1')
+        page.evaluate('window.__SKY_STUDIO_TEST__.PLAYER_RULES.selectors.instrumentRowsBelow=1')
         page.locator('#instrumentToggle').click()
         assert page.locator('#instrumentOptions button:visible').count() == 2
         page.close()

@@ -1,4 +1,4 @@
-"""The picker expands around its fixed baseline and never pads its end boundaries."""
+"""The picker expands only below its fixed baseline and never pads its end boundaries."""
 import argparse
 import json
 from pathlib import Path
@@ -28,11 +28,10 @@ with sync_playwright() as pw:
               const r=document.getElementById('instrumentMenu').getBoundingClientRect();
               return es.map((e,i)=>({i,visible:getComputedStyle(e).visibility!=='hidden',y:e.getBoundingClientRect().y,b:e.getBoundingClientRect().bottom})).filter(e=>e.visible&&e.b>r.top&&e.y<r.bottom);
             }''')
-            assert sum(r['i'] < index for r in rows) == min(2, index)
+            assert sum(r['i'] < index for r in rows) == 0
             assert sum(r['i'] > index for r in rows) == min(2, 10-index)
             bounds = page.locator('#instrumentMenu').bounding_box()
-            if index == 0:
-                assert bounds['y'] == baseline['y']
+            assert bounds['y'] == baseline['y']
             if index == 10:
                 assert abs(bounds['y']+bounds['height']-baseline['y']-baseline['height']) < .1
             assert page.locator('#instrumentOptions [aria-selected=true]').count() == 1
@@ -43,6 +42,7 @@ with sync_playwright() as pw:
             page.mouse.wheel(0, -1200 if index == 0 else 1200)
             page.wait_for_timeout(550)
             assert guide.bounding_box() == baseline
+            assert page.locator('#instrumentMenu').bounding_box()['y'] == baseline['y']
             position=page.locator('#instrumentMenu').evaluate('(e)=>Number(e.dataset.position)')
             assert abs(position-round(position)) < .001
             assert page.evaluate('scrollY') == vertical
@@ -61,8 +61,8 @@ with sync_playwright() as pw:
         assert page.locator('#instrumentMenu').evaluate('(e)=>Number(e.dataset.position)') == 10
         page.keyboard.press('Escape')
         assert not errors, errors
-        evidence.append({'width': width, 'fixedBaseline': True, 'twoAboveTwoBelow': True, 'noBoundaryPadding': True})
+        evidence.append({'width': width, 'fixedBaseline': True, 'downwardOnly': True, 'twoBelow': True, 'noBoundaryPadding': True})
         page.close()
     browser.close()
 (out/'results.json').write_text(json.dumps({'status':'PASS','checks':evidence},indent=2),encoding='utf-8')
-print('PASS fixed picker baseline, +/-2 rows, first/last boundaries and bounded wheel/keyboard')
+print('PASS fixed picker baseline, downward-only expansion, 2 rows below, first/last boundaries and bounded wheel/keyboard')

@@ -102,8 +102,8 @@ function syncInstrumentPicker(){
 function positionInstrumentPicker(){
  const rect=$('instrumentToggle').getBoundingClientRect(),menu=$('instrumentMenu'),view=instrumentViewport;
  view.row=rect.height;view.step=rect.height+PLAYER_RULES.selectors.instrumentRowGapPx;
- const above=Math.min(PLAYER_RULES.selectors.instrumentNeighbors*view.step,view.position*view.step,Math.max(0,rect.top-8));
- const below=Math.min(PLAYER_RULES.selectors.instrumentNeighbors*view.step,(INSTRUMENTS.length-1-view.position)*view.step,Math.max(0,innerHeight-rect.bottom-8));
+ const above=0; // Expand downward from the original control, never above it.
+ const below=Math.min(PLAYER_RULES.selectors.instrumentRowsBelow*view.step,(INSTRUMENTS.length-1-view.position)*view.step,Math.max(0,innerHeight-rect.bottom-8));
  menu.style.width=rect.width+'px';menu.style.left=rect.left+'px';menu.style.top=(rect.top-above)+'px';menu.style.height=(above+rect.height+below)+'px';
  const focus=$('instrumentCurrent');focus.style.top=above+'px';focus.style.height=rect.height+'px';
  const buttons=$('instrumentOptions').querySelectorAll('[data-instrument]');
@@ -131,12 +131,13 @@ function bindInstrumentPicker(){
   const button=document.createElement('button');button.type='button';button.dataset.instrument=spec.id;button.setAttribute('role','option');button.setAttribute('aria-selected','false');button.tabIndex=-1;button.textContent=spec.name+' · '+(spec.mode==='offline'?'离线':'在线');
   button.onclick=()=>{if(view.suppressClick){view.suppressClick=false;return}if(state.project?.playback?.instrument===spec.id)closeInstrumentPicker(true);else chooseInstrument(spec.id)};options.append(button);
  }
- const move=position=>{view.position=clamp(position,0,INSTRUMENTS.length-1);positionInstrumentPicker()};
+ menu.tabIndex=-1;
+ const move=position=>{view.position=clamp(position,0,INSTRUMENTS.length-1);positionInstrumentPicker();if(options.contains(document.activeElement)&&document.activeElement.style.visibility==='hidden')menu.focus({preventScroll:true})};
  cancelInstrumentWheel=bindSmoothWheel(options,menu,'y',PLAYER_RULES.selectors.instrumentMaxStepPx,{read:()=>view.position*view.step,write:pixels=>move(pixels/view.step),max:()=>(INSTRUMENTS.length-1)*view.step,snap:pixels=>Math.round(pixels/view.step)*view.step});
  trigger.onclick=()=>menu.hidden?openInstrumentPicker():closeInstrumentPicker();
  trigger.onkeydown=event=>{if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();openInstrumentPicker()}};
  menu.onkeydown=event=>{
-  const buttons=[...options.querySelectorAll('[data-instrument]')],index=buttons.indexOf(document.activeElement);let next;
+  const buttons=[...options.querySelectorAll('[data-instrument]')],focused=buttons.indexOf(document.activeElement),index=focused>=0?focused:Math.round(view.position);let next;
   if(event.key==='ArrowDown')next=Math.min(buttons.length-1,index+1);if(event.key==='ArrowUp')next=Math.max(0,index-1);
   if(event.key==='Home')next=0;if(event.key==='End')next=buttons.length-1;
   if(next!==undefined){event.preventDefault();cancelInstrumentWheel();move(next);buttons[next].focus({preventScroll:true})}

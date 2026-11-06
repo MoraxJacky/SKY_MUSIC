@@ -34,9 +34,9 @@
     "smoothingMs": 65,
     "rangeMaxStepPx": 24,
     "instrumentMaxStepPx": 18,
-    "instrumentNeighbors": 2,
     "instrumentRowGapPx": 5,
-    "instrumentSnapDelayMs": 110
+    "instrumentSnapDelayMs": 110,
+    "instrumentRowsBelow": 2
   },
   "volume": {
     "default": 0.25,

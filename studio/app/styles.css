@@ -355,7 +355,7 @@ body:has(dialog[open]){overflow:hidden}
 
 .player-view .key-control:has(.key-range-toggle[aria-expanded=true])>span{visibility:hidden}
 
-/* The selector's baseline stays over the original control; only nearby rows move. */
+/* The selector stays over its original control and expands downward only. */
 .player-view .instrument-toggle{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;width:clamp(105px,11vw,167px);padding:6px 8px;font-size:12px;white-space:nowrap;background:var(--player-button);border-color:var(--player-border)}
 .player-view .instrument-control:has(.instrument-toggle[aria-expanded=true])>.instrument-toggle{visibility:hidden}
 .player-view .instrument-menu{position:fixed;z-index:101;padding:0;border:0;border-radius:10px;background:var(--player-surface-end);box-shadow:0 0 0 1px var(--player-border),0 8px 24px #0006;color:var(--player-text);overflow:hidden;touch-action:none}
