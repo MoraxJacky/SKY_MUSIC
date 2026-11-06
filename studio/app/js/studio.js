@@ -252,9 +252,10 @@ function realPosition(){if(!state.isPlaying||!state.audioCtx)return state.positi
 function beginClock(){let ac=state.audioCtx;state.mediaAnchor=state.position;state.clockAnchor=ac.currentTime;let ev=scoreEvents(state.project);state.scheduleIndex=lowerBound(ev,state.position-2);state.interval=setInterval(scheduleAudio,24);scheduleAudio()}
 function lowerBound(arr,t){let l=0,r=arr.length;while(l<r){let m=(l+r)>>1;if(arr[m].timeMs<t)l=m+1;else r=m}return l}
 function scheduleAudio(){if(!state.isPlaying)return;let events=scoreEvents(state.project),now=realPosition(),lookahead=Math.min(state.project.durationMs,now+170*state.rate);while(state.scheduleIndex<events.length&&events[state.scheduleIndex].timeMs<=lookahead){let e=events[state.scheduleIndex++];if(!e.notes.length||e.timeMs<now-35)continue;let at=state.audioCtx.currentTime+Math.max(0,(e.timeMs-now)/(1000*state.rate));for(let n of e.notes)triggerSample(n,at,e.durationMs,e.notes.length,e.velocity||85)}}
-async function playPause(){if(state.isPlaying){pauseSong();return}if(!state.project)return;const project=state.project;cancelRollFinish();try{toast('正在准备音源…',1300);if(!await preloadPiano())return}catch(err){console.error(err);toast('音源加载失败：'+err.message,6000);return}if(state.project!==project||state.mode!=='player')return;if(state.position>=state.project.durationMs-80){state.position=0;state.rollPageStart=0}state.isPlaying=true;beginClock();$('playBtn').textContent='Ⅱ 暂停';state.sceneBase=performance.now();state.raf=requestAnimationFrame(playFrame);toast('开始演奏',1000)}
+async function playPause(){cancelScoreEntrance();if(state.isPlaying){pauseSong();return}if(!state.project)return;const project=state.project;cancelRollFinish();try{toast('正在准备音源…',1300);if(!await preloadPiano())return}catch(err){console.error(err);toast('音源加载失败：'+err.message,6000);return}if(state.project!==project||state.mode!=='player')return;if(state.position>=state.project.durationMs-80){state.position=0;state.rollPageStart=0}state.isPlaying=true;beginClock();$('playBtn').textContent='Ⅱ 暂停';state.sceneBase=performance.now();state.raf=requestAnimationFrame(playFrame);toast('开始演奏',1000)}
 function pauseSong(){if(!state.isPlaying)return;state.position=clamp(realPosition(),0,state.project.durationMs);state.isPlaying=false;clearInterval(state.interval);cancelAnimationFrame(state.raf);stopVoices();$('playBtn').textContent='▶ 播放';updateVisual();$('stageStatus').textContent='已暂停'}
 function seekTo(time,preserveRoll=false,rollView=null){
+ cancelScoreEntrance();
  if(!state.project)return;
  const was=state.isPlaying,frame=rollFrame(was?realPosition():state.position),fraction=frame.phase/frame.windowMs;
  cancelRollFinish();
@@ -634,6 +635,7 @@ function bindRollPointerSeek(){
  window.addEventListener('blur',stop);
 }
 function bindPlayerInteractions(){
+ bindScoreEntranceInterrupts();
  bindPlayerValuePicker('volume');bindPlayerValuePicker('sustain');
 
  bindRollPointerSeek();
@@ -802,6 +804,72 @@ function bindSpeedPicker(){
 
 function seekBeatPage(direction){if(!state.project)return;pauseSong();const layout=beatLayout(),size=beatPageSize(),slot=clamp((Math.floor(beatDisplayIndex()/size)+direction)*size,0,layout.count-1);seekTo(layout.grid?Math.round(slot*layout.step):scoreEvents(state.project)[slot].timeMs)}
 
+// A single visual-only arrival sequence for every song and theme.
+const scoreEntrance={current:null};
+function currentScoreEntrance(){const a=scoreEntrance.current;return a&&a.project===state.project&&!state.editMode?a:null}
+function scoreEntranceHidesKeys(){return Boolean(currentScoreEntrance())}
+function scoreEntranceHidesKey(key){return Boolean(currentScoreEntrance()&&!key.classList.contains('score-stamped'))}
+function scoreEntranceShowsBeat(beat){return !currentScoreEntrance()||beat.classList.contains('score-grown')}
+function scoreEntranceRollProgress(time,begin,windowMs){
+ const a=currentScoreEntrance();if(!a)return 1;if(a.started===null)return 0;
+ const cfg=PLAYER_RULES.scoreEntrance,elapsed=performance.now()-a.started-cfg.blankMs-clamp((time-begin)/windowMs,0,1)*cfg.rollSpreadMs;
+ const t=clamp(elapsed/cfg.rollFloatMs,0,1);return 1-(1-t)**3;
+}
+function prepareScoreEntrance(){
+ if(!document.createComment||homeReducedMotion())return;
+ cancelScoreEntrance();scoreEntrance.current={project:state.project,started:null,animations:[],overlays:[],raf:0,beats:[],keys:[]};
+ const host=$('playerView');host.classList.add('score-arriving');host.dataset.scoreEntrance='armed';
+}
+function finishScoreEntrance(phase='done'){
+ const a=scoreEntrance.current;if(!a)return;scoreEntrance.current=null;cancelAnimationFrame(a.raf);
+ for(const animation of a.animations)animation.cancel();
+ for(const overlay of a.overlays)overlay.remove();
+ const host=$('playerView');host.classList.remove('score-arriving');host.dataset.scoreEntrance=phase;
+ for(const el of [...$('beatGrid').children,...$('keyBoard').children]){el.classList.remove('score-grown','score-settled','score-stamped');el.style.removeProperty('z-index');el.style.removeProperty('transform-origin')}
+ if(state.mode==='player'&&state.project===a.project)updateVisual();
+}
+function cancelScoreEntrance(){finishScoreEntrance('cancelled')}
+function startScoreEntrance(){
+ const a=currentScoreEntrance();if(!a||a.started!==null)return;
+ if(state.mode!=='player'||state.isPlaying||homeReducedMotion()){cancelScoreEntrance();return}
+ const cfg=PLAYER_RULES.scoreEntrance,columns=PLAYER_RULES.grid.columns,colors=resolvedPlayerColors(state.project),blank=cfg.blankMs;
+ a.started=performance.now();$('playerView').dataset.scoreEntrance='running';
+ const animate=(el,frames,delay,duration,fill='both')=>{const animation=el.animate(frames,{delay,duration,fill,easing:'cubic-bezier(.2,.65,.25,1)'});animation.startTime=a.started;a.animations.push(animation)};
+ const cells=[...$('beatGrid').children],rowStride=(columns-1)*cfg.beatStepMs+cfg.beatGrowMs+cfg.rowGapMs;
+ cells.forEach((cell,index)=>{
+  const delay=blank+Math.floor(index/columns)*rowStride+(index%columns)*cfg.beatStepMs;a.beats.push({el:cell,delay});
+  animate(cell,[{boxShadow:'0 0 0 transparent'},{offset:.48,boxShadow:'0 0 20px '+colors.accent+'88, inset 0 0 0 1px '+colors.accent},{boxShadow:'0 0 0 transparent'}],delay,cfg.beatGrowMs);
+  const pattern=cell.querySelector('.mini-keys'),name=cell.querySelector('.beat-name');
+  if(pattern){const rect=pattern.getBoundingClientRect(),box=cell.getBoundingClientRect(),overlay=pattern.cloneNode(true);overlay.classList.add('score-arrival-pattern');overlay.style.cssText='left:'+(rect.left-box.left-cell.clientLeft)+'px;top:'+(rect.top-box.top-cell.clientTop)+'px;width:'+rect.width+'px;height:'+rect.height+'px';cell.append(overlay);a.overlays.push(overlay);
+   animate(overlay,[{opacity:0,transform:'translateY(10px) scale(.72)'},{offset:.48,opacity:1,transform:'translateY(-2px) scale(1.08)'},{opacity:1,transform:'none'}],delay,cfg.beatGrowMs);
+  }
+  if(name)animate(name,[{opacity:0,transform:'translateY(5px)'},{opacity:1,transform:'none'}],delay,cfg.beatGrowMs);
+ });
+ const notes=displayedBeat().notes;
+ [...$('keyBoard').children].filter(key=>notes.includes(Number(key.dataset.note))).forEach((key,index)=>{
+  const delay=blank+cfg.stampDelayMs+index*cfg.stampStepMs,n=Number(key.dataset.note)-1,column=n%5,row=Math.floor(n/5);a.keys.push({el:key,delay});key.style.zIndex='3';key.style.transformOrigin=(column===0?'left':column===4?'right':'center')+' '+(row===0?'top':row===2?'bottom':'center');
+  animate(key,[{opacity:.6,transform:'translateY(-10px) scale('+cfg.stampScale+')',boxShadow:'0 0 38px '+colors.accent+'99'},{offset:.42,opacity:1,transform:'translateY(2px) scale(.87)',boxShadow:'0 0 24px '+colors.accent+'aa'},{offset:.7,opacity:1,transform:'translateY(-1px) scale(1.12)'},{opacity:1,transform:'none',boxShadow:'0 0 12px '+colors.accent+'44'}],delay,cfg.stampMs,'forwards');
+ });
+ const duration=Math.max(blank+cfg.rollSpreadMs+cfg.rollFloatMs,...a.beats.map(item=>item.delay+cfg.beatGrowMs),...a.keys.map(item=>item.delay+cfg.stampMs));
+ // Start one shared clock after layout work, preserving the blank opening on slower devices.
+ a.started=performance.now();for(const animation of a.animations)animation.startTime=a.started;
+ const frame=()=>{
+  if(scoreEntrance.current!==a)return;
+  if(state.project!==a.project||state.mode!=='player'||state.editMode||state.isPlaying){cancelScoreEntrance();return}
+  const elapsed=performance.now()-a.started;
+  for(const item of a.beats){if(elapsed>=item.delay&&!item.el.classList.contains('score-grown')){item.el.classList.add('score-grown');if(Number(item.el.dataset.index)===beatDisplayIndex())item.el.classList.add('active','select')}if(elapsed>=item.delay+cfg.beatGrowMs&&!item.settled){item.settled=true;item.el.classList.add('score-settled')}}
+  for(const item of a.keys)if(elapsed>=item.delay&&!item.el.classList.contains('score-stamped'))item.el.classList.add('score-stamped','active');
+  drawRoll();if(elapsed>=duration){finishScoreEntrance();return}a.raf=requestAnimationFrame(frame);
+ };
+ a.raf=requestAnimationFrame(frame);
+}
+function bindScoreEntranceInterrupts(){
+ const interrupt=event=>{if(scoreEntrance.current&&((event.type==='keydown'&&state.mode==='player')||$('playerView').contains(event.target))){const input=(event.type==='input'||event.type==='change')&&'value'in event.target,value=input?event.target.value:null;cancelScoreEntrance();if(input)event.target.value=value}};
+ for(const type of ['pointerdown','keydown','wheel','input','change'])document.addEventListener(type,interrupt,true);
+ window.addEventListener('resize',cancelScoreEntrance);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelScoreEntrance()});
+}
+
 /* 40-ui.js */
 function snowPopulate(element,count,scope='world'){element.innerHTML='';for(let i=0;i<count;i++){let dot=document.createElement('i');dot.className='snow-dot';let size=1+Math.random()*3.3;dot.style.cssText=`left:${Math.random()*100}%;width:${size.toFixed(2)}px;height:${size.toFixed(2)}px;opacity:${(.18+Math.random()*.38).toFixed(2)};animation-duration:${(scope==='world'?16:9)+Math.random()*15}s;animation-delay:-${Math.random()*30}s;--dx:${Math.round((Math.random()-.5)*170)}px`;element.append(dot)}}
 function renderLibrary(){
@@ -826,8 +894,8 @@ function renderLibrary(){
  const add=document.createElement('button');add.className='song-card add-card';add.innerHTML='<span class="plus">＋</span><strong>导入新的乐曲</strong><span>SKYMUSIC · MIDI · MUSICXML · AUDIO</span>';add.onclick=openImport;container.append(add);resumeHomePresentation();
 }
 function openImport(){$('importDialog').showModal()}
-function mountPlatformProject(id){if(!homeExperience.entry?.mounting)cancelSongEntry();cancelPlayerValueScroll();pauseHomePresentation();cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();pauseSong();let p=state.library.find(p=>p.id===id);if(!p){toast('找不到歌曲');return}state.project=p;state.editMode=false;state.editDirty=false;state.editSource=null;state.editBaseline=null;updateEditButton();p.lastOpened=Date.now();saveLibrary();state.position=0;state.rollPageStart=0;state.windowSec=PLAYER_RULES.roll.initialSeconds;$('rollWindow').value=String(state.windowSec);scoreConsole.views.delete(id);scoreConsole.mode=PLAYER_RULES.editor.initialMode;state.selected=0;state.lastSelected=-1;state.page=-1;state.rate=p.playback.rate||1;state.tuning=p.playback.tuning||'C';state.sustain=Number.isFinite(p.playback.sustain)?p.playback.sustain:.45;state.volume=normalizeVolume(p.playback.volume);syncVolumeControl();$('homeView').hidden=true;$('playerView').hidden=false;state.mode='player';$('playBtn').textContent='▶ 播放';$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';syncSpeedPicker();syncSustainControl();$('instrumentSelect').value=p.playback.instrument||'offline';$('keySelect').value=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs);$('playBtn').disabled=false;applyTheme();initializeScene();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();try{localStorage.setItem('sky-last-song',id)}catch(e){console.warn('最近播放缓存不可用',e)}requestAnimationFrame(drawRoll);try{history.replaceState(null,'','#song='+encodeURIComponent(id))}catch(e){}}
-function goHome(){if(!homeExperience.entry?.mounting)cancelSongEntry();cancelPlayerValueScroll();cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();if(state.editMode){requestFinishEdit('home');return}pauseSong();state.mode='home';$('playerView').hidden=true;$('homeView').hidden=false;resetHomePresentation();$('songSearch').value='';$('libraryFilter').value='all';$('homeView').scrollTop=0;try{history.replaceState(null,'',location.pathname)}catch(e){};renderLibrary();toast('已返回音乐馆',1000)}
+function mountPlatformProject(id){cancelScoreEntrance();if(!homeExperience.entry?.mounting)cancelSongEntry();cancelPlayerValueScroll();pauseHomePresentation();cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();pauseSong();let p=state.library.find(p=>p.id===id);if(!p){toast('找不到歌曲');return}state.project=p;state.editMode=false;state.editDirty=false;state.editSource=null;state.editBaseline=null;updateEditButton();p.lastOpened=Date.now();saveLibrary();state.position=0;state.rollPageStart=0;state.windowSec=PLAYER_RULES.roll.initialSeconds;$('rollWindow').value=String(state.windowSec);scoreConsole.views.delete(id);scoreConsole.mode=PLAYER_RULES.editor.initialMode;state.selected=0;state.lastSelected=-1;state.page=-1;state.rate=p.playback.rate||1;state.tuning=p.playback.tuning||'C';state.sustain=Number.isFinite(p.playback.sustain)?p.playback.sustain:.45;state.volume=normalizeVolume(p.playback.volume);syncVolumeControl();$('homeView').hidden=true;$('playerView').hidden=false;state.mode='player';if(homeExperience.entry?.mounting)prepareScoreEntrance();$('playBtn').textContent='▶ 播放';$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';syncSpeedPicker();syncSustainControl();$('instrumentSelect').value=p.playback.instrument||'offline';$('keySelect').value=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs);$('playBtn').disabled=false;applyTheme();initializeScene();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();try{localStorage.setItem('sky-last-song',id)}catch(e){console.warn('最近播放缓存不可用',e)}requestAnimationFrame(drawRoll);try{history.replaceState(null,'','#song='+encodeURIComponent(id))}catch(e){}}
+function goHome(){cancelScoreEntrance();if(!homeExperience.entry?.mounting)cancelSongEntry();cancelPlayerValueScroll();cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();if(state.editMode){requestFinishEdit('home');return}pauseSong();state.mode='home';$('playerView').hidden=true;$('homeView').hidden=false;resetHomePresentation();$('songSearch').value='';$('libraryFilter').value='all';$('homeView').scrollTop=0;try{history.replaceState(null,'',location.pathname)}catch(e){};renderLibrary();toast('已返回音乐馆',1000)}
 function applyTheme(){let p=state.project;if(!p)return;let theme=sceneId(p),host=$('playerView');applyPlayerTemplate(p,host);if($('scoreConsole')?.open)applyPlayerTemplate(p,$('scoreConsole'));applyPlayerTemplate(p,$('sceneDialog'));$('keyFeedbackLayer').innerHTML='';initializeScene();requestAnimationFrame(drawRoll)}
 function beatIndex(time){let events=scoreEvents(state.project);return clamp(lowerBound(events,time+1)-1,0,Math.max(events.length-1,0))}
 // A grid cell represents a time slot, not one independently editable audio event.
@@ -859,15 +927,15 @@ function renderBeatGrid(force=false){
  for(let i=Math.min(layout.count-pg*size,size);i<size;i++){const tile=document.createElement('div');tile.className='beat empty beat-placeholder';tile.setAttribute('aria-hidden','true');frag.append(tile)}grid.append(frag);
  const split=size!==BEATS_PER_PAGE,total=Math.max(1,Math.ceil(layout.count/BEATS_PER_PAGE));$('pageLabel').textContent=(split?String(Math.floor(pg/2)+1)+(pg%2?'B':'A'):String(pg+1).padStart(2,'0'))+' / '+String(total).padStart(2,'0');grid.dataset.section=split?(pg%2?'B':'A'):'full';grid.setAttribute('aria-label',split?'第 '+(Math.floor(pg/2)+1)+' 组 '+(pg%2?'B':'A')+' 段，8列2行逐拍谱':'逐拍谱，8列4行');$('pagePrev').disabled=pg===0;$('pageNext').disabled=pg===Math.max(1,Math.ceil(layout.count/size))-1;
 }
-function renderKeyBoard(){let c=$('keyBoard');c.innerHTML='';let active=displayedBeat().notes;for(let n=1;n<=15;n++){let b=document.createElement('button');b.className='key-tile'+(active.includes(n)?' active':'');b.dataset.note=n;b.setAttribute('aria-label',(canEditScore()?'切换琴键 ':'试听琴键 ')+n+' '+noteName(n));b.innerHTML=`<span class="key-no">${String(n).padStart(2,'0')}</span><span class="key-name">${noteName(n)}</span>`;b.onclick=()=>{renderKeyFeedback(b);toggleNote(n)};c.append(b)}}
+function renderKeyBoard(){let c=$('keyBoard');c.innerHTML='';let active=displayedBeat().notes;for(let n=1;n<=15;n++){let b=document.createElement('button');b.className='key-tile'+(active.includes(n)&&!scoreEntranceHidesKeys()?' active':'');b.dataset.note=n;b.setAttribute('aria-label',(canEditScore()?'切换琴键 ':'试听琴键 ')+n+' '+noteName(n));b.innerHTML=`<span class="key-no">${String(n).padStart(2,'0')}</span><span class="key-name">${noteName(n)}</span>`;b.onclick=()=>{renderKeyFeedback(b);toggleNote(n)};c.append(b)}}
 async function toggleNote(n){if(!state.project)return;if(scoreConsoleCapture(n))return;if(!canEditScore()){try{await preloadPiano();triggerSample(n,state.audioCtx.currentTime+.02,280)}catch(e){toast('音源尚未就绪',2500)}return}let item=scoreEvents(state.project)[state.selected];if(!item)return;let exists=item.notes.includes(n);rememberEdit({index:state.selected,note:n,position:state.position});item.notes=exists?item.notes.filter(v=>v!==n):[...item.notes,n].sort((a,b)=>a-b);if(item.notes.length&&item.durationMs<70)item.durationMs=190;if(!item.notes.length)item.durationMs=0;item.confidence='user-corrected';scoreConsole.selectedNote=exists?item.notes[0]:n;scoreConsole.selection={project:state.project,event:item,note:scoreConsole.selectedNote};saveLibrary();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();if(state.editMode)syncEditorFields();$('noteCountHeader').textContent=songNotes(state.project)+' NOTES';if(!exists){try{await preloadPiano();triggerSample(n,state.audioCtx.currentTime+.015,300)}catch(e){console.warn(e)}}}
 function updateVisual(){let p=state.project;if(!p)return;let pos=state.position,events=scoreEvents(p),now=beatIndex(pos);let changed=now!==state.selected;if(state.isPlaying||state.lastSelected!==state.selected){state.selected=now;if(Math.floor(beatDisplayIndex()/beatPageSize())!==state.page)renderBeatGrid();if(changed)renderKeyBoard()}
  state.lastSelected=state.selected;const displayIndex=beatDisplayIndex();if(Math.floor(displayIndex/beatPageSize())!==state.page)renderBeatGrid();if(!state.editMode){$('timeClock').textContent=positionFmt(pos);$('seekSlider').value=Math.round(pos)}$('rollSeekSlider').max=p.durationMs;$('rollSeekSlider').value=Math.round(pos);$('rollPosition').textContent=String(state.selected+1).padStart(4,'0')+' / '+events.length;
  const e=displayedBeat();$('selectedSummary').textContent=eventLabel(e);$('currentBeatIndex').textContent='第 '+String(displayIndex+1).padStart(3,'0')+' 格';$('currentBeatNotes').textContent=eventLabel(e);
  let keys=state.isPlaying?activeNotes(pos):new Set();const editing=editingNoteSelection();
- for(let el of $('beatGrid').children){let index=+el.dataset.index,on=index===displayIndex;el.classList.toggle('active',on);el.classList.toggle('select',on);const editingCell=editing&&index===editing.slot;el.classList.toggle('editor-selected',Boolean(editingCell));el.dataset.editingNote=editingCell?String(editing.note):'';el.setAttribute('aria-description',editingCell?'正在编辑音符 '+editing.note+' '+noteName(editing.note):'');el.classList.toggle('echo',state.isPlaying&&index<displayIndex&&index>=displayIndex-8&&beatLayout().cells.get(index)?.notes.length>0);el.setAttribute('aria-current',on?'step':'false');for(let dot of el.querySelectorAll('.mini-dot')){dot.classList.toggle('resonance',on&&keys.has(+dot.dataset.note)&&!e?.notes?.includes(+dot.dataset.note));dot.classList.toggle('editor-note',Boolean(editingCell&&+dot.dataset.note===editing.note))}}
+ for(let el of $('beatGrid').children){let index=+el.dataset.index,on=index===displayIndex&&scoreEntranceShowsBeat(el);el.classList.toggle('active',on);el.classList.toggle('select',on);const editingCell=editing&&index===editing.slot;el.classList.toggle('editor-selected',Boolean(editingCell));el.dataset.editingNote=editingCell?String(editing.note):'';el.setAttribute('aria-description',editingCell?'正在编辑音符 '+editing.note+' '+noteName(editing.note):'');el.classList.toggle('echo',state.isPlaying&&index<displayIndex&&index>=displayIndex-8&&beatLayout().cells.get(index)?.notes.length>0);el.setAttribute('aria-current',on?'step':'false');for(let dot of el.querySelectorAll('.mini-dot')){dot.classList.toggle('resonance',on&&keys.has(+dot.dataset.note)&&!e?.notes?.includes(+dot.dataset.note));dot.classList.toggle('editor-note',Boolean(editingCell&&+dot.dataset.note===editing.note))}}
  if(state.isPlaying&&!e?.notes.length&&keys.size){let names=[...keys].sort((a,b)=>a-b).map(noteName).join(' · ');$('currentBeatNotes').textContent='余音 '+names;$('selectedSummary').textContent=names}
- for(let k of $('keyBoard').children){let n=Number(k.dataset.note);k.classList.toggle('ringing',state.isPlaying&&keys.has(n));k.classList.toggle('active',e?.notes?.includes(n))}drawRoll();updateScoreConsole()
+ for(let k of $('keyBoard').children){let n=Number(k.dataset.note);k.classList.toggle('ringing',state.isPlaying&&keys.has(n));k.classList.toggle('active',e?.notes?.includes(n)&&!scoreEntranceHidesKey(k))}drawRoll();updateScoreConsole()
 }
 // Page origin may move independently of the scan phase when the score is scrubbed.
 function rollSeekOrigin(position,fraction,windowMs=state.windowSec*1000){
@@ -936,10 +1004,10 @@ function drawRoll(){if(!state.project||state.mode!=='player')return;let cv=$('ro
   if(label.timeMs%1000!==0){c.strokeStyle='#79927b88';c.beginPath();c.moveTo(x,top);c.lineTo(x,H-bottom);c.stroke()}
   c.fillText(text,x,12);
  }
- c.save();c.beginPath();c.rect(left,top,plotW,H-top-bottom);c.clip();const editing=editingNoteSelection(),ev=platformController.events(),start=lowerBound(ev,begin-10000);for(let i=start;i<ev.length;i++){let e=ev[i];if(e.timeMs>end)break;if(!e.notes.length)continue;let x=left+(e.timeMs-begin)/windowMs*plotW;let width=Math.max(3,Math.min(windowMs<state.windowSec*1000||($('scoreConsole')?.open&&scoreConsole.mode==='fine')?Infinity:22,(e.durationMs||180)/windowMs*plotW));for(let n of e.notes){let tileWidth=Math.max(2,width-1.8),tileHeight=Math.max(3,rowH*.5),tileX=x+.8,y=top+(15-n)*rowH+(rowH-tileHeight)/2;
+ c.save();c.beginPath();c.rect(left,top,plotW,H-top-bottom);c.clip();const editing=editingNoteSelection(),ev=platformController.events(),start=lowerBound(ev,begin-10000);for(let i=start;i<ev.length;i++){let e=ev[i];if(e.timeMs>end)break;if(!e.notes.length)continue;let x=left+(e.timeMs-begin)/windowMs*plotW;let width=Math.max(3,Math.min(windowMs<state.windowSec*1000||($('scoreConsole')?.open&&scoreConsole.mode==='fine')?Infinity:22,(e.durationMs||180)/windowMs*plotW));for(let n of e.notes){const arrival=scoreEntranceRollProgress(e.timeMs,begin,windowMs);if(arrival<=0)continue;c.save();c.globalAlpha=arrival;let tileWidth=Math.max(2,width-1.8),tileHeight=Math.max(3,rowH*.5),tileX=x+.8,y=top+(15-n)*rowH+(rowH-tileHeight)/2+(1-arrival)*PLAYER_RULES.scoreEntrance.rollRisePx;
  // Keep repeated notes distinct even when their sounding durations overlap.
  for(let j=i+1;j<ev.length&&ev[j].timeMs<e.timeMs+(width+2)/plotW*windowMs;j++){if(ev[j].notes.includes(n)){tileWidth=Math.min(tileWidth,Math.max(.8,(ev[j].timeMs-e.timeMs)/windowMs*plotW-1.8));break}}
- c.fillStyle=e.notes.length>=3?colors.poly:e.notes.length===2?colors.chord:colors.note;c.shadowColor='rgba(0,0,0,.65)';c.shadowBlur=3;c.shadowOffsetY=1;c.beginPath();c.roundRect(tileX,y,tileWidth,tileHeight,Math.min(2,tileWidth/2,tileHeight/2));c.fill();c.save();c.shadowBlur=0;c.shadowOffsetY=0;c.lineWidth=.75;c.strokeStyle=paper.base;c.stroke();c.restore();if(editing&&editing.event===e&&editing.note===n){const boxLeft=Math.max(left+1,tileX-2),boxRight=Math.min(left+plotW-1,tileX+tileWidth+2);if(boxRight>boxLeft){c.save();c.strokeStyle=PLAYER_RULES.editor.selectionOutline;c.lineWidth=2;c.shadowColor=PLAYER_RULES.editor.selectionOutline;c.shadowBlur=5;c.shadowOffsetY=0;c.beginPath();c.roundRect(boxLeft,y-2,boxRight-boxLeft,tileHeight+4,3);c.stroke();c.restore()}}}}
+ c.fillStyle=e.notes.length>=3?colors.poly:e.notes.length===2?colors.chord:colors.note;c.shadowColor='rgba(0,0,0,.65)';c.shadowBlur=3;c.shadowOffsetY=1;c.beginPath();c.roundRect(tileX,y,tileWidth,tileHeight,Math.min(2,tileWidth/2,tileHeight/2));c.fill();c.save();c.shadowBlur=0;c.shadowOffsetY=0;c.lineWidth=.75;c.strokeStyle=paper.base;c.stroke();c.restore();if(editing&&editing.event===e&&editing.note===n){const boxLeft=Math.max(left+1,tileX-2),boxRight=Math.min(left+plotW-1,tileX+tileWidth+2);if(boxRight>boxLeft){c.save();c.strokeStyle=PLAYER_RULES.editor.selectionOutline;c.lineWidth=2;c.shadowColor=PLAYER_RULES.editor.selectionOutline;c.shadowBlur=5;c.shadowOffsetY=0;c.beginPath();c.roundRect(boxLeft,y-2,boxRight-boxLeft,tileHeight+4,3);c.stroke();c.restore()}}c.restore()}}
  c.restore();let cursorX=left+phase/windowMs*plotW;c.strokeStyle='#ffd89c';c.lineWidth=1.5;c.beginPath();c.moveTo(cursorX,top);c.lineTo(cursorX,H-bottom);c.stroke();c.fillStyle='#ffe0ac';c.beginPath();c.arc(cursorX,top,3.6,0,Math.PI*2);c.fill();c.beginPath();c.arc(cursorX,H-bottom,3.6,0,Math.PI*2);c.fill();c.lineWidth=1
 }
 
@@ -1142,7 +1210,8 @@ function bindHomeThemePreview(){
 }
 
 // Card entry is presentation only; the shared platform controller still mounts every song.
-function cancelSongEntry(){
+function cancelSongEntry(completed=false){
+ if(completed!==true)cancelScoreEntrance();
  const entry=homeExperience.entry;if(!entry)return;homeExperience.entry=null;
  for(const animation of entry.animations)animation.cancel();
  $('songEntryTransition').hidden=true;$('songEntryTransition').dataset.phase='idle';
@@ -1171,7 +1240,7 @@ async function enterSongFromCard(id,card){
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(!active())return;
   overlay.dataset.phase='reveal';document.querySelector('.site-wrap').classList.add('song-entry-reveal');
   await animate(player,songRevealFrames(player),rules.revealMs);
-  if(!active())return;cancelSongEntry();$('songTitle').focus({preventScroll:true});
+  if(!active())return;cancelSongEntry(true);startScoreEntrance();$('songTitle').focus({preventScroll:true});
  }catch(error){if(active()){cancelSongEntry();toast('打开单曲失败：'+error.message,5000)}}
 }
 
@@ -1183,6 +1252,7 @@ function songRevealFrames(el,opening=true){
  const frames=[{clipPath:`circle(0px at ${cx}px ${cy}px)`},{clipPath:`circle(${radius}px at ${cx}px ${cy}px)`}];return opening?frames:frames.reverse();
 }
 async function returnHomeFromPlayer(){
+ cancelScoreEntrance();
  if(homeExperience.entry)return;
  const overlay=$('songEntryTransition');
  if(state.mode!=='player'||state.editMode||homeReducedMotion()||!overlay.animate){goHome();return}
@@ -1236,7 +1306,7 @@ function undo(){let p=state.project;if(!p||!canEditScore())return;let stack=hist
 function redo(){let p=state.project;if(!p||!canEditScore())return;let stack=historyItems(state.future,p.id);if(!stack.length){toast('没有可恢复的修改');return}pauseSong();historyItems(state.history,p.id).push(editHistoryEntry(p));restoreSnapshot(p,stack.pop());toast('已重做');saveLibrary()}
 function refreshHistoryButtons(){$('consoleUndo').disabled=!state.project||!historyItems(state.history,state.project.id).length;$('consoleRedo').disabled=!state.project||!historyItems(state.future,state.project.id).length}
 function refreshWorkspace(){if(!state.project)return;let p=state.project;cancelRollFinish();state.position=clamp(state.position,0,p.durationMs);state.selected=clamp(state.selected,0,Math.max(0,scoreEvents(p).length-1));$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';if(!state.editMode){$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs)}$('speedSelect').value=String(state.rate);syncSustainControl();$('keySelect').value=state.tuning;$('instrumentSelect').value=p.playback.instrument||'offline';setTuningButtons();applyTheme();renderBeatGrid(true);renderKeyBoard();updateVisual();refreshHistoryButtons();if(state.editMode)syncEditorFields()}
-function openEditor(){cancelPlayerValueScroll();if(state.mode!=='player')return;if(state.editMode){requestFinishEdit('exit');return}pauseSong();scoreConsole.returnView=captureTimelineView();const src=state.project;state.editSource=src;state.project=normalize({...copy(src),_imageUrl:src._imageUrl,_imageBytes:src._imageBytes});state.editBaseline=snapshot(state.project);state.editDirty=false;state.editMode=true;applyTimelineView(scoreConsole.views.get(src.id)||{position:0,rollPageStart:0,windowSec:PLAYER_RULES.roll.initialSeconds});state.history.set(src.id,[]);state.future.set(src.id,[]);updateEditButton();refreshWorkspace();syncEditorFields();openScoreConsole();toast('已进入编辑模式：修改后点击「保存」')}
+function openEditor(){cancelScoreEntrance();cancelPlayerValueScroll();if(state.mode!=='player')return;if(state.editMode){requestFinishEdit('exit');return}pauseSong();scoreConsole.returnView=captureTimelineView();const src=state.project;state.editSource=src;state.project=normalize({...copy(src),_imageUrl:src._imageUrl,_imageBytes:src._imageBytes});state.editBaseline=snapshot(state.project);state.editDirty=false;state.editMode=true;applyTimelineView(scoreConsole.views.get(src.id)||{position:0,rollPageStart:0,windowSec:PLAYER_RULES.roll.initialSeconds});state.history.set(src.id,[]);state.future.set(src.id,[]);updateEditButton();refreshWorkspace();syncEditorFields();openScoreConsole();toast('已进入编辑模式：修改后点击「保存」')}
 function switchEditTab(){/* Editing modes live in the shared standalone score console. */}
 function syncEditorFields(){let p=state.project;if(!p)return;let e=scoreEvents(p)[state.selected];if(!e)return;$('editorEventIndex').textContent=`第 ${String(state.selected+1).padStart(3,'0')} 事件`;$('editorEventNames').textContent=eventLabel(e);$('eventTime').value=e.timeMs;$('eventDuration').value=e.durationMs;$('eventVelocity').value=e.velocity||85;$('eventConfidence').value=e.confidence||'unknown';$('metaTitle').value=p.title;$('metaSubtitle').value=p.subtitle;$('metaDescription').value=p.description||''}
 function commitEventFields(){if(!canEditScore())return;let p=state.project,e=scoreEvents(p)[state.selected];if(!e)return;let t=Number($('eventTime').value),d=Number($('eventDuration').value),v=Number($('eventVelocity').value);if(![t,d,v].every(Number.isFinite)||t<0||t>36000000||d<0||d>10000||v<1||v>127){toast('时间、时值或力度超出范围');return}rememberEdit();e.timeMs=Math.round(t);e.durationMs=Math.round(d);e.velocity=Math.round(v);e.confidence='user-corrected';scoreEvents(p).sort((a,b)=>a.timeMs-b.timeMs);state.selected=scoreEvents(p).indexOf(e);state.position=e.timeMs;state.lastSelected=state.selected;p.durationMs=Math.max(p.durationMs,e.timeMs+e.durationMs);saveLibrary();refreshWorkspace();syncEditorFields();toast('事件已更新')}
@@ -1429,6 +1499,7 @@ function install(){restorePlatformThemes();state.library=BUILTINS.map(p=>normali
  }
 // Browsers can restore a complete page or its form controls independently of app data.
 function resetStartupNavigation(home=true){
+ cancelScoreEntrance();
  cancelSongEntry();
  stopConsoleRecording();cancelRollDrag();pauseSong();cancelRollFinish();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();
  if($('scoreConsole').open)closeScoreConsole();

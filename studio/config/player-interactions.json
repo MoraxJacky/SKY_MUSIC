@@ -83,5 +83,18 @@
   "notifications": {
     "controlId": "toast",
     "durationMs": 3500
+  },
+  "scoreEntrance": {
+    "blankMs": 160,
+    "rollSpreadMs": 880,
+    "rollFloatMs": 380,
+    "rollRisePx": 22,
+    "beatStepMs": 34,
+    "beatGrowMs": 240,
+    "rowGapMs": 30,
+    "stampDelayMs": 140,
+    "stampStepMs": 75,
+    "stampMs": 520,
+    "stampScale": 1.55
   }
 }

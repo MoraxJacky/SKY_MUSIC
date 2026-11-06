@@ -59,6 +59,7 @@ function bindRollPointerSeek(){
  window.addEventListener('blur',stop);
 }
 function bindPlayerInteractions(){
+ bindScoreEntranceInterrupts();
  bindPlayerValuePicker('volume');bindPlayerValuePicker('sustain');
 
  bindRollPointerSeek();
@@ -226,3 +227,69 @@ function bindSpeedPicker(){
 }
 
 function seekBeatPage(direction){if(!state.project)return;pauseSong();const layout=beatLayout(),size=beatPageSize(),slot=clamp((Math.floor(beatDisplayIndex()/size)+direction)*size,0,layout.count-1);seekTo(layout.grid?Math.round(slot*layout.step):scoreEvents(state.project)[slot].timeMs)}
+
+// A single visual-only arrival sequence for every song and theme.
+const scoreEntrance={current:null};
+function currentScoreEntrance(){const a=scoreEntrance.current;return a&&a.project===state.project&&!state.editMode?a:null}
+function scoreEntranceHidesKeys(){return Boolean(currentScoreEntrance())}
+function scoreEntranceHidesKey(key){return Boolean(currentScoreEntrance()&&!key.classList.contains('score-stamped'))}
+function scoreEntranceShowsBeat(beat){return !currentScoreEntrance()||beat.classList.contains('score-grown')}
+function scoreEntranceRollProgress(time,begin,windowMs){
+ const a=currentScoreEntrance();if(!a)return 1;if(a.started===null)return 0;
+ const cfg=PLAYER_RULES.scoreEntrance,elapsed=performance.now()-a.started-cfg.blankMs-clamp((time-begin)/windowMs,0,1)*cfg.rollSpreadMs;
+ const t=clamp(elapsed/cfg.rollFloatMs,0,1);return 1-(1-t)**3;
+}
+function prepareScoreEntrance(){
+ if(!document.createComment||homeReducedMotion())return;
+ cancelScoreEntrance();scoreEntrance.current={project:state.project,started:null,animations:[],overlays:[],raf:0,beats:[],keys:[]};
+ const host=$('playerView');host.classList.add('score-arriving');host.dataset.scoreEntrance='armed';
+}
+function finishScoreEntrance(phase='done'){
+ const a=scoreEntrance.current;if(!a)return;scoreEntrance.current=null;cancelAnimationFrame(a.raf);
+ for(const animation of a.animations)animation.cancel();
+ for(const overlay of a.overlays)overlay.remove();
+ const host=$('playerView');host.classList.remove('score-arriving');host.dataset.scoreEntrance=phase;
+ for(const el of [...$('beatGrid').children,...$('keyBoard').children]){el.classList.remove('score-grown','score-settled','score-stamped');el.style.removeProperty('z-index');el.style.removeProperty('transform-origin')}
+ if(state.mode==='player'&&state.project===a.project)updateVisual();
+}
+function cancelScoreEntrance(){finishScoreEntrance('cancelled')}
+function startScoreEntrance(){
+ const a=currentScoreEntrance();if(!a||a.started!==null)return;
+ if(state.mode!=='player'||state.isPlaying||homeReducedMotion()){cancelScoreEntrance();return}
+ const cfg=PLAYER_RULES.scoreEntrance,columns=PLAYER_RULES.grid.columns,colors=resolvedPlayerColors(state.project),blank=cfg.blankMs;
+ a.started=performance.now();$('playerView').dataset.scoreEntrance='running';
+ const animate=(el,frames,delay,duration,fill='both')=>{const animation=el.animate(frames,{delay,duration,fill,easing:'cubic-bezier(.2,.65,.25,1)'});animation.startTime=a.started;a.animations.push(animation)};
+ const cells=[...$('beatGrid').children],rowStride=(columns-1)*cfg.beatStepMs+cfg.beatGrowMs+cfg.rowGapMs;
+ cells.forEach((cell,index)=>{
+  const delay=blank+Math.floor(index/columns)*rowStride+(index%columns)*cfg.beatStepMs;a.beats.push({el:cell,delay});
+  animate(cell,[{boxShadow:'0 0 0 transparent'},{offset:.48,boxShadow:'0 0 20px '+colors.accent+'88, inset 0 0 0 1px '+colors.accent},{boxShadow:'0 0 0 transparent'}],delay,cfg.beatGrowMs);
+  const pattern=cell.querySelector('.mini-keys'),name=cell.querySelector('.beat-name');
+  if(pattern){const rect=pattern.getBoundingClientRect(),box=cell.getBoundingClientRect(),overlay=pattern.cloneNode(true);overlay.classList.add('score-arrival-pattern');overlay.style.cssText='left:'+(rect.left-box.left-cell.clientLeft)+'px;top:'+(rect.top-box.top-cell.clientTop)+'px;width:'+rect.width+'px;height:'+rect.height+'px';cell.append(overlay);a.overlays.push(overlay);
+   animate(overlay,[{opacity:0,transform:'translateY(10px) scale(.72)'},{offset:.48,opacity:1,transform:'translateY(-2px) scale(1.08)'},{opacity:1,transform:'none'}],delay,cfg.beatGrowMs);
+  }
+  if(name)animate(name,[{opacity:0,transform:'translateY(5px)'},{opacity:1,transform:'none'}],delay,cfg.beatGrowMs);
+ });
+ const notes=displayedBeat().notes;
+ [...$('keyBoard').children].filter(key=>notes.includes(Number(key.dataset.note))).forEach((key,index)=>{
+  const delay=blank+cfg.stampDelayMs+index*cfg.stampStepMs,n=Number(key.dataset.note)-1,column=n%5,row=Math.floor(n/5);a.keys.push({el:key,delay});key.style.zIndex='3';key.style.transformOrigin=(column===0?'left':column===4?'right':'center')+' '+(row===0?'top':row===2?'bottom':'center');
+  animate(key,[{opacity:.6,transform:'translateY(-10px) scale('+cfg.stampScale+')',boxShadow:'0 0 38px '+colors.accent+'99'},{offset:.42,opacity:1,transform:'translateY(2px) scale(.87)',boxShadow:'0 0 24px '+colors.accent+'aa'},{offset:.7,opacity:1,transform:'translateY(-1px) scale(1.12)'},{opacity:1,transform:'none',boxShadow:'0 0 12px '+colors.accent+'44'}],delay,cfg.stampMs,'forwards');
+ });
+ const duration=Math.max(blank+cfg.rollSpreadMs+cfg.rollFloatMs,...a.beats.map(item=>item.delay+cfg.beatGrowMs),...a.keys.map(item=>item.delay+cfg.stampMs));
+ // Start one shared clock after layout work, preserving the blank opening on slower devices.
+ a.started=performance.now();for(const animation of a.animations)animation.startTime=a.started;
+ const frame=()=>{
+  if(scoreEntrance.current!==a)return;
+  if(state.project!==a.project||state.mode!=='player'||state.editMode||state.isPlaying){cancelScoreEntrance();return}
+  const elapsed=performance.now()-a.started;
+  for(const item of a.beats){if(elapsed>=item.delay&&!item.el.classList.contains('score-grown')){item.el.classList.add('score-grown');if(Number(item.el.dataset.index)===beatDisplayIndex())item.el.classList.add('active','select')}if(elapsed>=item.delay+cfg.beatGrowMs&&!item.settled){item.settled=true;item.el.classList.add('score-settled')}}
+  for(const item of a.keys)if(elapsed>=item.delay&&!item.el.classList.contains('score-stamped'))item.el.classList.add('score-stamped','active');
+  drawRoll();if(elapsed>=duration){finishScoreEntrance();return}a.raf=requestAnimationFrame(frame);
+ };
+ a.raf=requestAnimationFrame(frame);
+}
+function bindScoreEntranceInterrupts(){
+ const interrupt=event=>{if(scoreEntrance.current&&((event.type==='keydown'&&state.mode==='player')||$('playerView').contains(event.target))){const input=(event.type==='input'||event.type==='change')&&'value'in event.target,value=input?event.target.value:null;cancelScoreEntrance();if(input)event.target.value=value}};
+ for(const type of ['pointerdown','keydown','wheel','input','change'])document.addEventListener(type,interrupt,true);
+ window.addEventListener('resize',cancelScoreEntrance);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelScoreEntrance()});
+}

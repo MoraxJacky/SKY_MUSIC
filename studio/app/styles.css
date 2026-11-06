@@ -891,3 +891,12 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
 @media(min-width:901px){.home-view .home-top{width:min(1160px,calc(100% - 160px));max-width:none;margin-left:auto;margin-right:auto;padding-left:0;padding-right:0}}
 @media(min-width:901px) and (max-width:1150px){.home-view .home-top{width:calc(100% - 64px)}}
 @media(min-width:721px) and (max-width:900px){.home-view .home-top{padding-left:20px;padding-right:20px}}
+
+/* Keep the roll paper and 8x4 geometry visible while musical content grows in. */
+.player-view.score-arriving #beatGrid>.beat{position:relative}
+.player-view.score-arriving #beatGrid>.beat:not(.score-grown){background:var(--player-grid-end);box-shadow:none}
+.player-view.score-arriving #beatGrid>.beat:not(.score-grown)>.beat-name{opacity:0}
+.player-view.score-arriving #beatGrid>.beat:not(.score-settled)>.mini-keys:not(.score-arrival-pattern)>.mini-dot.on{background:color-mix(in srgb,var(--player-dot) 33%,transparent);border-color:color-mix(in srgb,var(--player-border) 20%,transparent);box-shadow:none}
+.player-view #beatGrid .score-arrival-pattern{position:absolute;z-index:2;margin:0;pointer-events:none;transform-origin:center}
+.player-view.score-arriving #keyBoard>.key-tile{position:relative}
+@media(prefers-reduced-motion:reduce){.player-view.score-arriving #beatGrid>.beat{opacity:1}}

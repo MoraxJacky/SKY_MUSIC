@@ -196,7 +196,8 @@ function bindHomeThemePreview(){
 }
 
 // Card entry is presentation only; the shared platform controller still mounts every song.
-function cancelSongEntry(){
+function cancelSongEntry(completed=false){
+ if(completed!==true)cancelScoreEntrance();
  const entry=homeExperience.entry;if(!entry)return;homeExperience.entry=null;
  for(const animation of entry.animations)animation.cancel();
  $('songEntryTransition').hidden=true;$('songEntryTransition').dataset.phase='idle';
@@ -225,7 +226,7 @@ async function enterSongFromCard(id,card){
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(!active())return;
   overlay.dataset.phase='reveal';document.querySelector('.site-wrap').classList.add('song-entry-reveal');
   await animate(player,songRevealFrames(player),rules.revealMs);
-  if(!active())return;cancelSongEntry();$('songTitle').focus({preventScroll:true});
+  if(!active())return;cancelSongEntry(true);startScoreEntrance();$('songTitle').focus({preventScroll:true});
  }catch(error){if(active()){cancelSongEntry();toast('打开单曲失败：'+error.message,5000)}}
 }
 
@@ -237,6 +238,7 @@ function songRevealFrames(el,opening=true){
  const frames=[{clipPath:`circle(0px at ${cx}px ${cy}px)`},{clipPath:`circle(${radius}px at ${cx}px ${cy}px)`}];return opening?frames:frames.reverse();
 }
 async function returnHomeFromPlayer(){
+ cancelScoreEntrance();
  if(homeExperience.entry)return;
  const overlay=$('songEntryTransition');
  if(state.mode!=='player'||state.editMode||homeReducedMotion()||!overlay.animate){goHome();return}
