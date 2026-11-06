@@ -3,7 +3,7 @@
   "id": "christmas",
   "name": "DAYS OF FEAST",
   "defaults": {
-    "accent": "#eac68a",
+    "accent": "#c8e2f3",
     "motion": "ambient",
     "snow": 35,
     "glow": 50
@@ -27,16 +27,16 @@
     }
   },
   "rollPalette": {
-    "base": "#0b2524",
-    "light": "#244438",
-    "medium": "#112e29",
-    "dark": "#0b2825",
-    "label": "#b4c9bf",
-    "anchor": "#eac68a"
+    "base": "#142b40",
+    "light": "#38526b",
+    "medium": "#29425b",
+    "dark": "#1d354d",
+    "label": "#bfd5e6",
+    "anchor": "#d1e9fa"
   },
   "displayName": "圣诞雪夜",
   "initialOverrides": {
-    "accent": "#eac68a",
+    "accent": "#c8e2f3",
     "motion": "ambient",
     "name": "DAYS OF FEAST",
     "snow": 35,
@@ -73,8 +73,8 @@
     "enabled": true,
     "element": "particle.snowflake",
     "colors": [
-      "#eac68a",
-      "#ddf1c4"
+      "#d2eafb",
+      "#f1f9ff"
     ],
     "count": 8,
     "sizePx": 12,

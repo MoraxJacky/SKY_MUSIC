@@ -278,15 +278,24 @@ body:has(dialog[open]){overflow:hidden}
 .player-view .song-titles h1{text-shadow:0 4px 30px #d9b87933}
 .player-view .song-titles span{color:#e6ca90}
 .player-view .key-tile{padding:1px 2px;white-space:nowrap;overflow:hidden}
-.player-view[data-theme=christmas] .key-tile.active{background:linear-gradient(145deg,#806748,#d0a86b);border-color:#f1cb8d}
-.player-view[data-theme=christmas] .beat{border-color:#3b5a45}
-.player-view[data-theme=christmas] .beat-number{color:#9cbea5}
-.player-view[data-theme=christmas] .beat-name{color:#cae6ce}
-.player-view[data-theme=christmas] .beat.empty .beat-name{color:#5c7a6b}
-.player-view[data-theme=christmas] .beat.active{border-color:#ffe6ad;box-shadow:0 0 0 1px #f3d398,0 0 18px #e4ac5890}
-.player-view[data-theme=christmas] .beat.active .beat-number{color:#fff3cd}
-.player-view[data-theme=christmas] .beat.active .beat-name{color:#fff8e3}
-.player-view[data-theme=christmas] .beat:hover{border-color:#f2d69e}
+.player-view[data-theme=christmas] .key-tile.active{background:var(--player-active-paint);border-color:var(--player-accent)}
+
+.player-view[data-theme=christmas] .beat{border-color:var(--player-border)}
+
+.player-view[data-theme=christmas] .beat-number{color:var(--player-muted)}
+
+.player-view[data-theme=christmas] .beat-name{color:var(--player-text)}
+
+.player-view[data-theme=christmas] .beat.empty .beat-name{color:var(--player-dot)}
+
+.player-view[data-theme=christmas] .beat.active{border-color:var(--player-accent);box-shadow:0 0 0 1px var(--player-accent),0 0 18px color-mix(in srgb,var(--player-accent) 56%,transparent)}
+
+.player-view[data-theme=christmas] .beat.active .beat-number{color:var(--player-text)}
+
+.player-view[data-theme=christmas] .beat.active .beat-name{color:var(--player-text)}
+
+.player-view[data-theme=christmas] .beat:hover{border-color:var(--player-accent)}
+
 @media(min-width:901px){
  .player-view .play-controls{display:grid;grid-template-rows:37px 12px;gap:9px;align-content:center;padding:11px 15px}
  .player-view .seek-line{position:static;inset:auto;display:flex;height:12px;gap:13px;font:500 11px ui-monospace,monospace;color:#c8baa0}
@@ -309,11 +318,16 @@ body:has(dialog[open]){overflow:hidden}
  .player-view #stagePane{margin-top:7px;border:0;border-top:1px solid #a8a36e45;border-radius:0;box-shadow:none;min-height:60px}
  .player-view .workspace-right #inspectorPane{margin-top:7px;padding:0;border:0;border-top:1px solid var(--player-border);border-radius:0;box-shadow:none}
  .player-view .stage-scenery{inset:0 4.5% 0}
- .player-view[data-theme=christmas] .roll-pane{background:linear-gradient(147deg,#16382fdc,#0a2728f7 75%)}
- .player-view[data-theme=christmas] .keys-pane{background:linear-gradient(120deg,#1d3e32f7,#2d2427eb)}
- .player-view[data-theme=christmas] .workspace-right{background:radial-gradient(ellipse at 85% 90%,#36483d3d,transparent 43%),linear-gradient(140deg,#15372fe8,#102522f9)}
- .player-view[data-theme=christmas] .play-controls{background:linear-gradient(113deg,#123a30e9,#172b29ed 58%,#302729df);border-color:#e0be8d55}
- .player-view[data-theme=christmas] #stagePane{background:radial-gradient(ellipse 58% 67% at 53% 78%,#f4cb9440,transparent 84%),linear-gradient(180deg,#132e2c00,#193c3847 50%,#58705b23)}
+.player-view[data-theme=christmas] .roll-pane{background:linear-gradient(147deg,var(--player-surface-start),var(--player-surface-end) 75%)}
+
+.player-view[data-theme=christmas] .keys-pane{background:linear-gradient(120deg,var(--player-surface-start),var(--player-surface-end))}
+
+.player-view[data-theme=christmas] .workspace-right{background:radial-gradient(ellipse at 85% 90%,color-mix(in srgb,var(--player-control-start) 24%,transparent),transparent 43%),linear-gradient(140deg,var(--player-surface-start),var(--player-surface-end))}
+
+.player-view[data-theme=christmas] .play-controls{background:linear-gradient(113deg,var(--player-control-start),var(--player-surface-end) 58%,var(--player-control-end));border-color:color-mix(in srgb,var(--player-accent) 33%,transparent)}
+
+.player-view[data-theme=christmas] #stagePane{background:linear-gradient(180deg,var(--player-stage-start),var(--player-stage-end))}
+
 }
 @media(min-width:901px) and (max-width:1420px){
  .player-view .pane{padding:11px 12px}
@@ -330,8 +344,10 @@ body:has(dialog[open]){overflow:hidden}
  .player-view #stagePane{margin-top:3px}
 }
 @media(max-width:900px){.player-view .play-controls{display:block;padding:12px 11px 28px}.player-control-row{flex-wrap:wrap;gap:8px}}
-.player-view[data-theme=christmas]::before{background:radial-gradient(ellipse at 12% 0%,#32472c 0%,transparent 35%),radial-gradient(ellipse at 90% 88%,#492a2b 0%,transparent 42%),radial-gradient(ellipse at 84% 2%,#123b33 0%,transparent 44%),linear-gradient(135deg,#071b19 0%,#0a211b 52%,#1d1d20 100%)}
-.player-view[data-theme=christmas] .pane{border-color:rgba(227,211,166,.25)}
+.player-view[data-theme=christmas]::before{background:radial-gradient(ellipse at 12% 0%,color-mix(in srgb,var(--player-accent) 19%,transparent),transparent 35%),radial-gradient(ellipse at 90% 88%,var(--player-control-end),transparent 42%),var(--player-backdrop)}
+
+.player-view[data-theme=christmas] .pane{border-color:color-mix(in srgb,var(--player-accent) 27%,transparent)}
+
 .player-view[data-theme=christmas] .pane::after,.player-view[data-theme=christmas] .workspace-right::after{background:radial-gradient(circle,#bf4c58 0 2px,transparent 2.5px) 0 0/20px 4px;opacity:.65}
 .player-view:not(.editing) #gridHint{visibility:hidden}
 @media(min-width:901px){
