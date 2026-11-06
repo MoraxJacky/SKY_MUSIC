@@ -123,7 +123,7 @@ async function importFiles(files){const list=[...files],entry=list.find(file=>fi
 function customThemeChanged(project){
  const definition=THEME_DEFINITIONS[sceneId(project)],canonical=normalize({score:{events:[]},theme:{id:definition.id,...definition.defaults,...definition.initialOverrides}}).theme;
  const theme=project.theme;
- return Boolean(project._imageUrl||theme.customStage)||['accent','backgroundColor','snow','glow','motion','name'].some(key=>theme[key]!==canonical[key])||Object.entries(theme.appearance||{}).some(([key,value])=>value!==definition.appearance[key]);
+ return Boolean(project._imageUrl)||['accent','backgroundColor','snow','glow','motion','name'].some(key=>theme[key]!==canonical[key])||Object.entries(theme.appearance||{}).some(([key,value])=>value!==definition.appearance[key]);
 }
 async function themeResourceBytes(project){
  const definition=copy(themeDefinition(project));definition.appearanceOverrides={...(definition.appearanceOverrides||{}),...Object.fromEntries(Object.entries(sanitizePlayerAppearance(project.theme.appearance)).filter(([key,value])=>value!==definition.appearance[key]))};definition.appearance={...definition.appearance,...definition.appearanceOverrides};definition.initialOverrides=copy(project.theme);delete definition.initialOverrides.id;delete definition.initialOverrides.definition;delete definition.initialOverrides.assets;

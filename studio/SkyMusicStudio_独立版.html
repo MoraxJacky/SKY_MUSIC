@@ -540,7 +540,7 @@ function normalize(raw){
  }).sort((a,b)=>a.timeMs-b.timeMs);
  const total=Number(source.durationMs??source.duration_ms??((normalEvents.at(-1)?.timeMs||0)+500));
  if(!Number.isFinite(total)||total<0||total>36000000)throw Error('歌曲时长不合法');
- const definition=source.theme?.definition?sanitizeThemeDefinition(source.theme.definition):null;if(definition)registerThemeDefinition(definition);
+ const definition=source.theme?.definition&&Object.hasOwn(THEME_DEFINITIONS,source.theme.id)?sanitizeThemeDefinition(source.theme.definition):null;
  const themeId=PRESETS[source.theme?.id]?source.theme.id:APP_CONFIG.defaultTheme;
  const themeDefaults=THEME_DEFINITIONS[themeId].defaults;
  const project={
@@ -948,7 +948,7 @@ async function importFiles(files){const list=[...files],entry=list.find(file=>fi
 function customThemeChanged(project){
  const definition=THEME_DEFINITIONS[sceneId(project)],canonical=normalize({score:{events:[]},theme:{id:definition.id,...definition.defaults,...definition.initialOverrides}}).theme;
  const theme=project.theme;
- return Boolean(project._imageUrl||theme.customStage)||['accent','backgroundColor','snow','glow','motion','name'].some(key=>theme[key]!==canonical[key])||Object.entries(theme.appearance||{}).some(([key,value])=>value!==definition.appearance[key]);
+ return Boolean(project._imageUrl)||['accent','backgroundColor','snow','glow','motion','name'].some(key=>theme[key]!==canonical[key])||Object.entries(theme.appearance||{}).some(([key,value])=>value!==definition.appearance[key]);
 }
 async function themeResourceBytes(project){
  const definition=copy(themeDefinition(project));definition.appearanceOverrides={...(definition.appearanceOverrides||{}),...Object.fromEntries(Object.entries(sanitizePlayerAppearance(project.theme.appearance)).filter(([key,value])=>value!==definition.appearance[key]))};definition.appearance={...definition.appearance,...definition.appearanceOverrides};definition.initialOverrides=copy(project.theme);delete definition.initialOverrides.id;delete definition.initialOverrides.definition;delete definition.initialOverrides.assets;

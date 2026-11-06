@@ -18,6 +18,7 @@ with sync_playwright() as pw:
  const definition=JSON.parse(JSON.stringify(window.SKY_STUDIO_CONFIG.themes.starlight));definition.id='registered-test';definition.name='Test Registered';definition.displayName='已录入测试主题';
  await t.importFile(new File([JSON.stringify({format:'skytheme',schemaVersion:2,definition})],'new.skytheme'));
  await t.importFile(new File([JSON.stringify({format:'skytheme',schemaVersion:2,definition})],'same.skytheme'));
+ const rogue=JSON.parse(JSON.stringify(definition));rogue.id='unregistered-embedded';t.normalize({score:{events:[]},theme:{id:rogue.id,definition:rogue}});if(t.THEME_DEFINITIONS[rogue.id])throw Error('Project registered a theme');
  const altered=JSON.parse(JSON.stringify(definition));altered.name='Collision';try{await t.importFile(new File([JSON.stringify({format:'skytheme',schemaVersion:2,definition:altered})],'collision.skytheme'));throw Error('Accepted collision')}catch(error){if(!error.message.includes('ID 已存在'))throw error}
  await t.importFile(new File([JSON.stringify(entry)],'complete.skymusic'));
  if(t.state.project.theme.id!=='registered-test'||JSON.stringify(t.state.project.score.events)!==before)throw Error('Registration/score failed');

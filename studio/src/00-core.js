@@ -48,7 +48,7 @@ function normalize(raw){
  }).sort((a,b)=>a.timeMs-b.timeMs);
  const total=Number(source.durationMs??source.duration_ms??((normalEvents.at(-1)?.timeMs||0)+500));
  if(!Number.isFinite(total)||total<0||total>36000000)throw Error('歌曲时长不合法');
- const definition=source.theme?.definition?sanitizeThemeDefinition(source.theme.definition):null;if(definition)registerThemeDefinition(definition);
+ const definition=source.theme?.definition&&Object.hasOwn(THEME_DEFINITIONS,source.theme.id)?sanitizeThemeDefinition(source.theme.definition):null;
  const themeId=PRESETS[source.theme?.id]?source.theme.id:APP_CONFIG.defaultTheme;
  const themeDefaults=THEME_DEFINITIONS[themeId].defaults;
  const project={
