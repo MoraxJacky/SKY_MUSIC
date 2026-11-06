@@ -10,6 +10,7 @@ def render(root):
     load = lambda name: json.loads((folder / name).read_text(encoding='utf-8'))
     player = load('player-interactions.json')
     assert not ({'score', 'events', 'theme', 'themes', 'songs'} & player.keys()), 'Player settings must not embed song/theme data'
+    assert 0 < player['editor']['crossPageFocusFraction'] < 1
     assert player['editor']['beatRowsPerSection'] == 2, 'Console A/B sections are 8x2 halves of one 8x4 group'
     assert player['grid'] == {'columns': 8, 'rows': 4, 'keyCount': 15}, 'The shared Sky layout is 8x4 / 15 keys'
     assert player['roll']['initialSeconds'] in player['roll']['windowsSeconds']
