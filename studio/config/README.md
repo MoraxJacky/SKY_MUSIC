@@ -73,3 +73,5 @@ python -X utf8 scripts/configuration.py --check
 - 仅新增主题文件即可在真实 HTTP 页面中发现并应用，不改交互处理器。
 
 旧版的原始交付、素材和历史验证记录仍保留在外层基线目录。
+
+音量同属共用交互：`player-interactions.json.volume` 定义默认 75%、最大输出增益 2、25ms 过渡和 UI 控件 ID；具体值保存在单曲 `playback.volume`，无需为主题或歌曲新增处理器。UI 识别契约见 `docs/PLAYER_TEMPLATE.md` 的“音量交互和 UI 识别”。

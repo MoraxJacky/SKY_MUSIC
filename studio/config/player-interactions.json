@@ -31,5 +31,13 @@
     "instrumentNeighbors": 2,
     "instrumentRowGapPx": 5,
     "instrumentSnapDelayMs": 110
+  },
+  "volume": {
+    "default": 0.75,
+    "maxGain": 2,
+    "rampSeconds": 0.025,
+    "sliderId": "volumeSlider",
+    "outputId": "volumeValue",
+    "label": "音量"
   }
 }

@@ -1,8 +1,12 @@
 const ONLINE_PIANO_ROOTS=[['C4',60],['Ds4',63],['Fs4',66],['A4',69],['C5',72],['Ds5',75],['Fs5',78],['A5',81],['C6',84],['Ds6',87],['Fs6',90],['A6',93]];
 const ONLINE_PIANO_BASE='https://tonejs.github.io/audio/salamander/';
 function makeRoomImpulse(ac){let length=Math.round(ac.sampleRate*1.85),b=ac.createBuffer(2,length,ac.sampleRate);for(let ch=0;ch<2;ch++){let data=b.getChannelData(ch);for(let i=0;i<length;i++){let t=i/ac.sampleRate;data[i]=(Math.random()*2-1)*Math.exp(-t*3.5)*Math.pow(Math.max(0,1-t/1.85),1.4)*.36}}return b}
-function getAudio(){if(!state.audioCtx){const C=window.AudioContext||window.webkitAudioContext;if(!C)throw Error('当前浏览器不支持 Web Audio');let ac=state.audioCtx=new C();state.master=ac.createDynamicsCompressor();state.master.threshold.value=-15;state.master.knee.value=18;state.master.ratio.value=3;state.master.connect(ac.destination);
+function getAudio(){if(!state.audioCtx){const C=window.AudioContext||window.webkitAudioContext;if(!C)throw Error('当前浏览器不支持 Web Audio');let ac=state.audioCtx=new C();state.master=ac.createDynamicsCompressor();state.master.threshold.value=-15;state.master.knee.value=18;state.master.ratio.value=3;state.volumeBus=ac.createGain();state.volumeBus.gain.value=normalizeVolume(state.volume)*PLAYER_RULES.volume.maxGain;state.master.connect(state.volumeBus);state.volumeBus.connect(ac.destination);
  state.dryBus=ac.createGain();state.dryBus.connect(state.master);state.reverbSend=ac.createGain();let convolution=ac.createConvolver();convolution.buffer=makeRoomImpulse(ac);state.wetBus=ac.createGain();state.reverbSend.connect(convolution);convolution.connect(state.wetBus);state.wetBus.connect(state.master);updateSustainAudio();}return state.audioCtx}
+function updateVolumeAudio(){
+ if(!state.audioCtx||!state.volumeBus)return;const now=state.audioCtx.currentTime,gain=state.volumeBus.gain;
+ gain.cancelScheduledValues(now);gain.setValueAtTime(gain.value,now);gain.linearRampToValueAtTime(normalizeVolume(state.volume)*PLAYER_RULES.volume.maxGain,now+PLAYER_RULES.volume.rampSeconds);
+}
 function updateSustainAudio(){if(!state.audioCtx||!state.wetBus)return;state.wetBus.gain.setTargetAtTime(.012+state.sustain*.40,state.audioCtx.currentTime,.04)}
 async function loadOfflinePiano(){const ac=getAudio();if(state.pianoBuffers.size>=15)return;if(!state.loadedSamplePromise){state.loadedSamplePromise=Promise.all(Object.entries(SAMPLES).map(async([midi,b64])=>{let bytes=base64ToBytes(b64);return [Number(midi),await ac.decodeAudioData(bytes.buffer)]})).then(items=>{for(let [m,b]of items)state.pianoBuffers.set(m,b)}).catch(err=>{state.loadedSamplePromise=null;throw err})}await state.loadedSamplePromise}
 async function preloadPiano(){return prepareInstrument()}

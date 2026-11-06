@@ -104,3 +104,9 @@
 ## 独立主源（2026-11-06）
 
 曲谱、主题和共用交互的编辑入口详见 [config/README.md](../config/README.md)。主题颜色、装饰及旧版专用样式已从交互脚本/基础 CSS 移出；新增主题 JSON 会自动进入选择器。同一套 `39-player-interactions.js` 服务全部歌曲和主题。
+
+## 音量交互和 UI 识别
+
+所有歌曲、音色和主题共用 `volumeSlider`（原生 slider，可访问名称“音量”、`data-control="volume"`）与 `volumeValue`（百分比输出）。0–100%，0 为静音；方向键微调、Home/End 到边界。规则集中在 `config/player-interactions.json` 的 `volume`，绑定归 `src/39-player-interactions.js`。样式使用当前主题颜色；窄屏同播放栏换行。
+
+音量保存于每首歌的 `playback.volume`（0–1），随完整 `.skymusic` 保存；纯谱 `.skytrack` 不携带音量。旧歌曲缺省为 75%。总输出增益是音量乘 2，因此默认输出为旧版的 1.5 倍（约 +3.5 dB），最大 2 倍；此调整是输出增益，不代表主观响度线性倍增。压缩器后统一控制干声、延音混响和试听，25ms 平滑过渡，不暂停播放。

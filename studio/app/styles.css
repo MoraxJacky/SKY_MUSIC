@@ -368,3 +368,10 @@ body:has(dialog[open]){overflow:hidden}
 
 /* Decoration visibility belongs to theme data, independently of the preset ID. */
 .player-view .stage-pane[data-motif=off]::before,.player-view .stage-pane[data-motif=off]::after{display:none}
+
+/* Shared volume control: named native slider for keyboard and UI recognition. */
+.player-view .volume-control{display:flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;white-space:nowrap}
+.player-view .volume-control input{width:clamp(42px,5vw,78px);margin:0;accent-color:var(--theme-accent)}
+.player-view .volume-control output{min-width:33px;text-align:right;color:var(--player-text);font:11px Georgia,serif}
+.player-view .volume-control input:focus-visible{outline:2px solid var(--theme-accent);outline-offset:3px;border-radius:4px}
+@media(min-width:901px) and (max-width:1100px){.player-view .player-control-row{gap:6px}.player-view .volume-control{gap:4px}.player-view .volume-control input{width:42px}}

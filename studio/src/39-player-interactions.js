@@ -1,5 +1,11 @@
 // One player interaction entry for every score and theme.
+function syncVolumeControl(){
+ const rules=PLAYER_RULES.volume,percent=Math.round(state.volume*100),slider=$(rules.sliderId);
+ slider.value=String(percent);slider.setAttribute('aria-valuetext',percent===0?'静音':percent+'%');$(rules.outputId).textContent=percent+'%';updateVolumeAudio();
+}
 function bindPlayerInteractions(){
+ $(PLAYER_RULES.volume.sliderId).oninput=ev=>{state.volume=normalizeVolume(Number(ev.target.value)/100);if(state.project){state.project.playback.volume=state.volume;saveLibrary()}syncVolumeControl()};
+
  $('backLibrary').onclick=goHome;
  $('rollWindow').innerHTML='';for(const seconds of PLAYER_RULES.roll.windowsSeconds){const option=document.createElement('option');option.value=String(seconds);option.textContent=seconds+'秒';$('rollWindow').append(option)}
  $('playBtn').onclick=()=>playPause();$('restartBtn').onclick=()=>seekTo(0);

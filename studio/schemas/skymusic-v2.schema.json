@@ -41,7 +41,15 @@
       "type": "object"
     },
     "playback": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "volume": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Master volume; omitted legacy values use shared player default."
+        }
+      }
     }
   }
 }
