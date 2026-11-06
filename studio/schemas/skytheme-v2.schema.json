@@ -85,6 +85,9 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
+            "backdropGlowOpacity": {"type": "number", "minimum": 0, "maximum": 1},
+            "panelShadowOpacity": {"type": "number", "minimum": 0, "maximum": 1},
+            "panelEdgeOpacity": {"type": "number", "minimum": 0, "maximum": 1},
             "surfaceGradient": {
               "type": "boolean"
             },

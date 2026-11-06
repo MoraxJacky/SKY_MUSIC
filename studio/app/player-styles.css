@@ -217,8 +217,8 @@ body:has(dialog[open]){overflow:hidden}
 @media(prefers-reduced-motion:reduce){.player-view *{transition:none!important}.player-view .snow-dot{animation:none!important}}
 
 /* Reusable v7 material system. Themes supply colors; layout and behavior stay shared. */
-.player-view{color:var(--player-text,#fff8eb)}
-.player-view::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 12% 0%,color-mix(in srgb,var(--player-accent) 19%,transparent),transparent 35%),radial-gradient(ellipse at 90% 88%,var(--player-control-end),transparent 42%),var(--player-backdrop,#091e1b)}
+.player-view{color:var(--player-text,#fff8eb);position:relative;isolation:isolate}
+.player-view::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 5% 20%,color-mix(in srgb,var(--player-accent) var(--player-backdrop-glow-opacity,28%),transparent),transparent 48%),radial-gradient(ellipse at 95% 82%,color-mix(in srgb,var(--player-surface-start) 80%,transparent),transparent 52%),radial-gradient(ellipse at 50% 45%,transparent 35%,color-mix(in srgb,var(--player-backdrop) 72%,black)),var(--player-backdrop,#091e1b)}
 .player-view .pane{background:linear-gradient(143deg,var(--player-surface-start),var(--player-surface-end));border-color:color-mix(in srgb,var(--player-accent) 27%,transparent);box-shadow:0 16px 60px #0006,inset 0 1px #ffffff1a}
 .player-view .pane::before{content:'';position:absolute;top:0;left:16%;right:16%;height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--player-accent) 40%,transparent),transparent);pointer-events:none}
 .player-view .pane::after{content:'';position:absolute;right:18px;top:0;width:100px;height:3px;background:radial-gradient(circle,var(--player-poly) 0 2px,transparent 2.5px) 0 0/19px 4px;opacity:.5;pointer-events:none}
@@ -344,8 +344,6 @@ body:has(dialog[open]){overflow:hidden}
  .player-view #stagePane{margin-top:3px}
 }
 @media(max-width:900px){.player-view .play-controls{display:block;padding:12px 11px 28px}.player-control-row{flex-wrap:wrap;gap:8px}}
-.player-view[data-theme=christmas]::before{background:radial-gradient(ellipse at 12% 0%,color-mix(in srgb,var(--player-accent) 19%,transparent),transparent 35%),radial-gradient(ellipse at 90% 88%,var(--player-control-end),transparent 42%),var(--player-backdrop)}
-
 .player-view[data-theme=christmas] .pane{border-color:color-mix(in srgb,var(--player-accent) 27%,transparent)}
 
 .player-view[data-theme=christmas] .pane::after,.player-view[data-theme=christmas] .workspace-right::after{background:radial-gradient(circle,#bf4c58 0 2px,transparent 2.5px) 0 0/20px 4px;opacity:.65}
@@ -902,8 +900,8 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
 @media(max-width:600px){.home-islet{width:280px;left:-95px;opacity:.32}}
 @media(prefers-reduced-motion:reduce){.home-islet{animation:none}}
 /* Only a hint of white at the outer edge, vanishing toward the banner center. */
-.home-view .home-theme-arrow{background:linear-gradient(90deg,#ffffff16,#ffffff06 42%,transparent);opacity:.8}
-.home-view .home-theme-arrow.theme-next{background:linear-gradient(270deg,#ffffff16,#ffffff06 42%,transparent)}
+.home-view .home-theme-arrow{background:linear-gradient(90deg,#ffffff26,#ffffff0c 42%,transparent);opacity:.8}
+.home-view .home-theme-arrow.theme-next{background:linear-gradient(270deg,#ffffff26,#ffffff0c 42%,transparent)}
 .home-view .home-theme-arrow:hover,.home-view .home-theme-arrow:focus-visible{background-color:transparent;opacity:1}
 @media(max-width:720px){
  .home-view .home-top{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:14px;width:100%;height:auto;min-height:0;margin:0;padding:12px 20px 14px}
@@ -1074,3 +1072,11 @@ body{--control-focus-accent:#d8eaf8;--control-focus-border:color-mix(in srgb,var
 .home-view .library-grid>.add-card .plus .app-icon{width:32px;height:32px}
 .home-view .library-grid>.add-card strong{font-size:15px;line-height:1.4;margin:0}
 @media(max-width:900px){.home-view{height:100dvh}}
+
+/* Shared elevation: a distant, diffuse backdrop and crisp foreground surfaces. */
+.home-view .light-cone .song-card-actions button{color:#d5e9f5;transition:background-color .16s,border-color .16s,color .16s,box-shadow .16s}
+.home-view .light-cone .song-card-actions button:hover,.home-view .light-cone .song-card-actions button:focus-visible{color:#fff;background:#42677de8;border-color:#eefaff;box-shadow:inset 0 1px #ffffff40,0 0 0 1px #daefff38,0 0 13px #c1e6ff85;outline:0}
+.home-control-tooltip{position:fixed;inset:auto;margin:0;width:max-content;max-width:calc(100vw - 16px);padding:7px 11px;border:1px solid #b7d4e3a6;border-radius:9px;background:linear-gradient(135deg,#25465bee,#112b40f5);color:#f0f8ff;font-size:12px;line-height:1.4;box-shadow:0 5px 18px #05152566,inset 0 1px #ffffff20;backdrop-filter:blur(8px);pointer-events:none}
+.player-view>.play-controls,.player-view .workspace-left>.pane,.player-view .workspace-right>.grid-pane,.player-view .workspace-right>#stagePane{
+ box-shadow:0 3px 7px color-mix(in srgb,var(--player-backdrop) 65%,transparent),0 18px 38px color-mix(in srgb,#000 var(--player-panel-shadow-opacity,30%),transparent),inset 0 1px color-mix(in srgb,var(--player-text) var(--player-panel-edge-opacity,16%),transparent),inset 0 -1px color-mix(in srgb,var(--player-backdrop) 45%,transparent);
+}

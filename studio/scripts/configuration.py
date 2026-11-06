@@ -53,6 +53,7 @@ def render(root):
         theme['keyFeedback'] = {**template['keyFeedback'], **theme.get('keyFeedback', {})}
         assert all(isinstance(theme['materials'][key], bool) for key in ['surfaceGradient', 'activeGradient'])
         assert all(0 <= theme['materials'][key] <= 360 for key in ['surfaceAngle', 'activeAngle'])
+        assert all(isinstance(theme['materials'][key], (int, float)) and not isinstance(theme['materials'][key], bool) and 0 <= theme['materials'][key] <= 1 for key in ['backdropGlowOpacity', 'panelShadowOpacity', 'panelEdgeOpacity'])
         feedback = theme['keyFeedback']
         if feedback.get('element'):
             particle = elements[feedback['element']]

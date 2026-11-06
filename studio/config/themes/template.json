@@ -28,7 +28,10 @@
     "surfaceGradient": true,
     "surfaceAngle": 143,
     "activeGradient": true,
-    "activeAngle": 160
+    "activeAngle": 160,
+    "backdropGlowOpacity": 0.28,
+    "panelShadowOpacity": 0.30,
+    "panelEdgeOpacity": 0.16
   },
   "keyFeedback": {
     "enabled": false,

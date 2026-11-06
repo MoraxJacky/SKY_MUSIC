@@ -3,6 +3,7 @@ const homeExperience={cards:new Set(),views:new Set(),flipped:new Set(),flips:ne
 const homeReducedMotion=()=>Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
 
 function clearHomeCardPhysics(){
+ hideHomeControlTooltip();
  cancelAnimationFrame(homeExperience.raf);homeExperience.raf=0;
  for(const [el,animation]of homeExperience.flips){animation.cancel();el.classList.remove('is-turning')}homeExperience.flips.clear();
  for(const card of homeExperience.views){card.x=card.y=card.vx=card.vy=card.tx=card.ty=card.glow=card.flash=0;paintHomeCard(card)}
@@ -56,12 +57,22 @@ function attachHomeCard(el,song){
  if(!document.createComment)return;
  const card={el,x:0,y:0,vx:0,vy:0,tx:0,ty:0,glow:0,flash:0,hover:false,lightX:50,lightY:50,targetLightX:50,targetLightY:50};
  homeExperience.views.add(card);setHomeCardFlip(el,song,homeExperience.flipped.has(song.id));
+ for(const button of el.querySelectorAll('[data-home-tooltip]')){button.addEventListener('pointerenter',event=>{if(event.pointerType!=='touch')showHomeControlTooltip(button)});button.addEventListener('pointerleave',hideHomeControlTooltip);button.addEventListener('focus',()=>showHomeControlTooltip(button));button.addEventListener('blur',hideHomeControlTooltip);button.addEventListener('click',hideHomeControlTooltip)}
  el.querySelector('.cone-flip-trigger').onclick=()=>setHomeCardFlip(el,song,el.dataset.face!=='back',true);
  const point=event=>{const rect=el.getBoundingClientRect(),x=clamp((event.clientX-rect.left)/rect.width,0,1),y=clamp((event.clientY-rect.top)/rect.height,0,1),limit=APP_CONFIG.home.cardPhysics.maxTiltDeg;card.tx=(.5-y)*2*limit;card.ty=(x-.5)*2*limit;card.targetLightX=x*100;card.targetLightY=y*100;wakeHomeCard(card)};
  el.addEventListener('pointerenter',event=>{if(event.pointerType==='touch'||homeReducedMotion())return;card.hover=true;card.flash=1;point(event)});
  el.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||homeReducedMotion())return;point(event)});
  const leave=()=>{card.hover=false;card.tx=card.ty=0;card.targetLightX=card.targetLightY=50;if(!homeReducedMotion())wakeHomeCard(card)};
  el.addEventListener('pointerleave',leave);el.addEventListener('pointercancel',leave);
+}
+
+// One platform tooltip lives in the top layer, outside clipped and tilted cards.
+let homeControlTooltip=null,homeTooltipAnchor=null;
+function hideHomeControlTooltip(){if(!homeControlTooltip)return;homeTooltipAnchor?.removeAttribute('aria-describedby');homeTooltipAnchor=null;if(homeControlTooltip.matches(':popover-open'))homeControlTooltip.hidePopover()}
+function showHomeControlTooltip(button){
+ if(!homeControlTooltip){homeControlTooltip=document.createElement('div');homeControlTooltip.id='homeControlTooltip';homeControlTooltip.className='home-control-tooltip';homeControlTooltip.setAttribute('role','tooltip');homeControlTooltip.setAttribute('popover','manual');document.body.append(homeControlTooltip);$('homeView').addEventListener('scroll',hideHomeControlTooltip,{passive:true});window.addEventListener('resize',hideHomeControlTooltip);document.addEventListener('pointerdown',hideHomeControlTooltip);document.addEventListener('keydown',e=>{if(e.key==='Escape')hideHomeControlTooltip()})}
+ hideHomeControlTooltip();homeTooltipAnchor=button;homeControlTooltip.textContent=button.dataset.homeTooltip;button.setAttribute('aria-describedby',homeControlTooltip.id);homeControlTooltip.showPopover();
+ const r=button.getBoundingClientRect(),t=homeControlTooltip.getBoundingClientRect();homeControlTooltip.style.left=clamp(r.left+r.width/2-t.width/2,8,innerWidth-t.width-8)+'px';homeControlTooltip.style.top=(r.top>=t.height+16?r.top-t.height-8:r.bottom+8)+'px';
 }
 
 function stopHomeCarousel(){const c=homeExperience.carousel;if(c){clearTimeout(c.timer);c.timer=0}}

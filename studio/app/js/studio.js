@@ -547,7 +547,7 @@ function themeAsset(path,project=state.project){return project?.theme?.assets?.[
 function applyThemeClasses(host,definition){const classes=new Set(Object.values(THEME_DEFINITIONS).flatMap(t=>t.decorations.classes));for(const name of classes)host.classList.toggle(name,definition.decorations.classes.includes(name))}
 function rollPaletteForTheme(definition,colors){return {base:colors.surfaceEnd,light:colors.gridStart,medium:colors.gridEnd,dark:colors.rest,label:colors.muted,anchor:colors.accent,...definition.rollPalette}}
 function themeCaption(project=state.project){const definition=themeDefinition(project),name=project?.theme?.name;return !name||definition.legacyNames?.includes(name)?definition.name:name}
-function sanitizeThemeMaterials(raw={}){const base=APP_CONFIG.themeTemplate.materials;return {surfaceGradient:typeof raw.surfaceGradient==='boolean'?raw.surfaceGradient:base.surfaceGradient,activeGradient:typeof raw.activeGradient==='boolean'?raw.activeGradient:base.activeGradient,surfaceAngle:clamp(Number(raw.surfaceAngle)||base.surfaceAngle,0,360),activeAngle:clamp(Number(raw.activeAngle)||base.activeAngle,0,360)}}
+function sanitizeThemeMaterials(raw={}){const base=APP_CONFIG.themeTemplate.materials,result={surfaceGradient:typeof raw.surfaceGradient==='boolean'?raw.surfaceGradient:base.surfaceGradient,activeGradient:typeof raw.activeGradient==='boolean'?raw.activeGradient:base.activeGradient,surfaceAngle:clamp(Number(raw.surfaceAngle)||base.surfaceAngle,0,360),activeAngle:clamp(Number(raw.activeAngle)||base.activeAngle,0,360)};for(const key of ['backdropGlowOpacity','panelShadowOpacity','panelEdgeOpacity'])result[key]=clamp(Number.isFinite(raw[key])?raw[key]:base[key],0,1);return result}
 function sanitizeThemeLayout(raw={}){const result={sceneFit:raw.sceneFit==='cover'?'cover':'contain'};for(const [key,fallback,min,max]of [['companionWidth',28,12,60],['companionHeight',64,20,95],['companionLeft',8,0,70],['companionBottom',9,0,60],['ornamentWidth',14,4,25],['ornamentHeight',32,8,50],['ornamentRight',3,0,40],['ornamentBottom',11,0,60]])result[key]=clamp(Number.isFinite(raw[key])?raw[key]:fallback,min,max);return result}
 function sanitizeKeyFeedback(raw={},colors={}){const base=APP_CONFIG.themeTemplate.keyFeedback,shapes=['snowflake','star','spark','butterfly','drop','diamond'];return {enabled:raw.enabled===true,shape:shapes.includes(raw.shape)?raw.shape:'star',element:typeof raw.element==='string'?raw.element:null,count:clamp(Math.round(Number(raw.count)||base.count),1,16),durationMs:clamp(Number(raw.durationMs)||base.durationMs,180,1500),spreadPx:clamp(Number(raw.spreadPx)||base.spreadPx,8,100),risePx:clamp(Number(raw.risePx)||base.risePx,8,100),sizePx:clamp(Number(raw.sizePx)||base.sizePx,6,24),colors:(raw.colors||[colors.accent,colors.note]).filter(color=>/^#[0-9a-f]{6}$/i.test(color)).slice(0,4)}}
 function sanitizePlayerAppearance(raw){let result={};if(!raw||typeof raw!=='object')return result;for(let key of Object.keys(PLAYER_APPEARANCE.christmas))if(/^#[0-9a-f]{6}$/i.test(raw[key]||''))result[key]=raw[key];return result}
@@ -582,6 +582,7 @@ function applyPlayerTemplate(project,host){
  state.playerColors=colors;applyThemeClasses(host,definition);
  host.dataset.template=PLAYER_TEMPLATE_ID;host.dataset.theme=id;
  applySurfaceTokens(host,colors,sanitizeThemeMaterials(definition.materials));
+ const depth=sanitizeThemeMaterials(definition.materials);for(const key of ['backdropGlowOpacity','panelShadowOpacity','panelEdgeOpacity'])host.style.setProperty('--player-'+key.replace(/[A-Z]/g,c=>'-'+c.toLowerCase()),`${depth[key]*100}%`);
  host.style.setProperty('--gold',colors.accent);host.style.setProperty('--theme-accent',colors.accent);host.style.setProperty('--note',colors.note);host.style.setProperty('--chord',colors.chord);
  host.style.setProperty('--glow-strength',String((theme.glow??58)/100));
  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -976,7 +977,7 @@ function renderLibrary(){
   const tuning=song.playback?.tuning||'C',details=[['音符数',String(songNotes(song))],['音域',tuning==='sky-original'?'光遇原调':(KEY_DEGREES[tuning]||KEY_DEGREES.C)[0]+' 大调'],['作者',song.author||'未署名']];
   for(const [label,value]of details){const group=document.createElement('div'),term=document.createElement('dt'),content=document.createElement('dd');term.textContent=label;content.textContent=value;content.title=value;group.append(term,content);card.querySelector('.cone-info').append(group)}
   const play=card.querySelector('.card-play');play.setAttribute('aria-label','演奏'+song.title);play.onclick=event=>{event.stopPropagation();enterSongFromCard(song.id,card)};
-  const actions=card.querySelector('.song-card-actions');for(const [label,action,title]of [[song.favorite?'favorite-filled':'favorite',()=>favoriteSong(song.id),'收藏'],['edit',()=>renameSong(song.id),'重命名'],['copy',()=>duplicateSong(song.id),'制作副本'],['close',()=>deleteSong(song.id),'删除项目']]){const button=document.createElement('button');button.innerHTML=appIcon(label);button.title=title;button.setAttribute('aria-label',title);button.onclick=event=>{event.stopPropagation();action()};actions.append(button)}
+  const actions=card.querySelector('.song-card-actions');for(const [label,action,title]of [[song.favorite?'favorite-filled':'favorite',()=>favoriteSong(song.id),'收藏'],['edit',()=>renameSong(song.id),'重命名'],['copy',()=>duplicateSong(song.id),'制作副本'],['close',()=>deleteSong(song.id),'删除项目']]){const button=document.createElement('button');button.innerHTML=appIcon(label);button.dataset.homeTooltip=title;button.setAttribute('aria-label',title);button.onclick=event=>{event.stopPropagation();action()};actions.append(button)}
   attachHomeCard(card,song);container.append(card);
  }
  const add=document.createElement('button');add.className='song-card add-card';add.innerHTML='<span class="plus">'+appIcon('plus')+'</span><strong>导入新的乐曲</strong>';add.onclick=openImport;container.append(add);resumeHomePresentation();
@@ -1103,6 +1104,7 @@ const homeExperience={cards:new Set(),views:new Set(),flipped:new Set(),flips:ne
 const homeReducedMotion=()=>Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
 
 function clearHomeCardPhysics(){
+ hideHomeControlTooltip();
  cancelAnimationFrame(homeExperience.raf);homeExperience.raf=0;
  for(const [el,animation]of homeExperience.flips){animation.cancel();el.classList.remove('is-turning')}homeExperience.flips.clear();
  for(const card of homeExperience.views){card.x=card.y=card.vx=card.vy=card.tx=card.ty=card.glow=card.flash=0;paintHomeCard(card)}
@@ -1156,12 +1158,22 @@ function attachHomeCard(el,song){
  if(!document.createComment)return;
  const card={el,x:0,y:0,vx:0,vy:0,tx:0,ty:0,glow:0,flash:0,hover:false,lightX:50,lightY:50,targetLightX:50,targetLightY:50};
  homeExperience.views.add(card);setHomeCardFlip(el,song,homeExperience.flipped.has(song.id));
+ for(const button of el.querySelectorAll('[data-home-tooltip]')){button.addEventListener('pointerenter',event=>{if(event.pointerType!=='touch')showHomeControlTooltip(button)});button.addEventListener('pointerleave',hideHomeControlTooltip);button.addEventListener('focus',()=>showHomeControlTooltip(button));button.addEventListener('blur',hideHomeControlTooltip);button.addEventListener('click',hideHomeControlTooltip)}
  el.querySelector('.cone-flip-trigger').onclick=()=>setHomeCardFlip(el,song,el.dataset.face!=='back',true);
  const point=event=>{const rect=el.getBoundingClientRect(),x=clamp((event.clientX-rect.left)/rect.width,0,1),y=clamp((event.clientY-rect.top)/rect.height,0,1),limit=APP_CONFIG.home.cardPhysics.maxTiltDeg;card.tx=(.5-y)*2*limit;card.ty=(x-.5)*2*limit;card.targetLightX=x*100;card.targetLightY=y*100;wakeHomeCard(card)};
  el.addEventListener('pointerenter',event=>{if(event.pointerType==='touch'||homeReducedMotion())return;card.hover=true;card.flash=1;point(event)});
  el.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||homeReducedMotion())return;point(event)});
  const leave=()=>{card.hover=false;card.tx=card.ty=0;card.targetLightX=card.targetLightY=50;if(!homeReducedMotion())wakeHomeCard(card)};
  el.addEventListener('pointerleave',leave);el.addEventListener('pointercancel',leave);
+}
+
+// One platform tooltip lives in the top layer, outside clipped and tilted cards.
+let homeControlTooltip=null,homeTooltipAnchor=null;
+function hideHomeControlTooltip(){if(!homeControlTooltip)return;homeTooltipAnchor?.removeAttribute('aria-describedby');homeTooltipAnchor=null;if(homeControlTooltip.matches(':popover-open'))homeControlTooltip.hidePopover()}
+function showHomeControlTooltip(button){
+ if(!homeControlTooltip){homeControlTooltip=document.createElement('div');homeControlTooltip.id='homeControlTooltip';homeControlTooltip.className='home-control-tooltip';homeControlTooltip.setAttribute('role','tooltip');homeControlTooltip.setAttribute('popover','manual');document.body.append(homeControlTooltip);$('homeView').addEventListener('scroll',hideHomeControlTooltip,{passive:true});window.addEventListener('resize',hideHomeControlTooltip);document.addEventListener('pointerdown',hideHomeControlTooltip);document.addEventListener('keydown',e=>{if(e.key==='Escape')hideHomeControlTooltip()})}
+ hideHomeControlTooltip();homeTooltipAnchor=button;homeControlTooltip.textContent=button.dataset.homeTooltip;button.setAttribute('aria-describedby',homeControlTooltip.id);homeControlTooltip.showPopover();
+ const r=button.getBoundingClientRect(),t=homeControlTooltip.getBoundingClientRect();homeControlTooltip.style.left=clamp(r.left+r.width/2-t.width/2,8,innerWidth-t.width-8)+'px';homeControlTooltip.style.top=(r.top>=t.height+16?r.top-t.height-8:r.bottom+8)+'px';
 }
 
 function stopHomeCarousel(){const c=homeExperience.carousel;if(c){clearTimeout(c.timer);c.timer=0}}

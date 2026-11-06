@@ -37,7 +37,7 @@
     "theme-034": "\n.player-view[data-theme=christmas] .workspace-right{background:radial-gradient(ellipse at 85% 90%,color-mix(in srgb,var(--player-control-start) 24%,transparent),transparent 43%),linear-gradient(140deg,var(--player-surface-start),var(--player-surface-end))}\n",
     "theme-035": "\n.player-view[data-theme=christmas] .play-controls{background:linear-gradient(113deg,var(--player-control-start),var(--player-surface-end) 58%,var(--player-control-end));border-color:color-mix(in srgb,var(--player-accent) 33%,transparent)}\n",
     "theme-036": "\n.player-view[data-theme=christmas] #stagePane{background:linear-gradient(180deg,var(--player-stage-start),var(--player-stage-end))}\n",
-    "theme-037": "\n.player-view[data-theme=christmas]::before{background:radial-gradient(ellipse at 12% 0%,color-mix(in srgb,var(--player-accent) 19%,transparent),transparent 35%),radial-gradient(ellipse at 90% 88%,var(--player-control-end),transparent 42%),var(--player-backdrop)}\n",
+    "theme-037": "",
     "theme-038": "\n.player-view[data-theme=christmas] .pane{border-color:color-mix(in srgb,var(--player-accent) 27%,transparent)}\n",
     "theme-039": "\n.player-view[data-theme=christmas] .pane::after,.player-view[data-theme=christmas] .workspace-right::after{background:radial-gradient(circle,#bf4c58 0 2px,transparent 2.5px) 0 0/20px 4px;opacity:.65}",
     "theme-040": ".player-view[data-theme=christmas] .stage-pane:not(.has-custom-image) .stage-scenery{inset:auto;left:50%;bottom:0;height:94%;aspect-ratio:2/1;max-width:91%;width:auto;transform:translateX(-50%)}",
