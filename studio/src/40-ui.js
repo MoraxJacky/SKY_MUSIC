@@ -66,12 +66,10 @@ function updateVisual(){let p=state.project;if(!p)return;let pos=state.position,
 }
 // Page origin may move independently of the scan phase when the score is scrubbed.
 function rollSeekOrigin(position,fraction,windowMs=state.windowSec*1000){
- const end=state.project.durationMs;
- // At the true end always retain a populated final view instead of starting an empty page.
- if(position>=end)return Math.max(0,end-windowMs);
- const remaining=end-position;
- const span=fraction<1?Math.min(windowMs,remaining/(1-fraction)):windowMs;
- return position-fraction*Math.max(1,span);
+ const span=Math.min(windowMs,state.project.durationMs),lastBegin=Math.max(0,state.project.durationMs-span);
+ // Keep the last window fixed in both scrub directions, with no time-scale change.
+ if(position>=lastBegin)return lastBegin;
+ return Math.min(position-fraction*span,lastBegin);
 }
 function rollFrame(position=state.position){
  if(typeof scoreConsole!=='undefined'&&scoreConsole.fine){const f=scoreConsole.fine.frame;return {...f,phase:clamp(position-f.begin,0,f.windowMs)}}

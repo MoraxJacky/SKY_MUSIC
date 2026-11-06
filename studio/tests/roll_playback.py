@@ -86,6 +86,7 @@ with sync_playwright() as pw:
     page.locator('#playBtn').click()
     page.wait_for_function('window.__SKY_STUDIO_TEST__.state.isPlaying')
     page.locator('#backLibrary').click()
+    page.wait_for_function("document.getElementById('songEntryTransition').hidden")
     assert page.locator('#homeView').is_visible()
     assert page.evaluate('!window.__SKY_STUDIO_TEST__.state.isPlaying && window.__SKY_STUDIO_TEST__.state.rollFinish === null')
     assert not errors, errors
