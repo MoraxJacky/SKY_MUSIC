@@ -20,8 +20,17 @@ function realPosition(){if(!state.isPlaying||!state.audioCtx)return state.positi
 function beginClock(){let ac=state.audioCtx;state.mediaAnchor=state.position;state.clockAnchor=ac.currentTime;let ev=scoreEvents(state.project);state.scheduleIndex=lowerBound(ev,state.position-2);state.interval=setInterval(scheduleAudio,24);scheduleAudio()}
 function lowerBound(arr,t){let l=0,r=arr.length;while(l<r){let m=(l+r)>>1;if(arr[m].timeMs<t)l=m+1;else r=m}return l}
 function scheduleAudio(){if(!state.isPlaying)return;let events=scoreEvents(state.project),now=realPosition(),lookahead=Math.min(state.project.durationMs,now+170*state.rate);while(state.scheduleIndex<events.length&&events[state.scheduleIndex].timeMs<=lookahead){let e=events[state.scheduleIndex++];if(!e.notes.length||e.timeMs<now-35)continue;let at=state.audioCtx.currentTime+Math.max(0,(e.timeMs-now)/(1000*state.rate));for(let n of e.notes)triggerSample(n,at,e.durationMs,e.notes.length,e.velocity||85)}}
-async function playPause(){cancelScoreEntrance();if(state.isPlaying){pauseSong();return}if(!state.project)return;const project=state.project;cancelRollFinish();try{toast('正在准备音源…',1300);if(!await preloadPiano())return}catch(err){console.error(err);toast('音源加载失败：'+err.message,6000);return}if(state.project!==project||state.mode!=='player')return;if(state.position>=state.project.durationMs-80){state.position=0;state.rollPageStart=0}state.isPlaying=true;beginClock();setControlContent($('playBtn'),'pause','暂停');state.sceneBase=performance.now();state.raf=requestAnimationFrame(playFrame);toast('开始演奏',1000)}
-function pauseSong(){if(!state.isPlaying)return;state.position=clamp(realPosition(),0,state.project.durationMs);state.isPlaying=false;clearInterval(state.interval);cancelAnimationFrame(state.raf);stopVoices();setControlContent($('playBtn'),'play','播放');updateVisual();$('stageStatus').textContent='已暂停'}
+async function playPause(silent=false){
+ cancelScoreEntrance();if(state.isPlaying){pauseSong();if(!silent)toast('已暂停演奏');return}if(!state.project)return;
+ const project=state.project,revision=actionNoticeRevision;let loadingRevision=-1;cancelRollFinish();
+ const waiting=silent?0:setTimeout(()=>{if(state.project===project&&state.mode==='player'){toast('正在准备音源…');loadingRevision=actionNoticeRevision}},PLAYER_RULES.notifications.slowOperationMs);
+ try{if(!await preloadPiano())return}catch(err){console.error(err);toast('音源加载失败：'+err.message,6000);return}finally{clearTimeout(waiting)}
+ if(state.project!==project||state.mode!=='player')return;
+ if(state.position>=state.project.durationMs-80){state.position=0;state.rollPageStart=0}
+ state.isPlaying=true;beginClock();setControlContent($('playBtn'),'pause','暂停');state.sceneBase=performance.now();state.raf=requestAnimationFrame(playFrame);
+ if(!silent&&(revision===actionNoticeRevision||loadingRevision===actionNoticeRevision))toast('开始演奏');
+}
+function pauseSong(){if(!state.isPlaying)return;state.position=clamp(realPosition(),0,state.project.durationMs);state.isPlaying=false;clearInterval(state.interval);cancelAnimationFrame(state.raf);stopVoices();setControlContent($('playBtn'),'play','播放');updateVisual();$('stageStatus').dataset.playStatus='已暂停';$('stageStatus').textContent='已暂停'}
 function seekTo(time,preserveRoll=false,rollView=null){
  resetPlaybackKeyFeedback();
  cancelScoreEntrance();

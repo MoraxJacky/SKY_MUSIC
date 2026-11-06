@@ -25,7 +25,7 @@ function updateScoreConsole(){
 }
 function stopConsoleRecording(){scoreConsole.recording=false;cancelAnimationFrame(scoreConsole.raf);if($('consoleRecordStart'))$('consoleRecordStart').textContent='开始录制'}
 function startConsoleRecording(){
- if(scoreConsole.recording){stopConsoleRecording();updateScoreConsole();return}pauseSong();rememberEdit();scoreConsole.recording=true;scoreConsole.start=performance.now();scoreConsole.at=state.position;$('consoleRecordStart').textContent='停止录制';if($('consoleRecordMode').value==='live'){const tick=()=>{if(!scoreConsole.recording)return;state.position=Math.min(state.project.durationMs,scoreConsole.at+performance.now()-scoreConsole.start);updateVisual();scoreConsole.raf=requestAnimationFrame(tick)};tick()}updateScoreConsole();
+ if(scoreConsole.recording){stopConsoleRecording();updateScoreConsole();toast('已停止录制');return}pauseSong();rememberEdit();scoreConsole.recording=true;scoreConsole.start=performance.now();scoreConsole.at=state.position;$('consoleRecordStart').textContent='停止录制';if($('consoleRecordMode').value==='live'){const tick=()=>{if(!scoreConsole.recording)return;state.position=Math.min(state.project.durationMs,scoreConsole.at+performance.now()-scoreConsole.start);updateVisual();scoreConsole.raf=requestAnimationFrame(tick)};tick()}updateScoreConsole();toast('已开始录制');
 }
 function consoleNumber(id,min,max){const value=Number($(id).value);if(!Number.isFinite(value)||value<min||value>max)throw Error('参数超出范围：'+$(id).parentElement.textContent);return value}
 function scoreConsoleCapture(note){

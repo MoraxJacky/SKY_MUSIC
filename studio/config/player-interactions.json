@@ -82,7 +82,8 @@
   },
   "notifications": {
     "controlId": "toast",
-    "durationMs": 3500
+    "durationMs": 1800,
+    "slowOperationMs": 600
   },
   "scoreEntrance": {
     "blankMs": 160,

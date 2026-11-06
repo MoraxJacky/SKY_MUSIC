@@ -31,6 +31,7 @@ def render(root):
     assert player['selectors']['speedMinimumRows'] >= 2
     assert 0 < player['valuePicker']['rowHeightPx'] <= 40 and 0 < player['valuePicker']['wheelGain'] <= 1
     assert player['notifications']['durationMs'] > 0
+    assert 200 <= player['notifications']['slowOperationMs'] <= 2000
     entrance=player['scoreEntrance']
     assert 1200 <= entrance['durationMs'] <= 4000
     assert 80 <= entrance['blankMs'] <= 400 and 100 <= entrance['beatGrowMs'] <= 500

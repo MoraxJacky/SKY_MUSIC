@@ -14,12 +14,12 @@ with sync_playwright() as pw:
  assert page.locator('#instrumentToggle,#instrumentMenu').count()==0
  notices=[]
  for id in ['songInfoBtn','exportProject']:
-  page.locator('#'+id).click();assert page.locator('#toast').is_visible();notices.append(page.locator('#toast').inner_text());page.keyboard.press('Escape')
+  before=page.locator('#toast').inner_text();page.locator('#'+id).click();assert page.locator('#toast').inner_text()==before;notices.append('quiet '+id);page.keyboard.press('Escape')
  tone=page.get_by_role('spinbutton',name='选择音色',exact=True);tone.hover();page.mouse.wheel(0,120)
  page.wait_for_function("window.__SKY_STUDIO_TEST__.state.project.playback.instrument==='offline-harp'")
  assert tone.get_attribute('aria-valuenow')=='2' and '竖琴' in tone.get_attribute('aria-valuetext')
- tone.press('Home');page.wait_for_function("window.__SKY_STUDIO_TEST__.state.project.playback.instrument==='offline'")
- volume=page.get_by_role('spinbutton',name='音量',exact=True);volume.press('ArrowUp');assert '音量 26' in page.locator('#toast').inner_text()
+ tone.press('Home');page.wait_for_function("window.__SKY_STUDIO_TEST__.state.project.playback.instrument==='offline'&&document.getElementById('toast').textContent==='音色：经典钢琴'")
+ volume=page.get_by_role('spinbutton',name='音量',exact=True);before=page.locator('#toast').inner_text();volume.press('ArrowUp');assert page.locator('#toast').inner_text()==before
  assert volume.get_attribute('aria-valuenow')=='26'
  page.locator('#loopOneBtn').click();assert page.locator('#loopOneBtn').get_attribute('aria-pressed')=='true' and page.evaluate('window.__SKY_STUDIO_TEST__.state.project.playback.loop')
  assert '开启单曲循环' in page.locator('#toast').inner_text()
@@ -52,7 +52,7 @@ with sync_playwright() as pw:
   assert min(x['top'] for x in result['visual'])>=result['bar']['top']+5,(w,result)
   if w>900:assert max(x['top'] for x in result['visual'])-min(x['top'] for x in result['visual'])<1,(w,result)
   page.screenshot(path=str(out/f'controls-{w}-{h}.png'));layouts.append({'width':w,**result})
- page.locator('#speedToggle').click();assert page.locator('#toast').is_visible();page.keyboard.press('Escape')
+ before=page.locator('#toast').inner_text();page.locator('#speedToggle').click();assert page.locator('#toast').inner_text()==before;page.keyboard.press('Escape')
  assert page.locator('#playerView button').evaluate_all("es=>es.every(e=>!/[▶Ⅱ↶⇩✎◐⌄⧉★☆‹›＋✧♬]/.test(e.textContent))")
  assert not errors,errors
  (out/'results.json').write_text(json.dumps({'passed':True,'stampTiming':timing,'loop':loop,'notices':notices,'capsule':capsules[0],'layouts':layouts,'errors':errors},ensure_ascii=False,indent=2),'utf-8');b.close();print('PASS synchronized arrival, capsules, wheel instruments, real repeat and particles, notices, SVG and aligned responsive controls')

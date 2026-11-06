@@ -252,8 +252,17 @@ function realPosition(){if(!state.isPlaying||!state.audioCtx)return state.positi
 function beginClock(){let ac=state.audioCtx;state.mediaAnchor=state.position;state.clockAnchor=ac.currentTime;let ev=scoreEvents(state.project);state.scheduleIndex=lowerBound(ev,state.position-2);state.interval=setInterval(scheduleAudio,24);scheduleAudio()}
 function lowerBound(arr,t){let l=0,r=arr.length;while(l<r){let m=(l+r)>>1;if(arr[m].timeMs<t)l=m+1;else r=m}return l}
 function scheduleAudio(){if(!state.isPlaying)return;let events=scoreEvents(state.project),now=realPosition(),lookahead=Math.min(state.project.durationMs,now+170*state.rate);while(state.scheduleIndex<events.length&&events[state.scheduleIndex].timeMs<=lookahead){let e=events[state.scheduleIndex++];if(!e.notes.length||e.timeMs<now-35)continue;let at=state.audioCtx.currentTime+Math.max(0,(e.timeMs-now)/(1000*state.rate));for(let n of e.notes)triggerSample(n,at,e.durationMs,e.notes.length,e.velocity||85)}}
-async function playPause(){cancelScoreEntrance();if(state.isPlaying){pauseSong();return}if(!state.project)return;const project=state.project;cancelRollFinish();try{toast('正在准备音源…',1300);if(!await preloadPiano())return}catch(err){console.error(err);toast('音源加载失败：'+err.message,6000);return}if(state.project!==project||state.mode!=='player')return;if(state.position>=state.project.durationMs-80){state.position=0;state.rollPageStart=0}state.isPlaying=true;beginClock();setControlContent($('playBtn'),'pause','暂停');state.sceneBase=performance.now();state.raf=requestAnimationFrame(playFrame);toast('开始演奏',1000)}
-function pauseSong(){if(!state.isPlaying)return;state.position=clamp(realPosition(),0,state.project.durationMs);state.isPlaying=false;clearInterval(state.interval);cancelAnimationFrame(state.raf);stopVoices();setControlContent($('playBtn'),'play','播放');updateVisual();$('stageStatus').textContent='已暂停'}
+async function playPause(silent=false){
+ cancelScoreEntrance();if(state.isPlaying){pauseSong();if(!silent)toast('已暂停演奏');return}if(!state.project)return;
+ const project=state.project,revision=actionNoticeRevision;let loadingRevision=-1;cancelRollFinish();
+ const waiting=silent?0:setTimeout(()=>{if(state.project===project&&state.mode==='player'){toast('正在准备音源…');loadingRevision=actionNoticeRevision}},PLAYER_RULES.notifications.slowOperationMs);
+ try{if(!await preloadPiano())return}catch(err){console.error(err);toast('音源加载失败：'+err.message,6000);return}finally{clearTimeout(waiting)}
+ if(state.project!==project||state.mode!=='player')return;
+ if(state.position>=state.project.durationMs-80){state.position=0;state.rollPageStart=0}
+ state.isPlaying=true;beginClock();setControlContent($('playBtn'),'pause','暂停');state.sceneBase=performance.now();state.raf=requestAnimationFrame(playFrame);
+ if(!silent&&(revision===actionNoticeRevision||loadingRevision===actionNoticeRevision))toast('开始演奏');
+}
+function pauseSong(){if(!state.isPlaying)return;state.position=clamp(realPosition(),0,state.project.durationMs);state.isPlaying=false;clearInterval(state.interval);cancelAnimationFrame(state.raf);stopVoices();setControlContent($('playBtn'),'play','播放');updateVisual();$('stageStatus').dataset.playStatus='已暂停';$('stageStatus').textContent='已暂停'}
 function seekTo(time,preserveRoll=false,rollView=null){
  resetPlaybackKeyFeedback();
  cancelScoreEntrance();
@@ -659,7 +668,7 @@ function createVerticalChoiceStrip(el,items,options){
 }
 function bindPlayerValuePicker(kind){
  const el=$(PLAYER_RULES[kind].controlId);
- const commit=percent=>{const value=clamp(Math.round(Number.isFinite(percent)?percent:state[kind]*100),0,100);if(state[kind]===value/100)return;state[kind]=value/100;el.value=String(value);el.setAttribute('aria-valuenow',String(value));el.setAttribute('aria-valuetext',kind==='volume'&&value===0?'静音':value+'%');const revision=actionNoticeRevision;if(state.project){state.project.playback[kind]=state[kind];saveLibrary()}if(kind==='volume')updateVolumeAudio();else updateSustainAudio();if(revision===actionNoticeRevision)toast(PLAYER_RULES[kind].label+' '+value,1400)};
+ const commit=percent=>{const value=clamp(Math.round(Number.isFinite(percent)?percent:state[kind]*100),0,100);if(state[kind]===value/100)return;state[kind]=value/100;el.value=String(value);el.setAttribute('aria-valuenow',String(value));el.setAttribute('aria-valuetext',kind==='volume'&&value===0?'静音':value+'%');if(state.project){state.project.playback[kind]=state[kind];saveLibrary()}if(kind==='volume')updateVolumeAudio();else updateSustainAudio()};
  el.oninput=()=>{commit(Number(el.value));playerValuePickers.get(kind)?.sync(Math.round(state[kind]*100))};
  if(!document.createComment)return;
  const strip=createVerticalChoiceStrip(el,Array.from({length:101},(_,i)=>({label:String(100-i)})),{numeric:true,live:true,selected:()=>100-Math.round(state[kind]*100),choose:index=>commit(100-index)});
@@ -691,15 +700,15 @@ function bindRollPointerSeek(){
  window.addEventListener('blur',stop);
 }
 function bindPlayerInteractions(){
- bindScoreEntranceInterrupts();bindActionNotifications();
+ bindScoreEntranceInterrupts();
  bindPlayerValuePicker('volume');bindPlayerValuePicker('sustain');
 
  bindRollPointerSeek();
  $('backLibrary').onclick=returnHomeFromPlayer;
  $('rollWindow').innerHTML='';for(const seconds of PLAYER_RULES.roll.windowsSeconds){const option=document.createElement('option');option.value=String(seconds);option.textContent=seconds+'秒';$('rollWindow').append(option)}
- $('playBtn').onclick=()=>playPause();$('restartBtn').onclick=()=>seekTo(0);$('loopOneBtn').onclick=()=>{if(!state.project)return;state.project.playback.loop=!state.project.playback.loop;saveLibrary();syncLoopControl();toast(state.project.playback.loop?'已开启单曲循环':'已关闭单曲循环')};
+ $('playBtn').onclick=()=>playPause();$('restartBtn').onclick=()=>{seekTo(0);toast('已重置到开头')};$('loopOneBtn').onclick=()=>{if(!state.project)return;state.project.playback.loop=!state.project.playback.loop;saveLibrary();syncLoopControl();toast(state.project.playback.loop?'已开启单曲循环':'已关闭单曲循环')};
 
- $('speedSelect').onchange=ev=>{let was=state.isPlaying;if(was)pauseSong();state.rate=Number(ev.target.value);syncSpeedPicker();if(state.project){state.project.playback.rate=state.rate;saveLibrary()}if(was)playPause()};
+ $('speedSelect').onchange=ev=>{const previous=state.rate;let was=state.isPlaying;if(was)pauseSong();state.rate=Number(ev.target.value);syncSpeedPicker();if(state.project){state.project.playback.rate=state.rate;saveLibrary()}if(previous!==state.rate)toast('倍速：'+state.rate.toFixed(2)+'×');if(was)playPause(true)};
  $('rollWindow').onchange=ev=>{const finishing=Boolean(state.rollFinish),frame=rollFrame(),fraction=frame.phase/frame.windowMs;cancelRollFinish();state.windowSec=Number(ev.target.value);state.rollPageStart=rollSeekOrigin(state.position,fraction);if(finishing)finishRollScan();else drawRoll()};
  $('rollWindow').value=String(state.windowSec);$('stepPrev').onclick=()=>stepEvent(-1);$('stepNext').onclick=()=>stepEvent(1);
  $('seekSlider').oninput=ev=>seekTo(Number(ev.target.value));
@@ -707,7 +716,7 @@ function bindPlayerInteractions(){
  $('pagePrev').onclick=()=>seekBeatPage(-1);
  $('pageNext').onclick=()=>seekBeatPage(1);
  $('resetKeyEdit').onclick=()=>{if(!canEditScore())return;const view=rollFrame();let p=state.project;let original=BUILTINS.find(x=>x.id===(p.provenance?.derivedFrom||p.id));let e=scoreEvents(p)[state.selected],reference=original&&scoreEvents(original)[state.selected];if(!e)return;if(reference){rememberEdit();e.notes=[...reference.notes];e.durationMs=reference.durationMs;e.confidence='source';settleFineRollView(view,e);renderKeyBoard();renderBeatGrid(true);updateVisual();toast('已恢复此格的原始琴键')}else toast('导入曲目无内置原谱，请通过导入文件恢复')};
- $('keySelect').onchange=ev=>{if(!state.project)return;let was=state.isPlaying;if(was)pauseSong();state.tuning=ev.target.value;state.project.playback.tuning=state.tuning;saveLibrary();setTuningButtons();renderKeyBoard();renderBeatGrid(true);updateVisual();if(state.editMode)syncEditorFields();if(was)playPause()};
+ $('keySelect').onchange=ev=>{if(!state.project)return;const previous=state.tuning;let was=state.isPlaying;if(was)pauseSong();state.tuning=ev.target.value;state.project.playback.tuning=state.tuning;saveLibrary();setTuningButtons();renderKeyBoard();renderBeatGrid(true);updateVisual();if(state.editMode)syncEditorFields();if(previous!==state.tuning)toast('音域：'+$('keyRangeValue').textContent);if(was)playPause(true)};
  $('instrumentSelect').onchange=ev=>chooseInstrument(ev.target.value);
  document.addEventListener('keydown',e=>{if(state.mode!=='player'||document.querySelector('dialog[open]')||e.target.closest('input,select,textarea,button'))return;if(e.code===PLAYER_RULES.keyboard.playPause){e.preventDefault();playPause()}else if(e.code===PLAYER_RULES.keyboard.nextEvent){e.preventDefault();stepEvent(1)}else if(e.code===PLAYER_RULES.keyboard.previousEvent){e.preventDefault();stepEvent(-1)}});
  window.addEventListener('resize',()=>{if(state.mode==='player')requestAnimationFrame(()=>{drawRoll();if(!state.isPlaying)initializeScene()})});
@@ -846,8 +855,9 @@ function syncSpeedPicker(){$('speedSelect').value=String(state.rate);$('speedVal
 async function chooseInstrument(id){
  if(!state.project)return;const project=state.project,selection=++instrumentSelection,was=state.isPlaying||instrumentResume;
  instrumentResume=was;if(state.isPlaying)pauseSong();project.playback.instrument=instrumentSpec(id).id;saveLibrary();syncInstrumentPicker();closeInstrumentPicker(true);
- toast('正在准备'+instrumentSpec(id).name+'…',1300);
- try{const ready=await preloadPiano();if(selection!==instrumentSelection||project!==state.project)return;instrumentResume=false;if(ready&&was&&!state.isPlaying)await playPause()}catch(error){if(selection===instrumentSelection)instrumentResume=false;console.warn(error);toast('音源加载异常：'+error.message,5000)}
+ const revision=actionNoticeRevision;let loadingRevision=-1;
+ const waiting=setTimeout(()=>{if(selection===instrumentSelection&&project===state.project&&state.mode==='player'){toast('正在加载音色…');loadingRevision=actionNoticeRevision}},PLAYER_RULES.notifications.slowOperationMs);
+ try{const ready=await preloadPiano();clearTimeout(waiting);if(selection!==instrumentSelection||project!==state.project||state.mode!=='player')return;instrumentResume=false;if(ready&&was&&!state.isPlaying)await playPause(true);if(ready&&selection===instrumentSelection&&project===state.project&&(revision===actionNoticeRevision||loadingRevision===actionNoticeRevision))toast('音色：'+instrumentSpec(project.playback.instrument).name)}catch(error){if(selection===instrumentSelection&&project===state.project){instrumentResume=false;console.warn(error);toast('音源加载异常：'+error.message,5000)}}finally{clearTimeout(waiting)}
 }
 
 function bindInstrumentPicker(){
@@ -931,18 +941,6 @@ function bindScoreEntranceInterrupts(){
 }
 
 function syncLoopControl(){const on=state.project?.playback.loop===true;$('loopOneBtn').setAttribute('aria-pressed',String(on));$('loopOneBtn').title=on?'关闭单曲循环':'开启单曲循环'}
-function actionNoticeLabel(el){
- const labels={playBtn:'播放 / 暂停',restartBtn:'已重置播放位置',loopOneBtn:'单曲循环',backLibrary:'返回音乐馆',scoreEditorBtn:'打开曲谱编辑控制台',exportProject:'打开导出窗口',songInfoBtn:'查看歌曲信息',keyRangeToggle:'选择音域',speedToggle:'选择倍速',instrumentPicker:'音色',volumePicker:'音量',sustainPicker:'延音',rollWindow:'卷帘窗口',seekSlider:'播放位置',rollSeekSlider:'谱面位置',rollCanvas:'定位播放位置',homeThemeNext:'切换下一个主题',homeThemePrev:'切换上一个主题'};
- if(el.dataset.close)return '关闭窗口';
- if(el.id==='seekSlider'||el.id==='rollSeekSlider'||el.id==='rollCanvas')return '播放位置 '+positionFmt(state.position);
- if(el.matches?.('[role="spinbutton"]'))return (labels[el.id]||el.getAttribute('aria-label')||'设置')+'：'+(el.getAttribute('aria-valuetext')||el.value);
- if(el.tagName==='SELECT')return (labels[el.id]||el.getAttribute('aria-label')||'设置')+'：'+(el.selectedOptions[0]?.textContent||el.value);
- return labels[el.id]||el.getAttribute('aria-label')||el.title||el.placeholder||el.labels?.[0]?.textContent.trim().slice(0,70)||el.textContent.trim().replace(/\s+/g,' ').slice(0,90)||'已更新设置';
-}
-function bindActionNotifications(){
- const notify=event=>{const el=event.target.closest?.('button,[role="button"],[role="spinbutton"],label[for],input,select,textarea,canvas,a[href]');if(!el||el.disabled)return;const revision=actionNoticeRevision,label=actionNoticeLabel(el);queueMicrotask(()=>{if(revision===actionNoticeRevision)toast(label,1600)})};
- document.addEventListener('click',notify,true);document.addEventListener('change',notify,true);
-}
 
 /* 40-ui.js */
 function snowPopulate(element,count,scope='world'){element.innerHTML='';for(let i=0;i<count;i++){let dot=document.createElement('i');dot.className='snow-dot';let size=1+Math.random()*3.3;dot.style.cssText=`left:${Math.random()*100}%;width:${size.toFixed(2)}px;height:${size.toFixed(2)}px;opacity:${(.18+Math.random()*.38).toFixed(2)};animation-duration:${(scope==='world'?16:9)+Math.random()*15}s;animation-delay:-${Math.random()*30}s;--dx:${Math.round((Math.random()-.5)*170)}px`;element.append(dot)}}
@@ -1378,7 +1376,7 @@ function undo(){let p=state.project;if(!p||!canEditScore())return;let stack=hist
 function redo(){let p=state.project;if(!p||!canEditScore())return;let stack=historyItems(state.future,p.id);if(!stack.length){toast('没有可恢复的修改');return}pauseSong();historyItems(state.history,p.id).push(editHistoryEntry(p));restoreSnapshot(p,stack.pop());toast('已重做');saveLibrary()}
 function refreshHistoryButtons(){$('consoleUndo').disabled=!state.project||!historyItems(state.history,state.project.id).length;$('consoleRedo').disabled=!state.project||!historyItems(state.future,state.project.id).length}
 function refreshWorkspace(){if(!state.project)return;let p=state.project;cancelRollFinish();state.position=clamp(state.position,0,p.durationMs);state.selected=clamp(state.selected,0,Math.max(0,scoreEvents(p).length-1));$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';if(!state.editMode){$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs)}$('speedSelect').value=String(state.rate);syncSustainControl();$('keySelect').value=state.tuning;$('instrumentSelect').value=p.playback.instrument||'offline';setTuningButtons();applyTheme();renderBeatGrid(true);renderKeyBoard();updateVisual();refreshHistoryButtons();if(state.editMode)syncEditorFields()}
-function openEditor(){cancelScoreEntrance();cancelPlayerValueScroll();if(state.mode!=='player')return;if(state.editMode){requestFinishEdit('exit');return}pauseSong();scoreConsole.returnView=captureTimelineView();const src=state.project;state.editSource=src;state.project=normalize({...copy(src),_imageUrl:src._imageUrl,_imageBytes:src._imageBytes});state.editBaseline=snapshot(state.project);state.editDirty=false;state.editMode=true;applyTimelineView(scoreConsole.views.get(src.id)||{position:0,rollPageStart:0,windowSec:PLAYER_RULES.roll.initialSeconds});state.history.set(src.id,[]);state.future.set(src.id,[]);updateEditButton();refreshWorkspace();syncEditorFields();openScoreConsole();toast('已进入编辑模式：修改后点击「保存」')}
+function openEditor(){cancelScoreEntrance();cancelPlayerValueScroll();if(state.mode!=='player')return;if(state.editMode){requestFinishEdit('exit');return}pauseSong();scoreConsole.returnView=captureTimelineView();const src=state.project;state.editSource=src;state.project=normalize({...copy(src),_imageUrl:src._imageUrl,_imageBytes:src._imageBytes});state.editBaseline=snapshot(state.project);state.editDirty=false;state.editMode=true;applyTimelineView(scoreConsole.views.get(src.id)||{position:0,rollPageStart:0,windowSec:PLAYER_RULES.roll.initialSeconds});state.history.set(src.id,[]);state.future.set(src.id,[]);updateEditButton();refreshWorkspace();syncEditorFields();openScoreConsole();toast('已打开谱面编辑控制台')}
 function switchEditTab(){/* Editing modes live in the shared standalone score console. */}
 function syncEditorFields(){let p=state.project;if(!p)return;let e=scoreEvents(p)[state.selected];if(!e)return;$('editorEventIndex').textContent=`第 ${String(state.selected+1).padStart(3,'0')} 事件`;$('editorEventNames').textContent=eventLabel(e);$('eventTime').value=e.timeMs;$('eventDuration').value=e.durationMs;$('eventVelocity').value=e.velocity||85;$('eventConfidence').value=e.confidence||'unknown';$('metaTitle').value=p.title;$('metaSubtitle').value=p.subtitle;$('metaDescription').value=p.description||''}
 function commitEventFields(){if(!canEditScore())return;let p=state.project,e=scoreEvents(p)[state.selected];if(!e)return;let t=Number($('eventTime').value),d=Number($('eventDuration').value),v=Number($('eventVelocity').value);if(![t,d,v].every(Number.isFinite)||t<0||t>36000000||d<0||d>10000||v<1||v>127){toast('时间、时值或力度超出范围');return}rememberEdit();e.timeMs=Math.round(t);e.durationMs=Math.round(d);e.velocity=Math.round(v);e.confidence='user-corrected';scoreEvents(p).sort((a,b)=>a.timeMs-b.timeMs);state.selected=scoreEvents(p).indexOf(e);state.position=e.timeMs;state.lastSelected=state.selected;p.durationMs=Math.max(p.durationMs,e.timeMs+e.durationMs);saveLibrary();refreshWorkspace();syncEditorFields();toast('事件已更新')}
@@ -1454,7 +1452,7 @@ function updateScoreConsole(){
 }
 function stopConsoleRecording(){scoreConsole.recording=false;cancelAnimationFrame(scoreConsole.raf);if($('consoleRecordStart'))$('consoleRecordStart').textContent='开始录制'}
 function startConsoleRecording(){
- if(scoreConsole.recording){stopConsoleRecording();updateScoreConsole();return}pauseSong();rememberEdit();scoreConsole.recording=true;scoreConsole.start=performance.now();scoreConsole.at=state.position;$('consoleRecordStart').textContent='停止录制';if($('consoleRecordMode').value==='live'){const tick=()=>{if(!scoreConsole.recording)return;state.position=Math.min(state.project.durationMs,scoreConsole.at+performance.now()-scoreConsole.start);updateVisual();scoreConsole.raf=requestAnimationFrame(tick)};tick()}updateScoreConsole();
+ if(scoreConsole.recording){stopConsoleRecording();updateScoreConsole();toast('已停止录制');return}pauseSong();rememberEdit();scoreConsole.recording=true;scoreConsole.start=performance.now();scoreConsole.at=state.position;$('consoleRecordStart').textContent='停止录制';if($('consoleRecordMode').value==='live'){const tick=()=>{if(!scoreConsole.recording)return;state.position=Math.min(state.project.durationMs,scoreConsole.at+performance.now()-scoreConsole.start);updateVisual();scoreConsole.raf=requestAnimationFrame(tick)};tick()}updateScoreConsole();toast('已开始录制');
 }
 function consoleNumber(id,min,max){const value=Number($(id).value);if(!Number.isFinite(value)||value<min||value>max)throw Error('参数超出范围：'+$(id).parentElement.textContent);return value}
 function scoreConsoleCapture(note){
@@ -1558,7 +1556,7 @@ function completeEdit(kind){
  state.rate=chosen.playback?.rate||1;state.volume=normalizeVolume(chosen.playback?.volume);syncSpeedPicker();syncVolumeControl();
  state.tuning=chosen.playback?.tuning||'C';state.sustain=chosen.playback?.sustain??.45;
  refreshWorkspace();renderLibrary();saveLibrary();
- toast(kind==='new'?'已另存为普通曲谱，可自由重命名和删除':kind==='direct'?'已保存当前项目':'已退出编辑模式');
+ toast(kind==='new'?'已另存为新曲谱，已结束编辑':kind==='direct'?'已保存，已结束编辑':'已结束编辑，未保存修改');
 }
 function openSongInfo(){if(!state.project)return;syncEditorFields();for(let id of ['metaTitle','metaSubtitle','metaDescription'])$(id).readOnly=!state.editMode;$('saveMetadata').hidden=!state.editMode;$('metadataDialog').showModal()}
 

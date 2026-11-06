@@ -815,7 +815,8 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
 .home-view .home-art{animation:none;transform:scale(1.035);will-change:auto}
 .home-flow-canvas{position:absolute;inset:0;width:100%;height:100%;mix-blend-mode:screen;filter:blur(13px);pointer-events:none;opacity:.9}
 
-.home-theme-dialog{width:min(860px,calc(100vw - 36px));padding:24px;background:linear-gradient(135deg,#132a3b,#0d1c2c);border:1px solid #d7f2fa55;color:#e4efee;border-radius:16px;box-shadow:0 0 40px #d0e9ff0d,0 30px 100px #020815aa}
+.platform-dialog{background:linear-gradient(135deg,#132a3b,#0d1c2c);border:1px solid #d7f2fa55;color:#e4efee;border-radius:16px;box-shadow:0 0 40px #d0e9ff0d,0 30px 100px #020815aa}
+.home-theme-dialog{width:min(860px,calc(100vw - 36px));padding:24px}
 .home-theme-dialog .dialog-head{margin-bottom:20px}.home-theme-dialog .dialog-head h2{margin:6px 0 0;font-size:21px}.home-theme-dialog .eyebrow{font-size:8px;color:#b4ced7}
 .home-theme-workspace{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(180px,1fr);gap:24px}
 .home-theme-sample{min-width:0;border-radius:10px;overflow:hidden;border:1px solid #d8edf338;background:var(--sample-stage-end);color:var(--sample-text)}
@@ -834,7 +835,7 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
 .home-theme-settings input:not([type=color]),.home-theme-settings select{width:100%}.home-theme-settings input[type=color]{width:56px;height:30px;padding:3px;cursor:pointer}.home-theme-settings output{margin-left:auto;font-size:11px;color:#afcbd2}.home-theme-settings p{font-size:11px;line-height:1.8;color:#92aebc}
 .home-theme-dialog .dialog-footer{margin-top:22px}
 .home-theme-settings input:not([type=range]),.home-theme-settings select{border:1px solid #b9d8e23d;border-radius:6px;padding:7px 9px;background:#0c2132;color:#dfefec;min-height:32px}.home-theme-settings input[type=color]{padding:3px}
-.home-theme-dialog .btn-primary{background:linear-gradient(135deg,#dbece6,#aecdd1);border-color:#d9ede8;color:#15313e}
+.platform-dialog .btn-primary{background:linear-gradient(135deg,#dbece6,#aecdd1);border-color:#d9ede8;color:#15313e}
 .home-theme-settings input[type=range]{accent-color:#c0dadb}
 @media(max-width:600px){.home-theme-dialog{padding:18px}.home-theme-workspace{grid-template-columns:1fr;gap:18px}.theme-sample-scene{height:135px}.theme-sample-roll{height:75px}.home-theme-settings{display:grid;grid-template-columns:1fr 1fr;gap:12px}.home-theme-settings label:first-child,.home-theme-settings p{grid-column:1/-1}}
 @media(prefers-reduced-motion:reduce){.home-view .cone-tilt,.home-view .light-cone .song-cover img{transform:none;will-change:auto}.home-flow-canvas{display:none}.theme-sample-orbit{animation:none!important}}
@@ -983,3 +984,8 @@ button>.app-icon{vertical-align:middle}
 .circular-choice .value-picker-track>span{position:absolute;top:0;left:0;right:0}
 .roll-pane .pane-actions>label{display:inline-flex;align-items:center;gap:6px}
 .score-console .console-score>div>.pane{box-shadow:none}
+
+.platform-dialog .dialog-head h2{color:#edf6ff}
+.help-dialog p{color:#c6d8e7;line-height:1.8;margin:16px 0}
+.help-dialog a{color:#bddff5}
+.help-dialog .dialog-footer{margin-top:20px}

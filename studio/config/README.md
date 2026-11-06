@@ -93,3 +93,5 @@ python -X utf8 scripts/configuration.py --check
 `player-interactions.json.scoreEntrance` 控制卡片过渡后的谱面视觉入场时序、上浮距离与盖章幅度。该配置不含歌曲ID、音符或主题颜色；六主题共用一套展示逻辑。用户操作立即结束入场，音乐位置与编辑行为由既有控制器继续处理。
 
 音色 `instrumentPicker` 现与数值控件共用单格竖向滚轮（首尾循环，停止滚动后提交音源选择），旧音色下拉框已移除；倍速仍保留下拉菜单。`scoreEntrance.durationMs=2400` 统一三块谱面入场进度，其他分段时序按比例归一。`loop` 定义单曲循环按钮，歌曲 `playback.loop` 存布尔开关。点击反馈、循环、粒子订阅与图标均属于共享逻辑，不接受主题定义的动作处理器。
+
+通知采用显式动作提交策略：默认1800ms，`slowOperationMs=600` 延迟显示加载提示；不对任意点击、音量/延音或拖动持续发通知。首页说明与主题预览共用 `platform-dialog` 蓝色玻璃表面，不从歌曲主题复制行为。
