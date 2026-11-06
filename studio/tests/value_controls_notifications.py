@@ -17,15 +17,16 @@ with sync_playwright() as pw:
   cell=page.locator('#'+kind+'Picker');before=int(cell.get_attribute('aria-valuenow'));cell.hover()
   page.mouse.wheel(0,-100);page.wait_for_timeout(650)
   after=int(cell.get_attribute('aria-valuenow'));assert after==before+1,(kind,before,after)
-  assert cell.evaluate("e=>Math.abs(parseFloat(getComputedStyle(e.querySelector('.value-picker-track')).transform.split(',')[5])%30)<.01")
+  assert cell.evaluate("e=>Math.abs(parseFloat(getComputedStyle(e.querySelector('.value-picker-track')).transform.split(',')[5])%36)<.01")
   cell.press('End');cell.hover();page.mouse.wheel(0,-120);page.wait_for_timeout(400);assert cell.get_attribute('aria-valuenow')=='100'
   cell.press('Home');page.mouse.wheel(0,120);page.wait_for_timeout(400);assert cell.get_attribute('aria-valuenow')=='0'
-  assert cell.bounding_box()['height']==32
+  assert cell.evaluate("e=>{const s=getComputedStyle(e);return s.borderTopWidth==='0px'&&s.backgroundColor==='rgba(0, 0, 0, 0)'&&s.maskImage.includes('linear-gradient')}")
+  assert cell.locator('b').first.bounding_box()['height']==32
   cell.press('ArrowUp');assert cell.get_attribute('aria-valuenow')=='1'
   wheel.append({'control':kind,'up':after-before,'bounded':True,'visibleCells':1})
- page.locator('#songTitle').click();page.mouse.move(5,5)
+ page.locator('#songTitle').click();page.mouse.move(5,5);page.wait_for_timeout(220)
  # Play, key range, instrument and the numeric cells share the same actual height.
- styles=page.evaluate("['playBtn','keyRangeToggle','instrumentToggle','volumePicker','sustainPicker'].map(id=>{const e=document.getElementById(id),s=getComputedStyle(e);return {id,height:e.getBoundingClientRect().height,paint:s.backgroundImage,color:s.color,border:s.borderColor}})")
+ styles=page.evaluate("['playBtn','keyRangeToggle','instrumentToggle','volumePicker','sustainPicker'].map(id=>{const host=document.getElementById(id),e=host.matches('.value-picker')?host.querySelector('b'):host,s=getComputedStyle(e);return {id,height:e.getBoundingClientRect().height,paint:s.backgroundImage,color:s.color,border:s.borderColor}})")
  assert all(s['height']==32 for s in styles),styles
  assert len({(s['paint'],s['color'],s['border']) for s in styles if s['id'] in ['playBtn','keyRangeToggle']})==1,styles
  assert len({(s['paint'],s['color'],s['border']) for s in styles if s['id'] in ['volumePicker','sustainPicker']})==1,styles

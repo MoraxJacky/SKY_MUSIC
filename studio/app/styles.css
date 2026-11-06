@@ -811,16 +811,17 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
 .theme-sample-scene .theme-sample-charm{position:absolute;right:4%;bottom:10%;width:17%;height:37%;object-fit:contain;filter:none;pointer-events:none}
 .theme-sample-scene>span{z-index:2;text-shadow:0 2px 7px #061322;background:linear-gradient(90deg,#08131b66,transparent);padding:4px 0}
 
-/* One visible value cell with theme control colors; only Play matches the gold range chip. */
-.player-view :is(.key-range-toggle,.instrument-toggle,.value-picker,#playBtn){height:32px;box-sizing:border-box;line-height:normal}
+/* Value strips share the range menu's transparent fading viewport and moving cells. */
+.player-view :is(.key-range-toggle,.instrument-toggle,#playBtn){height:32px;box-sizing:border-box;line-height:normal}
 .player-view #playBtn{border:1px solid #f3d29e;border-radius:9px;background:linear-gradient(125deg,#e1c78f,#b88c58);color:#203a2a;box-shadow:inset 0 1px #fff4d744,0 0 10px #f0c88222;font-size:12px;font-weight:700}
 .player-view #playBtn:hover{background:linear-gradient(125deg,#f1daa8,#d0aa70);box-shadow:0 0 13px #f0c88255;border-color:#fff0c4}
-.player-view .value-picker{border:1px solid var(--player-border);border-radius:9px;background:var(--player-button);color:var(--player-text);box-shadow:inset 0 1px #ffffff10;font-size:12px;font-weight:600}
-.player-view .value-picker:hover,.player-view .value-picker:focus-visible{background:var(--player-hover);border-color:var(--theme-accent);outline:1px solid var(--theme-accent);outline-offset:-2px}
+.player-view .value-picker{height:42px;box-sizing:border-box;line-height:normal;border:0;border-radius:0;background:transparent;color:var(--player-text);box-shadow:none;font-size:12px;font-weight:600;outline:none;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 5px,#000 calc(100% - 5px),transparent);mask-image:linear-gradient(to bottom,transparent,#000 5px,#000 calc(100% - 5px),transparent)}
+.player-view .value-picker:hover b,.player-view .value-picker:focus-visible b{background:var(--player-hover);border-color:var(--theme-accent)}
 .player-view #playBtn{display:inline-flex;align-items:center;justify-content:center;padding:0 16px;white-space:nowrap}
 .player-view :is(.sustain-control,.volume-control){gap:7px;flex:none}
 .player-view .value-picker{width:48px;min-width:48px;overflow:hidden;cursor:ns-resize;touch-action:none;overscroll-behavior:contain;font-variant-numeric:tabular-nums}
-.value-picker-track{will-change:transform;pointer-events:none}
-.value-picker-track span{display:flex;height:30px;align-items:center;justify-content:center}
+.value-picker-track{position:relative;top:3px;will-change:transform;pointer-events:none}
+.value-picker-track>span{display:flex;height:36px;align-items:center;justify-content:center}
+.value-picker-track b{display:flex;align-items:center;justify-content:center;height:32px;width:44px;box-sizing:border-box;border-radius:7px;border:1px solid var(--player-border);background:var(--player-button);font-weight:600;transition:background .18s,border-color .18s}
 /* Global status is painted by the same theme resolver as player panels. */
 .toast{inset:auto auto 22px 50%;margin:0;width:max-content;max-width:min(550px,calc(100vw - 32px));pointer-events:none;border-color:var(--notice-border,#718ba3);background:linear-gradient(135deg,var(--notice-surfaceStart,#273e56),var(--notice-surfaceEnd,#172b42));color:var(--notice-text,#edf6ff);box-shadow:0 9px 32px #0006,inset 0 1px var(--notice-accent,#d8eaf8)}

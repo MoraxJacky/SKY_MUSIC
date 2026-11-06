@@ -76,7 +76,7 @@
     "label": "延音"
   },
   "valuePicker": {
-    "rowHeightPx": 30,
+    "rowHeightPx": 36,
     "wheelMaxStepPx": 30,
     "wheelGain": 0.3
   },

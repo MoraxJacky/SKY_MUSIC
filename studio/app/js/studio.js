@@ -597,7 +597,7 @@ function bindPlayerValuePicker(kind){
  // The headless DOM harness does not implement scrolling; the real browser owns animation.
  if(!document.createComment)return;
  const track=el.querySelector('.value-picker-track');let position=(100-Math.round(state[kind]*100))*row,drag=null;
- for(let n=100;n>=0;n--){const cell=document.createElement('span');cell.textContent=String(n);track.append(cell)}
+ for(let n=100;n>=0;n--){const cell=document.createElement('span'),option=document.createElement('b');option.textContent=String(n);cell.append(option);track.append(cell)}
  const paint=value=>{position=value;track.style.transform='translateY('+(-position)+'px)';commit(100-value/row)};
  const wheel=bindSmoothWheel(track,el,'y',PLAYER_RULES.valuePicker.wheelMaxStepPx,{read:()=>position,write:paint,max:()=>100*row,snap:value=>Math.round(value/row)*row,wheelGain:PLAYER_RULES.valuePicker.wheelGain});
  const sync=value=>{wheel();position=(100-value)*row;track.style.transform='translateY('+(-position)+'px)'};
