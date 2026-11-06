@@ -530,3 +530,8 @@ body:has(dialog[open]){overflow:hidden}
 }
 @media(min-width:851px) and (max-width:1150px) and (min-height:821px){.console-layout{grid-template-columns:minmax(0,1fr) 400px}}
 @media(min-width:851px) and (min-height:821px){.console-side #inspectorPane .fields-grid input{font-size:13px}}
+#saveChoiceDialog .save-options{grid-template-columns:repeat(3,minmax(0,1fr))}
+#saveChoiceDialog .save-options button{min-width:0;padding:10px 7px}
+/* The song notation footer contains preview information only. */
+.player-view .grid-foot{grid-template-columns:minmax(0,1fr) auto}
+.player-view .grid-foot #gridHint{text-align:right}

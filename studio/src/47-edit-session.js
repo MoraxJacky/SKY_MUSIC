@@ -1,17 +1,18 @@
+function canEditScore(){return Boolean(state.editMode&&$('scoreConsole').open&&!$('saveChoiceDialog').open)}
 // Transactional score editing. The public library copy remains untouched until Save.
 function updateEditButton(){
  const on=Boolean(state.editMode),p=$('playerView');if(!p)return;
  p.classList.toggle('editing',on);
- const b=$('scoreEditorBtn');b.textContent=!on?'✎ 曲谱编辑':state.editDirty?'▣ 保存':'✓ 完成编辑';
+ const b=$('scoreEditorBtn');b.textContent='✎ 曲谱编辑';
  b.classList.toggle('has-changes',on&&state.editDirty);
  const hint=$('gridHint');if(hint)hint.textContent=on?'点击节拍选择事件':'点击节拍可查看';
  const info=$('saveMetadata');if(info)info.hidden=!on;
 }
 function requestFinishEdit(action='exit'){
  if(!state.editMode){if(action==='home')goHome();return}
+ stopConsoleRecording();pauseSong();cancelRollDrag();const drag=scoreConsole.fine;scoreConsole.fine=null;if(drag&&drag.canvas.hasPointerCapture(drag.pointerId))drag.canvas.releasePointerCapture(drag.pointerId);
  state.pendingEditAction=action;
- if(state.editDirty){$('saveChoiceDialog').showModal();return}
- completeEdit('discard');
+ if(!$('saveChoiceDialog').open)$('saveChoiceDialog').showModal();
 }
 function completeEdit(kind){
  if(!state.editMode)return;
@@ -33,6 +34,8 @@ function completeEdit(kind){
  state.history.delete(original.id);state.future.delete(original.id);updateEditButton();
  saveLibrary();
  if(action==='home'){goHome();return}
+ try{history.replaceState(null,'','#song='+encodeURIComponent(chosen.id))}catch(error){}
+ state.rate=chosen.playback?.rate||1;state.volume=normalizeVolume(chosen.playback?.volume);syncSpeedPicker();syncVolumeControl();
  state.tuning=chosen.playback?.tuning||'C';state.sustain=chosen.playback?.sustain??.45;
  refreshWorkspace();renderLibrary();saveLibrary();
  toast(kind==='new'?'已另存为普通曲谱，可自由重命名和删除':kind==='direct'?'已保存当前项目':'已退出编辑模式');

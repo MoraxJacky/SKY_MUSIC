@@ -9,12 +9,12 @@ function setConsoleMode(mode){
  renderBeatGrid(true);renderKeyBoard();updateVisual();requestAnimationFrame(()=>{drawRoll();initializeScene()});
 }
 function openScoreConsole(){
- if(!state.editMode||!document.createComment)return;
+ if(!state.editMode)return;if(!document.createComment){$('scoreConsole').showModal();return;}
  if(!$('scoreConsole').open){pauseSong();scoreConsole.homes=[];for(const [selector,slot] of [['.roll-pane','consoleRollSlot'],['.keys-pane','consoleKeysSlot'],['.grid-pane','consoleGridSlot']]){const panel=document.querySelector(selector),marker=document.createComment('player-panel');panel.before(marker);scoreConsole.homes.push({panel,marker});$(slot).append(panel)}$('scoreConsole').showModal()}
  applyPlayerTemplate(state.project,$('scoreConsole'));setConsoleMode(scoreConsole.mode);syncEditorFields();updateScoreConsole();
 }
 function closeScoreConsole(){
- if(!document.createComment)return;stopConsoleRecording();pauseSong();scoreConsole.fine=null;
+ if(!document.createComment){$('scoreConsole').close();return}stopConsoleRecording();pauseSong();scoreConsole.fine=null;
  if($('scoreConsole').open)$('scoreConsole').close();for(const {panel,marker} of scoreConsole.homes){marker.replaceWith(panel)}scoreConsole.homes=[];renderBeatGrid(true);renderKeyBoard();updateVisual();requestAnimationFrame(()=>{drawRoll();initializeScene()});
 }
 function updateScoreConsole(){
@@ -51,7 +51,7 @@ function beginFineNoteDrag(event,canvas){
 }
 function bindScoreConsole(){
  if(!document.createComment)return;
- $('reopenConsole').onclick=openScoreConsole;$('consoleClose').onclick=closeScoreConsole;$('scoreConsole').addEventListener('cancel',event=>{event.preventDefault();closeScoreConsole()});
+ $('consoleClose').onclick=()=>requestFinishEdit('exit');$('scoreConsole').addEventListener('cancel',event=>{event.preventDefault();requestFinishEdit('exit')});$('saveChoiceDialog').addEventListener('cancel',event=>{event.preventDefault();event.stopPropagation()});
  for(const button of document.querySelectorAll('[data-console-mode]')){button.onclick=()=>setConsoleMode(button.dataset.consoleMode);button.onkeydown=event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const buttons=[...document.querySelectorAll('[data-console-mode]')],index=buttons.indexOf(button),next=event.key==='Home'?0:event.key==='End'?2:(index+(event.key==='ArrowRight'?1:2))%3;setConsoleMode(buttons[next].dataset.consoleMode);buttons[next].focus()}}}
  $('consoleSave').onclick=()=>{stopConsoleRecording();requestFinishEdit('exit')};$('consoleUndo').onclick=undo;$('consoleRedo').onclick=redo;$('consolePrev').onclick=()=>stepConsoleEvent(-1);$('consoleNext').onclick=()=>stepConsoleEvent(1);$('consolePlay').onclick=()=>{stopConsoleRecording();playPause()};$('consoleRecordStart').onclick=startConsoleRecording;$('consoleGenerate').onclick=generateConsoleScore;
  $('consoleTuning').innerHTML=$('keySelect').innerHTML;$('consoleTuning').onchange=event=>{$('keySelect').value=event.target.value;$('keySelect').onchange({target:$('keySelect')})};

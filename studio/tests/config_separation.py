@@ -96,13 +96,14 @@ with sync_playwright() as pw:
         original = page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.project.score)')
         page.locator('#scoreEditorBtn').click()
         for theme in themes:
-            if not page.locator('#scoreConsole').is_visible(): page.locator('#reopenConsole').click()
+            if not page.locator('#scoreConsole').is_visible(): page.locator('#scoreEditorBtn').click()
             page.locator('#consoleFineTab').click()
             page.locator('#consoleInspectorSlot').wait_for(state='visible')
             page.locator('#sceneEditorBtn').click()
             page.locator(f'[data-scene="{theme}"]').click()
             page.locator('[data-close="sceneDialog"]').click()
             page.locator('#consoleClose').click()
+            page.locator('#saveDirect').click()
             assert page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.project.score)') == original
             assert page.locator('#playerView').get_attribute('data-theme') == theme
             assert page.locator('#beatGrid .beat').count() == 32
@@ -114,9 +115,6 @@ with sync_playwright() as pw:
             page.locator('#playBtn').click()
             assert not page.evaluate('window.__SKY_STUDIO_TEST__.state.isPlaying')
             combinations.append({'score': song, 'theme': theme, 'sharedPlaybackAndNavigation': True})
-        page.locator('#scoreEditorBtn').click()
-        if page.locator('#saveChoiceDialog').is_visible():
-            page.locator('#discardChanges').click()
         page.locator('#backLibrary').click()
     assert not errors, errors
     page.close()
@@ -135,10 +133,9 @@ with sync_playwright() as pw:
         page.locator('[data-scene="moonlight-test"]').click()
         page.locator('[data-close="sceneDialog"]').click()
         page.locator('#consoleClose').click()
+        page.locator('#saveDirect').click()
         assert page.locator('#playerView').get_attribute('data-theme') == 'moonlight-test'
         assert page.evaluate('window.__SKY_STUDIO_TEST__.state.playerColors.note') == '#123456'
-        page.locator('#scoreEditorBtn').click()
-        page.locator('#saveDirect').click()
         assert page.locator('.stage-tree').is_visible()
         assert page.locator('.stage-motif').is_hidden()
         page.locator('#stepNext').click()

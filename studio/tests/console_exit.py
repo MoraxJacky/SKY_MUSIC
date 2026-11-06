@@ -1,0 +1,18 @@
+"""Mandatory three-way console exit and a read-only song page after every outcome."""
+import argparse,json
+from pathlib import Path
+from playwright.sync_api import sync_playwright
+p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);out=p.parse_args().output.resolve();out.mkdir(parents=True,exist_ok=False);root=Path(__file__).resolve().parents[1];checks=[]
+with sync_playwright() as pw:
+ b=pw.chromium.launch(channel='msedge',headless=True)
+ for kind in ['saveDirect','saveAsNew','discardChanges']:
+  page=b.new_page(viewport={'width':1366,'height':900});errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.goto((root/'SkyMusicStudio_Standalone.html').as_uri());page.locator('.card-play').first.click();original=page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.project.score)');page.locator('#scoreEditorBtn').click();page.locator('#consoleFineTab').click();page.locator('#eventDuration').fill('400');page.locator('#eventApply').click();changed=page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.project.score)');assert changed!=original;page.locator('#consoleClose').click();assert page.locator('#saveChoiceDialog').is_visible();assert page.locator('#saveChoiceDialog button').all_inner_texts()==['保存','另存为','不保存'];page.keyboard.press('Escape');assert page.locator('#saveChoiceDialog').is_visible();assert page.locator('#scoreConsole').is_visible()
+  page.evaluate('window.__SKY_STUDIO_TEST__.eventInsert()');assert page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.project.score)')==changed
+  page.screenshot(path=str(out/(kind+'.png')));page.locator('#'+kind).click();assert page.locator('#scoreConsole').is_hidden() and page.locator('#saveChoiceDialog').is_hidden();assert not page.evaluate('window.__SKY_STUDIO_TEST__.state.editMode');assert page.locator('#playerView').get_attribute('class').find('editing')<0;assert page.locator('#quickNewEvent,#quickDeleteEvent,#reopenConsole').count()==0;assert page.locator('#scoreEditorBtn').inner_text()=='✎ 曲谱编辑'
+  current=page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.project.score)');assert current==(original if kind=='discardChanges' else changed);assert page.evaluate('window.__SKY_STUDIO_TEST__.state.library.length')==(4 if kind=='saveAsNew' else 3)
+  page.evaluate('()=>{const t=window.__SKY_STUDIO_TEST__;t.eventInsert();t.eventRemove();t.undo();t.redo()}');page.locator('#keyBoard [data-note="2"]').click();page.wait_for_timeout(100);assert page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.project.score)')==current
+  page.reload();assert page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.project.score)')==current;assert page.evaluate('window.__SKY_STUDIO_TEST__.state.library.length')==(4 if kind=='saveAsNew' else 3);assert not page.evaluate('window.__SKY_STUDIO_TEST__.state.editMode')
+  # Even an untouched session has to choose; Escape on the console requests that choice.
+  page.locator('#scoreEditorBtn').click();page.keyboard.press('Escape');assert page.locator('#saveChoiceDialog').is_visible();page.keyboard.press('Escape');assert page.locator('#saveChoiceDialog').is_visible();page.locator('#discardChanges').click();assert not page.evaluate('window.__SKY_STUDIO_TEST__.state.editMode');assert not errors,errors;checks.append({'choice':kind,'readonlyAfterExit':True,'persistent':True,'unchangedSessionStillPrompts':True,'escapeCannotBypass':True});page.close()
+ b.close()
+(out/'results.json').write_text(json.dumps({'passed':True,'checks':checks},indent=2),'utf-8');print('PASS all three exit choices, persistence, unchanged-session confirmation, Escape prevention and read-only song controls')
