@@ -41,8 +41,8 @@ function bindPlayerInteractions(){
  $('rollWindow').value=String(state.windowSec);$('stepPrev').onclick=()=>stepEvent(-1);$('stepNext').onclick=()=>stepEvent(1);
  $('seekSlider').oninput=ev=>seekTo(Number(ev.target.value));
  $('rollSeekSlider').oninput=ev=>seekTo(Number(ev.target.value),true);
- $('pagePrev').onclick=()=>{pauseSong();let pg=Math.floor(state.selected/BEATS_PER_PAGE);let ev=scoreEvents(state.project),i=Math.max(0,(pg-1)*BEATS_PER_PAGE);seekTo(ev[i]?.timeMs||0)};
- $('pageNext').onclick=()=>{pauseSong();let pg=Math.floor(state.selected/BEATS_PER_PAGE);let ev=scoreEvents(state.project),i=Math.min(ev.length-1,(pg+1)*BEATS_PER_PAGE);seekTo(ev[i]?.timeMs||0)};
+ $('pagePrev').onclick=()=>seekBeatPage(-1);
+ $('pageNext').onclick=()=>seekBeatPage(1);
  $('resetKeyEdit').onclick=()=>{if(!state.editMode)return;let p=state.project;let original=BUILTINS.find(x=>x.id===(p.provenance?.derivedFrom||p.id));let e=scoreEvents(p)[state.selected],reference=original&&scoreEvents(original)[state.selected];if(!e)return;if(reference){rememberEdit();e.notes=[...reference.notes];e.durationMs=reference.durationMs;e.confidence='source';renderKeyBoard();renderBeatGrid(true);updateVisual();toast('已恢复此格的原始琴键')}else toast('导入曲目无内置原谱，请通过导入文件恢复')};
  $('keySelect').onchange=ev=>{if(!state.project)return;let was=state.isPlaying;if(was)pauseSong();state.tuning=ev.target.value;state.project.playback.tuning=state.tuning;saveLibrary();setTuningButtons();renderKeyBoard();renderBeatGrid(true);updateVisual();if(state.editMode)syncEditorFields();if(was)playPause()};
  $('instrumentSelect').onchange=ev=>chooseInstrument(ev.target.value);
@@ -169,3 +169,5 @@ function bindSpeedPicker(){
  $('speedSelect').innerHTML='';for(const rate of PLAYER_RULES.playbackRates){const option=document.createElement('option');option.value=String(rate);option.textContent=rate.toFixed(2)+'×';$('speedSelect').append(option)}
  speedPicker=createDownwardPicker({trigger:'speedToggle',menu:'speedMenu',options:'speedOptions',focus:'speedCurrent',attribute:'speed',items:PLAYER_RULES.playbackRates.map(rate=>({value:String(rate),label:rate.toFixed(2)+'×'})),selected:()=>String(state.rate),rowsBelow:()=>PLAYER_RULES.selectors.speedRowsBelow,beforeOpen:()=>{closeRangePicker();closeInstrumentPicker()},choose:value=>{$('speedSelect').value=value;$('speedSelect').onchange({target:$('speedSelect')});closeSpeedPicker(true)}});
 }
+
+function seekBeatPage(direction){if(!state.project)return;pauseSong();const layout=beatLayout(),slot=clamp((Math.floor(beatDisplayIndex()/BEATS_PER_PAGE)+direction)*BEATS_PER_PAGE,0,layout.count-1);seekTo(layout.grid?Math.round(slot*layout.step):scoreEvents(state.project)[slot].timeMs)}
