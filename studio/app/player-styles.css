@@ -446,3 +446,7 @@ body:has(dialog[open]){overflow:hidden}
 .player-view #instrumentToggle .instrument-arrow-slot{display:grid;place-items:center;width:14px;height:14px;flex:0 0 14px;line-height:1}
 .player-view #instrumentToggle .select-chevron{width:12px;height:12px}
 .player-view #instrumentValue{min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:left}
+
+/* Shared editing actions sit between transport and mode-specific controls. */
+.console-edit-actions>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.console-edit-actions button{width:100%;min-height:38px;padding:7px 3px;font-size:12px}
