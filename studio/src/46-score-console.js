@@ -1,5 +1,5 @@
 // One editing work copy, three views of the same score and player controls.
-const scoreConsole={mode:PLAYER_RULES.editor.initialMode,recording:false,start:0,at:0,raf:0,homes:[],fine:null};
+const scoreConsole={mode:PLAYER_RULES.editor.initialMode,recording:false,start:0,at:0,raf:0,homes:[],fine:null,views:new Map(),returnView:null};
 function setConsoleMode(mode){
  stopConsoleRecording();scoreConsole.mode=mode;const fine=mode==='fine',generate=mode==='generate';
  $('scoreConsole').dataset.mode=mode;$('consoleEditActions').parentElement.scrollTop=0;$('rollCanvas').title=fine?'点击音符选中；横向拖动改时间，纵向拖动改音高，拖动右边缘改长度':'点击或拖动扫描条定位，松开后保持暂停';
@@ -78,4 +78,11 @@ function settleFineRollView(view,event){
  if(inside){state.rollPageStart=view.begin;return}
  const lastStart=Math.floor(Math.max(0,duration-.001)/windowMs)*windowMs;
  state.rollPageStart=time<windowMs?0:time>=lastStart?lastStart:clamp(time-windowMs*PLAYER_RULES.editor.crossPageFocusFraction,0,lastStart);
+}
+
+// Each surface owns its own navigation state; score data is the only shared result.
+function captureTimelineView(){const frame=rollFrame();return {position:state.position,rollPageStart:frame.begin,windowSec:state.windowSec}}
+function applyTimelineView(view){
+ if(!view)return;cancelRollFinish();state.windowSec=PLAYER_RULES.roll.windowsSeconds.includes(view.windowSec)?view.windowSec:PLAYER_RULES.roll.initialSeconds;
+ state.position=clamp(view.position,0,state.project.durationMs);state.rollPageStart=view.position>state.project.durationMs||view.rollPageStart>=state.project.durationMs?Math.floor(Math.max(0,state.project.durationMs-.001)/(state.windowSec*1000))*state.windowSec*1000:view.rollPageStart;rollFrame();state.selected=beatIndex(state.position);state.lastSelected=-1;state.page=-1;$('rollWindow').value=String(state.windowSec);
 }

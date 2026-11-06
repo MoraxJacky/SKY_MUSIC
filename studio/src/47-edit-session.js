@@ -16,7 +16,7 @@ function requestFinishEdit(action='exit'){
 }
 function completeEdit(kind){
  if(!state.editMode)return;
- closeScoreConsole();pauseSong();
+ const editorView=captureTimelineView();closeScoreConsole();pauseSong();
  const action=state.pendingEditAction||'exit',working=state.project,original=state.editSource;
  let chosen=original;
  if(kind==='direct'||kind==='new')trimTrailingRests(working);
@@ -31,6 +31,7 @@ function completeEdit(kind){
  }else if(kind!=='discard')return;
  if($('saveChoiceDialog').open)$('saveChoiceDialog').close();
  state.project=chosen;state.editMode=false;state.editDirty=false;state.editSource=null;state.editBaseline=null;state.pendingEditAction=null;
+ scoreConsole.views.set(original.id,editorView);if(kind==='new')scoreConsole.views.set(chosen.id,{...editorView});const playerView=scoreConsole.returnView;scoreConsole.returnView=null;applyTimelineView(playerView);
  state.history.delete(original.id);state.future.delete(original.id);updateEditButton();
  saveLibrary();
  if(action==='home'){goHome();return}
