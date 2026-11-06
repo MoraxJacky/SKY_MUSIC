@@ -32,6 +32,7 @@ with sync_playwright() as pw:
   page.locator('#scoreEditorBtn').click();assert page.evaluate('window.notices.at(-1)')=='已打开谱面编辑控制台'
   count=page.evaluate('window.notices.length');page.locator('#consoleClose').click();assert page.evaluate('window.notices.length')==count
   page.locator('#'+choice).click();assert expected in page.evaluate('window.notices.at(-1)')
+  if choice=='saveAsNew':page.locator('#exportLater button').click()
  # Slow network feedback appears once, while the more useful fallback error remains visible.
  page.evaluate("()=>{const original=window.fetch;window.fetch=async(...args)=>{if(String(args[0]).startsWith('https:')){await new Promise(r=>setTimeout(r,850));throw new TypeError('controlled offline test')}return original(...args)}}")
  count=page.evaluate('window.notices.length');tone.press('End');page.wait_for_function("document.getElementById('toast').textContent.includes('暂不可用')")

@@ -13,7 +13,7 @@ with sync_playwright() as pw:
   assert result['outline'] not in ['rgb(233, 204, 139)','rgb(228, 197, 139)'],result
   assert '255, 255, 255' in result['shadow'],result
   records.append(result);return result
- home=check('songSearch');check('libraryFilter');page.screenshot(path=str(out/'home-focus.png'))
+ home=check('songSearch');page.locator('#libraryFilterToggle').focus();page.screenshot(path=str(out/'home-focus.png'))
  page.locator('#newSongBtn').click();check('createTitle');check('createDuration');page.keyboard.press('Escape')
  page.locator('.theme-preview-open[data-preview-theme=christmas]').filter(visible=True).first.click();check('homePreviewName');check('homePreviewMotion');page.screenshot(path=str(out/'theme-preview-focus.png'));page.keyboard.press('Escape')
  before=page.locator('#toast').inner_text();check('songSearch');assert page.locator('#toast').inner_text()==before

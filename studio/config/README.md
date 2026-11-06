@@ -88,7 +88,7 @@ python -X utf8 scripts/configuration.py --check
 
 六主题插画v2的资源索引在 `themes/elements.json`，每套预设通过 `elementRefs` 引用自己的场景、双人小景和挂件。`decorations.layout` 只控制场景填充与角色/挂件百分比构图，由共享模板校验并应用；不能携带音乐或处理器。详细路径、来源及提示词见 [THEME_ART_V2.md](../docs/THEME_ART_V2.md)。
 
-音量与延音共用 `valuePicker` 的单格竖向平滑选取；0–100 有界、不循环。`volume.controlId` / `sustain.controlId` 指向可识别的 spinbutton。通知生命周期归共用交互 `notifications`，颜色由模板解析器独立提供；倍速末端 `selectors.speedMinimumRows` 保留两个真实选项。
+音量与延音共用 `valuePicker` 的单格竖向平滑选取；0–100 有界、不循环。`volume.controlId` / `sustain.controlId` 指向可识别的 spinbutton。通知生命周期归共用交互 `notifications`，颜色由模板解析器独立提供；倍速末端 `selectors.speedMinimumRows=3` 保留基准行和下方两个真实选项，滚轮命中区域始终不收缩。
 
 `player-interactions.json.scoreEntrance` 控制卡片过渡后的谱面视觉入场时序、上浮距离与盖章幅度。该配置不含歌曲ID、音符或主题颜色；六主题共用一套展示逻辑。用户操作立即结束入场，音乐位置与编辑行为由既有控制器继续处理。
 

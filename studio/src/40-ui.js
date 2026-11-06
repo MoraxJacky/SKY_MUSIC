@@ -1,6 +1,6 @@
 function snowPopulate(element,count,scope='world'){element.innerHTML='';for(let i=0;i<count;i++){let dot=document.createElement('i');dot.className='snow-dot';let size=1+Math.random()*3.3;dot.style.cssText=`left:${Math.random()*100}%;width:${size.toFixed(2)}px;height:${size.toFixed(2)}px;opacity:${(.18+Math.random()*.38).toFixed(2)};animation-duration:${(scope==='world'?16:9)+Math.random()*15}s;animation-delay:-${Math.random()*30}s;--dx:${Math.round((Math.random()-.5)*170)}px`;element.append(dot)}}
 function renderLibrary(){
- syncStatusNotificationAppearance(); clearHomeCardPhysics();const q=$('songSearch').value.trim().toLowerCase(),container=$('libraryCards'),filter=$('libraryFilter').value;container.innerHTML='';
+ syncStatusNotificationAppearance();syncLibraryFilterPicker(); clearHomeCardPhysics();const q=$('songSearch').value.trim().toLowerCase(),container=$('libraryCards'),filter=$('libraryFilter').value;container.innerHTML='';
  const visible=state.library.filter(song=>(song.title+' '+song.subtitle+' '+(song.author||'')).toLowerCase().includes(q)).filter(song=>filter==='favorite'?song.favorite:filter==='recent'?song.lastOpened>0:true);
  if(filter==='recent')visible.sort((a,b)=>b.lastOpened-a.lastOpened);$('libraryCount').textContent=state.library.length+' 首乐曲';
  for(const song of visible){
@@ -18,7 +18,7 @@ function renderLibrary(){
   const actions=card.querySelector('.song-card-actions');for(const [label,action,title]of [[song.favorite?'favorite-filled':'favorite',()=>favoriteSong(song.id),'收藏'],['edit',()=>renameSong(song.id),'重命名'],['copy',()=>duplicateSong(song.id),'制作副本'],['close',()=>deleteSong(song.id),'删除项目']]){const button=document.createElement('button');button.innerHTML=appIcon(label);button.title=title;button.setAttribute('aria-label',title);button.onclick=event=>{event.stopPropagation();action()};actions.append(button)}
   attachHomeCard(card,song);container.append(card);
  }
- const add=document.createElement('button');add.className='song-card add-card';add.innerHTML='<span class="plus">'+appIcon('plus')+'</span><strong>导入新的乐曲</strong><span>SKYMUSIC · MIDI · MUSICXML · AUDIO</span>';add.onclick=openImport;container.append(add);resumeHomePresentation();
+ const add=document.createElement('button');add.className='song-card add-card';add.innerHTML='<span class="plus">'+appIcon('plus')+'</span><strong>导入新的乐曲</strong>';add.onclick=openImport;container.append(add);resumeHomePresentation();
 }
 function openImport(){$('importDialog').showModal()}
 function mountPlatformProject(id){cancelScoreEntrance();if(!homeExperience.entry?.mounting)cancelSongEntry();cancelPlayerValueScroll();pauseHomePresentation();cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();pauseSong();let p=state.library.find(p=>p.id===id);if(!p){toast('找不到歌曲');return}state.project=p;state.editMode=false;state.editDirty=false;state.editSource=null;state.editBaseline=null;updateEditButton();p.lastOpened=Date.now();if(PLAYER_RULES.sustain.resetOnSongEntry)p.playback.sustain=PLAYER_RULES.sustain.default;saveLibrary();state.position=0;state.rollPageStart=0;state.windowSec=PLAYER_RULES.roll.initialSeconds;$('rollWindow').value=String(state.windowSec);scoreConsole.views.delete(id);scoreConsole.mode=PLAYER_RULES.editor.initialMode;state.selected=0;state.lastSelected=-1;state.page=-1;state.rate=p.playback.rate||1;state.tuning=p.playback.tuning||'C';state.sustain=Number.isFinite(p.playback.sustain)?p.playback.sustain:PLAYER_RULES.sustain.default;state.volume=normalizeVolume(p.playback.volume);syncVolumeControl();$('homeView').hidden=true;$('playerView').hidden=false;state.mode='player';if(homeExperience.entry?.mounting)prepareScoreEntrance();setControlContent($('playBtn'),'play','播放');$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';syncSpeedPicker();syncLoopControl();syncSustainControl();$('instrumentSelect').value=p.playback.instrument||'offline';$('keySelect').value=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs);$('playBtn').disabled=false;applyTheme();initializeScene();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();try{localStorage.setItem('sky-last-song',id)}catch(e){console.warn('最近播放缓存不可用',e)}requestAnimationFrame(drawRoll);try{history.replaceState(null,'','#song='+encodeURIComponent(id))}catch(e){}}
@@ -73,7 +73,7 @@ function rollSeekOrigin(position,fraction,windowMs=state.windowSec*1000){
 }
 function rollFrame(position=state.position){
  if(typeof scoreConsole!=='undefined'&&scoreConsole.fine){const f=scoreConsole.fine.frame;return {...f,phase:clamp(position-f.begin,0,f.windowMs)}}
- const nominal=state.windowSec*1000,duration=state.project.durationMs;
+ const nominal=state.windowSec*1000,duration=state.project.durationMs,windowMs=Math.max(1,Math.min(nominal,duration)),lastBegin=Math.max(0,duration-windowMs);
  if(state.rollFinish){const f=state.rollFinish;return {begin:f.begin,end:f.begin+f.windowMs,windowMs:f.windowMs,phase:Math.min(f.windowMs,f.phase+(performance.now()-f.at)*f.rate)}}
  let begin=state.rollPageStart,phase=position-begin;
  if(phase<0||phase>=nominal){
@@ -81,10 +81,10 @@ function rollFrame(position=state.position){
   const pagePosition=position>=duration?Math.max(0,position-.001):position;
   begin+=Math.floor((pagePosition-begin)/nominal)*nominal;
  }
- if(begin>=duration&&duration>0)begin=Math.max(0,duration-nominal);
+ // Every entry path (playback, global seek, page arrows, editor and roll scrub)
+ // shares one full-sized final window. Never magnify a short remainder page.
+ begin=Math.min(begin,lastBegin);
  state.rollPageStart=begin;
- // The final page ends at the music, not at a padded 8/10/12/20-second boundary.
- const windowMs=Math.max(1,Math.min(nominal,duration-begin));
  return {begin,end:begin+windowMs,windowMs,phase:clamp(position-begin,0,windowMs)};
 }
 function cancelRollFinish(){cancelAnimationFrame(state.rollFinishRaf);state.rollFinishRaf=0;state.rollFinish=null}
@@ -129,7 +129,7 @@ function drawRoll(){if(!state.project||state.mode!=='player')return;let cv=$('ro
   if(label.timeMs%1000!==0){c.strokeStyle='#79927b88';c.beginPath();c.moveTo(x,top);c.lineTo(x,H-bottom);c.stroke()}
   c.fillText(text,x,12);
  }
- c.save();c.beginPath();c.rect(left,top,plotW,H-top-bottom);c.clip();const editing=editingNoteSelection(),ev=platformController.events(),start=lowerBound(ev,begin-10000);for(let i=start;i<ev.length;i++){let e=ev[i];if(e.timeMs>end)break;if(!e.notes.length)continue;let x=left+(e.timeMs-begin)/windowMs*plotW;let width=Math.max(3,Math.min(windowMs<state.windowSec*1000||($('scoreConsole')?.open&&scoreConsole.mode==='fine')?Infinity:22,(e.durationMs||180)/windowMs*plotW));for(let n of e.notes){const arrival=scoreEntranceRollProgress(e.timeMs,begin,windowMs);if(arrival<=0)continue;c.save();c.globalAlpha=arrival;let tileWidth=Math.max(2,width-1.8),tileHeight=Math.max(3,rowH*.5),tileX=x+.8,y=top+(15-n)*rowH+(rowH-tileHeight)/2+(1-arrival)*PLAYER_RULES.scoreEntrance.rollRisePx;
+ c.save();c.beginPath();c.rect(left,top,plotW,H-top-bottom);c.clip();const editing=editingNoteSelection(),ev=platformController.events(),start=lowerBound(ev,begin-10000);for(let i=start;i<ev.length;i++){let e=ev[i];if(e.timeMs>end)break;if(!e.notes.length)continue;let x=left+(e.timeMs-begin)/windowMs*plotW;let width=Math.max(3,Math.min($('scoreConsole')?.open&&scoreConsole.mode==='fine'?Infinity:22,(e.durationMs||180)/windowMs*plotW));for(let n of e.notes){const arrival=scoreEntranceRollProgress(e.timeMs,begin,windowMs);if(arrival<=0)continue;c.save();c.globalAlpha=arrival;let tileWidth=Math.max(2,width-1.8),tileHeight=Math.max(3,rowH*.5),tileX=x+.8,y=top+(15-n)*rowH+(rowH-tileHeight)/2+(1-arrival)*PLAYER_RULES.scoreEntrance.rollRisePx;
  // Keep repeated notes distinct even when their sounding durations overlap.
  for(let j=i+1;j<ev.length&&ev[j].timeMs<e.timeMs+(width+2)/plotW*windowMs;j++){if(ev[j].notes.includes(n)){tileWidth=Math.min(tileWidth,Math.max(.8,(ev[j].timeMs-e.timeMs)/windowMs*plotW-1.8));break}}
  c.fillStyle=e.notes.length>=3?colors.poly:e.notes.length===2?colors.chord:colors.note;c.shadowColor='rgba(0,0,0,.65)';c.shadowBlur=3;c.shadowOffsetY=1;c.beginPath();c.roundRect(tileX,y,tileWidth,tileHeight,Math.min(2,tileWidth/2,tileHeight/2));c.fill();c.save();c.shadowBlur=0;c.shadowOffsetY=0;c.lineWidth=.75;c.strokeStyle=paper.base;c.stroke();c.restore();if(editing&&editing.event===e&&editing.note===n){const boxLeft=Math.max(left+1,tileX-2),boxRight=Math.min(left+plotW-1,tileX+tileWidth+2);if(boxRight>boxLeft){c.save();c.strokeStyle=PLAYER_RULES.editor.selectionOutline;c.lineWidth=2;c.shadowColor=PLAYER_RULES.editor.selectionOutline;c.shadowBlur=5;c.shadowOffsetY=0;c.beginPath();c.roundRect(boxLeft,y-2,boxRight-boxLeft,tileHeight+4,3);c.stroke();c.restore()}}c.restore()}}

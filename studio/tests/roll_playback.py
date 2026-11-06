@@ -13,7 +13,7 @@ root = Path(__file__).resolve().parents[1]
 
 with sync_playwright() as pw:
     browser = pw.chromium.launch(channel='msedge', headless=True)
-    page = browser.new_page(viewport={'width': 1366, 'height': 768})
+    page = browser.new_page(viewport={'width': 1366, 'height': 768}, reduced_motion='reduce')
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.goto((root / 'SkyMusicStudio_Standalone.html').as_uri())
@@ -66,8 +66,8 @@ with sync_playwright() as pw:
           return {position:T.state.position,playing:T.state.isPlaying,...T.rollFrame()};
         }''')
         assert end['position'] == duration and not end['playing']
-        assert end['begin'] == (8000 if duration == 10000 else 0)
-        # The final page uses the true remaining duration, with no padded blank time.
+        assert end['begin'] == max(0,duration-8000)
+        # The final page keeps its complete time window and ends at the music.
         assert end['end'] == duration
         assert end['phase'] == end['windowMs']
         page.wait_for_function('window.__SKY_STUDIO_TEST__.state.rollFinishRaf === 0')

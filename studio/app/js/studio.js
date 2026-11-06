@@ -557,21 +557,31 @@ function resolvedPlayerColors(project){
  if(/^#[0-9a-f]{6}$/i.test(theme.backgroundColor||''))colors.stageEnd=colors.backdrop=theme.backgroundColor;
  return colors;
 }
+// Surface tokens are shared by the page and top-layer dialogs, without binding interactions.
+const PLATFORM_DIALOG_COLORS={surfaceStart:'#132a3b',surfaceEnd:'#0d1c2c',text:'#edf6ff',muted:'#b9d1e1',border:'#718ba3',accent:'#d8eaf8',button:'#203c50',hover:'#2d4c61',activeStart:'#38566d',activeEnd:'#29465b',backdrop:'#0d1c2c'};
+function applySurfaceTokens(host,colors,material={surfaceGradient:true,surfaceAngle:135,activeGradient:true,activeAngle:145}){
+ for(const [name,value]of Object.entries(colors))host.style.setProperty('--player-'+name.replace(/[A-Z]/g,c=>'-'+c.toLowerCase()),value);
+ host.style.setProperty('--player-surface-paint',material.surfaceGradient?`linear-gradient(${material.surfaceAngle}deg,${colors.surfaceStart},${colors.surfaceEnd})`:colors.surfaceEnd);
+ host.style.setProperty('--player-active-paint',material.activeGradient?`linear-gradient(${material.activeAngle}deg,${colors.activeStart},${colors.activeEnd})`:colors.activeEnd);
+}
+function syncDialogAppearance(){
+ const project=state.mode==='player'?state.project:null,colors=project?resolvedPlayerColors(project):PLATFORM_DIALOG_COLORS,material=project?sanitizeThemeMaterials(themeDefinition(project).materials):undefined;
+ for(const dialog of document.querySelectorAll('.work-dialog:not(.platform-dialog)')){
+  dialog.classList.add('context-dialog');dialog.dataset.theme=project?sceneId(project):'platform';applySurfaceTokens(dialog,colors,material);
+ }
+}
 function syncStatusNotificationAppearance(){
  const el=$('toast');if(!el?.style?.setProperty)return;
  const preview=$('homeThemeDialog')?.open?homeExperience.preview?.project:null,project=preview||(state.mode==='player'?state.project:null);
  const colors=project?resolvedPlayerColors(project):{surfaceStart:'#273e56',surfaceEnd:'#172b42',text:'#edf6ff',border:'#718ba3',accent:'#d8eaf8'};
- document.body.style.setProperty('--control-focus-accent',colors.accent);
+ document.body.style.setProperty('--control-focus-accent',colors.accent);syncDialogAppearance();
  for(const key of ['surfaceStart','surfaceEnd','text','border','accent'])el.style.setProperty('--notice-'+key,colors[key]);el.dataset.theme=project?sceneId(project):'platform';
 }
 function applyPlayerTemplate(project,host){
  const id=sceneId(project),definition=themeDefinition(project),decor=definition.decorations,theme=project.theme||{},colors=resolvedPlayerColors(project);
  state.playerColors=colors;applyThemeClasses(host,definition);
  host.dataset.template=PLAYER_TEMPLATE_ID;host.dataset.theme=id;
- for(let [name,value]of Object.entries(colors))host.style.setProperty('--player-'+name.replace(/[A-Z]/g,c=>'-'+c.toLowerCase()),value);
- const material=sanitizeThemeMaterials(definition.materials);
- host.style.setProperty('--player-surface-paint',material.surfaceGradient?`linear-gradient(${material.surfaceAngle}deg,${colors.surfaceStart},${colors.surfaceEnd})`:colors.surfaceEnd);
- host.style.setProperty('--player-active-paint',material.activeGradient?`linear-gradient(${material.activeAngle}deg,${colors.activeStart},${colors.activeEnd})`:colors.activeEnd);
+ applySurfaceTokens(host,colors,sanitizeThemeMaterials(definition.materials));
  host.style.setProperty('--gold',colors.accent);host.style.setProperty('--theme-accent',colors.accent);host.style.setProperty('--note',colors.note);host.style.setProperty('--chord',colors.chord);
  host.style.setProperty('--glow-strength',String((theme.glow??58)/100));
  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -826,8 +836,10 @@ function createDownwardPicker(config){
  function close(returnFocus=false){cancelWheel();menu.hidden=true;trigger.setAttribute('aria-expanded','false');if(returnFocus)trigger.focus()}
  function position(){
   const rect=trigger.getBoundingClientRect();view.row=rect.height;view.step=rect.height+PLAYER_RULES.selectors.instrumentRowGapPx;
-  const origin=Math.min(view.position,Math.max(0,items.length-(config.minimumRows||1)));
-  const below=Math.min(config.rowsBelow()*view.step,(items.length-1-origin)*view.step,Math.max(0,innerHeight-rect.bottom-8));
+  // minimumRows includes the baseline row: keep both lower hit targets at the end.
+  const visibleRows=Math.min(items.length,Math.max(config.minimumRows||1,config.rowsBelow()+1));
+  const origin=Math.min(view.position,Math.max(0,items.length-visibleRows));
+  const below=Math.min((visibleRows-1)*view.step,Math.max(0,innerHeight-rect.bottom-8));
   menu.style.width=rect.width+'px';menu.style.left=rect.left+'px';menu.style.top=rect.top+'px';menu.style.height=(rect.height+below)+'px';focus.style.top=((view.position-origin)*view.step)+'px';focus.style.height=rect.height+'px';
   buttons.forEach((button,i)=>{const y=(i-origin)*view.step;button.style.top=y+'px';button.style.height=view.row+'px';button.style.visibility=y+view.row>0&&y<view.row+below?'visible':'hidden'});menu.dataset.position=String(view.position);
  }
@@ -921,7 +933,7 @@ function startScoreEntrance(){
  });
  const notes=displayedBeat().notes,stampScaleTime=span/(cfg.stampDelayMs+Math.max(0,notes.length-1)*cfg.stampStepMs+cfg.stampMs),stampMs=cfg.stampMs*stampScaleTime;
  [...$('keyBoard').children].filter(key=>notes.includes(Number(key.dataset.note))).forEach((key,index)=>{
-  const delay=blank+(cfg.stampDelayMs+index*cfg.stampStepMs)*stampScaleTime,n=Number(key.dataset.note)-1,column=n%5,row=Math.floor(n/5);a.keys.push({el:key,delay});key.style.zIndex='3';key.style.transformOrigin=(column===0?'left':column===4?'right':'center')+' '+(row===0?'top':row===2?'bottom':'center');
+  const delay=blank+(cfg.stampDelayMs+index*cfg.stampStepMs)*stampScaleTime;a.keys.push({el:key,delay});key.style.zIndex='3';key.style.transformOrigin='center center';
   animate(key,[{opacity:0,transform:'translateY(0px) scale(1)',boxShadow:'0 0 0 '+colors.accent+'00',easing:'cubic-bezier(.16,.8,.3,1)'},{offset:cfg.stampGrowEnd,opacity:1,transform:'translateY(-'+cfg.stampRisePx+'px) scale('+cfg.stampScale+')',boxShadow:'0 0 28px '+colors.accent+'99',easing:'cubic-bezier(.2,.6,.3,1)'},{offset:cfg.stampHighlightEnd,opacity:1,transform:'translateY(-'+cfg.stampRisePx+'px) scale('+cfg.stampScale+')',boxShadow:'0 0 20px '+colors.accent+'77',easing:'cubic-bezier(.3,.05,.35,1)'},{opacity:1,transform:'translateY(0px) scale(1)',boxShadow:'0 0 10px '+colors.accent+'33'}],delay,stampMs,'forwards');
  });
  const duration=cfg.durationMs;
@@ -949,7 +961,7 @@ function syncLoopControl(){const on=state.project?.playback.loop===true;$('loopO
 /* 40-ui.js */
 function snowPopulate(element,count,scope='world'){element.innerHTML='';for(let i=0;i<count;i++){let dot=document.createElement('i');dot.className='snow-dot';let size=1+Math.random()*3.3;dot.style.cssText=`left:${Math.random()*100}%;width:${size.toFixed(2)}px;height:${size.toFixed(2)}px;opacity:${(.18+Math.random()*.38).toFixed(2)};animation-duration:${(scope==='world'?16:9)+Math.random()*15}s;animation-delay:-${Math.random()*30}s;--dx:${Math.round((Math.random()-.5)*170)}px`;element.append(dot)}}
 function renderLibrary(){
- syncStatusNotificationAppearance(); clearHomeCardPhysics();const q=$('songSearch').value.trim().toLowerCase(),container=$('libraryCards'),filter=$('libraryFilter').value;container.innerHTML='';
+ syncStatusNotificationAppearance();syncLibraryFilterPicker(); clearHomeCardPhysics();const q=$('songSearch').value.trim().toLowerCase(),container=$('libraryCards'),filter=$('libraryFilter').value;container.innerHTML='';
  const visible=state.library.filter(song=>(song.title+' '+song.subtitle+' '+(song.author||'')).toLowerCase().includes(q)).filter(song=>filter==='favorite'?song.favorite:filter==='recent'?song.lastOpened>0:true);
  if(filter==='recent')visible.sort((a,b)=>b.lastOpened-a.lastOpened);$('libraryCount').textContent=state.library.length+' 首乐曲';
  for(const song of visible){
@@ -967,7 +979,7 @@ function renderLibrary(){
   const actions=card.querySelector('.song-card-actions');for(const [label,action,title]of [[song.favorite?'favorite-filled':'favorite',()=>favoriteSong(song.id),'收藏'],['edit',()=>renameSong(song.id),'重命名'],['copy',()=>duplicateSong(song.id),'制作副本'],['close',()=>deleteSong(song.id),'删除项目']]){const button=document.createElement('button');button.innerHTML=appIcon(label);button.title=title;button.setAttribute('aria-label',title);button.onclick=event=>{event.stopPropagation();action()};actions.append(button)}
   attachHomeCard(card,song);container.append(card);
  }
- const add=document.createElement('button');add.className='song-card add-card';add.innerHTML='<span class="plus">'+appIcon('plus')+'</span><strong>导入新的乐曲</strong><span>SKYMUSIC · MIDI · MUSICXML · AUDIO</span>';add.onclick=openImport;container.append(add);resumeHomePresentation();
+ const add=document.createElement('button');add.className='song-card add-card';add.innerHTML='<span class="plus">'+appIcon('plus')+'</span><strong>导入新的乐曲</strong>';add.onclick=openImport;container.append(add);resumeHomePresentation();
 }
 function openImport(){$('importDialog').showModal()}
 function mountPlatformProject(id){cancelScoreEntrance();if(!homeExperience.entry?.mounting)cancelSongEntry();cancelPlayerValueScroll();pauseHomePresentation();cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();pauseSong();let p=state.library.find(p=>p.id===id);if(!p){toast('找不到歌曲');return}state.project=p;state.editMode=false;state.editDirty=false;state.editSource=null;state.editBaseline=null;updateEditButton();p.lastOpened=Date.now();if(PLAYER_RULES.sustain.resetOnSongEntry)p.playback.sustain=PLAYER_RULES.sustain.default;saveLibrary();state.position=0;state.rollPageStart=0;state.windowSec=PLAYER_RULES.roll.initialSeconds;$('rollWindow').value=String(state.windowSec);scoreConsole.views.delete(id);scoreConsole.mode=PLAYER_RULES.editor.initialMode;state.selected=0;state.lastSelected=-1;state.page=-1;state.rate=p.playback.rate||1;state.tuning=p.playback.tuning||'C';state.sustain=Number.isFinite(p.playback.sustain)?p.playback.sustain:PLAYER_RULES.sustain.default;state.volume=normalizeVolume(p.playback.volume);syncVolumeControl();$('homeView').hidden=true;$('playerView').hidden=false;state.mode='player';if(homeExperience.entry?.mounting)prepareScoreEntrance();setControlContent($('playBtn'),'play','播放');$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';syncSpeedPicker();syncLoopControl();syncSustainControl();$('instrumentSelect').value=p.playback.instrument||'offline';$('keySelect').value=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs);$('playBtn').disabled=false;applyTheme();initializeScene();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();try{localStorage.setItem('sky-last-song',id)}catch(e){console.warn('最近播放缓存不可用',e)}requestAnimationFrame(drawRoll);try{history.replaceState(null,'','#song='+encodeURIComponent(id))}catch(e){}}
@@ -1022,7 +1034,7 @@ function rollSeekOrigin(position,fraction,windowMs=state.windowSec*1000){
 }
 function rollFrame(position=state.position){
  if(typeof scoreConsole!=='undefined'&&scoreConsole.fine){const f=scoreConsole.fine.frame;return {...f,phase:clamp(position-f.begin,0,f.windowMs)}}
- const nominal=state.windowSec*1000,duration=state.project.durationMs;
+ const nominal=state.windowSec*1000,duration=state.project.durationMs,windowMs=Math.max(1,Math.min(nominal,duration)),lastBegin=Math.max(0,duration-windowMs);
  if(state.rollFinish){const f=state.rollFinish;return {begin:f.begin,end:f.begin+f.windowMs,windowMs:f.windowMs,phase:Math.min(f.windowMs,f.phase+(performance.now()-f.at)*f.rate)}}
  let begin=state.rollPageStart,phase=position-begin;
  if(phase<0||phase>=nominal){
@@ -1030,10 +1042,10 @@ function rollFrame(position=state.position){
   const pagePosition=position>=duration?Math.max(0,position-.001):position;
   begin+=Math.floor((pagePosition-begin)/nominal)*nominal;
  }
- if(begin>=duration&&duration>0)begin=Math.max(0,duration-nominal);
+ // Every entry path (playback, global seek, page arrows, editor and roll scrub)
+ // shares one full-sized final window. Never magnify a short remainder page.
+ begin=Math.min(begin,lastBegin);
  state.rollPageStart=begin;
- // The final page ends at the music, not at a padded 8/10/12/20-second boundary.
- const windowMs=Math.max(1,Math.min(nominal,duration-begin));
  return {begin,end:begin+windowMs,windowMs,phase:clamp(position-begin,0,windowMs)};
 }
 function cancelRollFinish(){cancelAnimationFrame(state.rollFinishRaf);state.rollFinishRaf=0;state.rollFinish=null}
@@ -1078,7 +1090,7 @@ function drawRoll(){if(!state.project||state.mode!=='player')return;let cv=$('ro
   if(label.timeMs%1000!==0){c.strokeStyle='#79927b88';c.beginPath();c.moveTo(x,top);c.lineTo(x,H-bottom);c.stroke()}
   c.fillText(text,x,12);
  }
- c.save();c.beginPath();c.rect(left,top,plotW,H-top-bottom);c.clip();const editing=editingNoteSelection(),ev=platformController.events(),start=lowerBound(ev,begin-10000);for(let i=start;i<ev.length;i++){let e=ev[i];if(e.timeMs>end)break;if(!e.notes.length)continue;let x=left+(e.timeMs-begin)/windowMs*plotW;let width=Math.max(3,Math.min(windowMs<state.windowSec*1000||($('scoreConsole')?.open&&scoreConsole.mode==='fine')?Infinity:22,(e.durationMs||180)/windowMs*plotW));for(let n of e.notes){const arrival=scoreEntranceRollProgress(e.timeMs,begin,windowMs);if(arrival<=0)continue;c.save();c.globalAlpha=arrival;let tileWidth=Math.max(2,width-1.8),tileHeight=Math.max(3,rowH*.5),tileX=x+.8,y=top+(15-n)*rowH+(rowH-tileHeight)/2+(1-arrival)*PLAYER_RULES.scoreEntrance.rollRisePx;
+ c.save();c.beginPath();c.rect(left,top,plotW,H-top-bottom);c.clip();const editing=editingNoteSelection(),ev=platformController.events(),start=lowerBound(ev,begin-10000);for(let i=start;i<ev.length;i++){let e=ev[i];if(e.timeMs>end)break;if(!e.notes.length)continue;let x=left+(e.timeMs-begin)/windowMs*plotW;let width=Math.max(3,Math.min($('scoreConsole')?.open&&scoreConsole.mode==='fine'?Infinity:22,(e.durationMs||180)/windowMs*plotW));for(let n of e.notes){const arrival=scoreEntranceRollProgress(e.timeMs,begin,windowMs);if(arrival<=0)continue;c.save();c.globalAlpha=arrival;let tileWidth=Math.max(2,width-1.8),tileHeight=Math.max(3,rowH*.5),tileX=x+.8,y=top+(15-n)*rowH+(rowH-tileHeight)/2+(1-arrival)*PLAYER_RULES.scoreEntrance.rollRisePx;
  // Keep repeated notes distinct even when their sounding durations overlap.
  for(let j=i+1;j<ev.length&&ev[j].timeMs<e.timeMs+(width+2)/plotW*windowMs;j++){if(ev[j].notes.includes(n)){tileWidth=Math.min(tileWidth,Math.max(.8,(ev[j].timeMs-e.timeMs)/windowMs*plotW-1.8));break}}
  c.fillStyle=e.notes.length>=3?colors.poly:e.notes.length===2?colors.chord:colors.note;c.shadowColor='rgba(0,0,0,.65)';c.shadowBlur=3;c.shadowOffsetY=1;c.beginPath();c.roundRect(tileX,y,tileWidth,tileHeight,Math.min(2,tileWidth/2,tileHeight/2));c.fill();c.save();c.shadowBlur=0;c.shadowOffsetY=0;c.lineWidth=.75;c.strokeStyle=paper.base;c.stroke();c.restore();if(editing&&editing.event===e&&editing.note===n){const boxLeft=Math.max(left+1,tileX-2),boxRight=Math.min(left+plotW-1,tileX+tileWidth+2);if(boxRight>boxLeft){c.save();c.strokeStyle=PLAYER_RULES.editor.selectionOutline;c.lineWidth=2;c.shadowColor=PLAYER_RULES.editor.selectionOutline;c.shadowBlur=5;c.shadowOffsetY=0;c.beginPath();c.roundRect(boxLeft,y-2,boxRight-boxLeft,tileHeight+4,3);c.stroke();c.restore()}}c.restore()}}
@@ -1191,6 +1203,7 @@ function resetHomePresentation(){
 function pauseHomePresentation(){stopHomeCarousel();clearHomeCardPhysics();stopHomeFlow()}
 function resumeHomePresentation(){scheduleHomeCarousel();startHomeFlow()}
 function bindHomeExperience(){
+ bindHomeScrollChrome();bindLibraryFilterPicker();
  if(!document.createComment)return;
  const track=$('homeThemeTrack'),artTrack=$('homeThemeArtTrack'),dotHost=$('homeThemeDots');
  const definitions=Object.values(APP_CONFIG.platform.themes).map(pack=>pack.definition);
@@ -1401,6 +1414,28 @@ function bindCreateThemePicker(){
  document.addEventListener('pointerdown',e=>{if(menu.matches(':popover-open')&&!menu.contains(e.target)&&!toggle.contains(e.target))closeCreateThemePicker()});window.addEventListener('resize',()=>closeCreateThemePicker());$('createDialog').addEventListener('close',()=>closeCreateThemePicker());$('createDialog').addEventListener('cancel',e=>{if(menu.matches(':popover-open')){e.preventDefault();closeCreateThemePicker(true)}});$('createTitle').oninput=()=>$('createTitle').setCustomValidity('');$('createTheme').onchange=syncCreateThemePicker;
 }
 
+
+// Keep navigation anchored while the library fades out below it, without painting a header panel.
+function bindHomeScrollChrome(){
+ if(!document.createComment)return;
+ const home=$('homeView'),header=home.querySelector('.home-top'),body=home.querySelector('.home-body');let pending=0;
+ const paint=()=>{pending=0;const scrolled=home.scrollTop>1;home.classList.toggle('home-scrolled',scrolled);const cutoff=scrolled?Math.max(0,header.getBoundingClientRect().bottom-body.getBoundingClientRect().top):0;body.style.setProperty('--home-content-cutoff',cutoff+'px')};
+ const schedule=()=>{if(!pending)pending=requestAnimationFrame(paint)};home.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule);new ResizeObserver(schedule).observe(header);paint();
+}
+let libraryFilterPicker=null;
+function syncLibraryFilterPicker(){libraryFilterPicker?.sync()}
+function bindLibraryFilterPicker(){
+ if(!document.createComment)return;
+ const select=$('libraryFilter'),trigger=$('libraryFilterToggle'),menu=$('libraryFilterMenu'),value=$('libraryFilterValue');
+ const close=(focus=false)=>{if(menu.matches(':popover-open'))menu.hidePopover();trigger.setAttribute('aria-expanded','false');if(focus)trigger.focus()};
+ const sync=()=>{value.textContent=select.selectedOptions[0]?.textContent||'全部曲目';for(const option of menu.children){const active=option.dataset.value===select.value;option.setAttribute('aria-selected',String(active));option.tabIndex=active?0:-1}};
+ for(const item of select.options){const option=document.createElement('button');option.type='button';option.role='option';option.dataset.value=item.value;const label=document.createElement('span');label.textContent=item.textContent;const check=document.createElement('span');check.className='theme-choice-check';check.innerHTML=appIcon('check');option.append(label,check);option.onclick=()=>{select.value=item.value;select.dispatchEvent(new Event('change',{bubbles:true}));sync();close(true)};menu.append(option)}
+ const open=()=>{sync();const rect=trigger.getBoundingClientRect();menu.style.width=Math.max(150,rect.width)+'px';menu.style.left=Math.min(rect.left,innerWidth-Math.max(150,rect.width)-12)+'px';menu.style.top=rect.bottom+6+'px';menu.style.maxHeight=Math.max(100,innerHeight-rect.bottom-18)+'px';menu.showPopover();trigger.setAttribute('aria-expanded','true');menu.querySelector('[aria-selected=true]')?.focus({preventScroll:true})};
+ trigger.onclick=()=>menu.matches(':popover-open')?close():open();trigger.onkeydown=e=>{if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();open()}};
+ menu.onkeydown=e=>{const options=[...menu.children],index=options.indexOf(document.activeElement);let next=index;if(e.key==='ArrowDown')next=(index+1)%options.length;else if(e.key==='ArrowUp')next=(index+options.length-1)%options.length;else if(e.key==='Home')next=0;else if(e.key==='End')next=options.length-1;else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close(true);return}else if(e.key==='Tab'){close(true);return}else return;e.preventDefault();options[next].focus()};
+ document.addEventListener('pointerdown',e=>{if(menu.matches(':popover-open')&&!menu.contains(e.target)&&!trigger.contains(e.target))close()});$('homeView').addEventListener('scroll',()=>close(),{passive:true});window.addEventListener('resize',()=>close());select.addEventListener('change',sync);libraryFilterPicker={sync,close};sync();
+}
+
 /* 45-workspace.js */
 // v0.3 project library, non-destructive editor, theme controls and portable exports.
 function escName(s){return (s||'untitled').replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').slice(0,90)}
@@ -1452,12 +1487,13 @@ function u16(n){return[(n>>8)&255,n&255]}function u32(n){return[(n>>>24)&255,(n>
 function exportMIDI(p){let all=[{tick:0,kind:'meta',bytes:[0xff,0x51,3,7,161,32]}];const base=KEY_ROOTS[p.playback.tuning]??60;for(let e of scoreEvents(p)){for(let n of e.notes){let midi=base+SCALE[n-1],tick=Math.round(e.timeMs*.96),end=Math.max(tick+1,Math.round((e.timeMs+Math.max(30,e.durationMs))*.96));all.push({tick,kind:'on',bytes:[0x90,midi,clamp(e.velocity||85,1,127)]});all.push({tick:end,kind:'off',bytes:[0x80,midi,0]})}}all.sort((a,b)=>a.tick-b.tick||({'off':0,meta:1,on:2}[a.kind]-{'off':0,meta:1,on:2}[b.kind]));let body=[],t=0;for(let e of all){body.push(...vlq(e.tick-t),...e.bytes);t=e.tick}body.push(0,0xff,0x2f,0);let out=[...('MThd').split('').map(c=>c.charCodeAt(0)),...u32(6),...u16(0),...u16(1),...u16(480),...('MTrk').split('').map(c=>c.charCodeAt(0)),...u32(body.length),...body];downloadBytes(escName(p.title)+'.mid',new Uint8Array(out),'audio/midi')}
 function exportCSV(p){let lines=['step,time_ms,notes,duration_ms,velocity,confidence'];for(let [i,e] of scoreEvents(p).entries())lines.push([i+1,e.timeMs,e.notes.join('+'),e.durationMs,e.velocity||85,e.confidence||''].map(v=>String(v).replaceAll(',',';')).join(','));downloadBytes(escName(p.title)+'.csv',ENCODER.encode('\ufeff'+lines.join('\r\n')),'text/csv;charset=utf-8')}
 function exportJSON(p){downloadBytes(escName(p.title)+'.json',ENCODER.encode(JSON.stringify(p,(_,v)=>v instanceof Uint8Array?undefined:v,2)),'application/json')}
-function openExport(){if(state.project)$('exportDialog').showModal()}
+let returnHomeAfterExport=false;
+function openExport(afterSave=false,returnHome=false){if(!state.project)return;returnHomeAfterExport=returnHome;$('exportTitle').textContent=afterSave?'新曲谱已保存 · 导出文件':'导出乐曲';$('exportDescription').textContent=afterSave?'已在音乐库创建独立副本。请选择 .skymusic 保存完整单曲，或 .skytrack 保存纯谱面；也可以稍后导出。':'选择需要的格式，分享单曲请选择 .skymusic；接收方须先录入引用的 .skytheme 主题。';$('exportLater').hidden=!afterSave;$('exportDialog').showModal()}
 function bindWorkspace(){
  populateThemeChoices();
  $('newSongBtn').onclick=()=>{$('createTitle').value='';$('createTitle').setCustomValidity('');populateThemeChoices();$('createDialog').showModal();$('createTitle').focus()};$('libraryFilter').onchange=renderLibrary;$('createConfirm').onclick=createProject;bindCreateThemePicker();bindThemeRepository();
  $('scoreEditorBtn').onclick=openEditor;$('consoleUndo').onclick=undo;$('consoleRedo').onclick=redo;
- $('sceneEditorBtn').onclick=themeEditor;$('exportProject').onclick=openExport;
+ $('sceneEditorBtn').onclick=themeEditor;$('exportProject').onclick=()=>openExport();$('exportDialog').addEventListener('close',()=>{const home=returnHomeAfterExport;returnHomeAfterExport=false;if(home)returnHomeFromPlayer()});
  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$((b.dataset.close)).close());
  $('batchEditorBtn').onclick=()=>setConsoleMode('fine');$('songInfoBtn').onclick=openSongInfo;$('renameConfirm').onclick=renameConfirmed;$('deleteConfirm').onclick=deleteConfirmed;$('renameInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();renameConfirmed()}};$('saveDirect').onclick=()=>completeEdit('direct');$('saveAsNew').onclick=()=>completeEdit('new');$('discardChanges').onclick=()=>completeEdit('discard');
  $('eventApply').onclick=commitEventFields;$('eventAdd').onclick=eventInsert;$('eventDelete').onclick=eventRemove;
@@ -1607,12 +1643,13 @@ function completeEdit(kind){
  scoreConsole.views.set(original.id,editorView);if(kind==='new')scoreConsole.views.set(chosen.id,{...editorView});const playerView=scoreConsole.returnView;scoreConsole.returnView=null;applyTimelineView(playerView);
  state.history.delete(original.id);state.future.delete(original.id);updateEditButton();
  saveLibrary();
- if(action==='home'){returnHomeFromPlayer();return}
+ if(action==='home'&&kind!=='new'){returnHomeFromPlayer();return}
  try{history.replaceState(null,'','#song='+encodeURIComponent(chosen.id))}catch(error){}
  state.rate=chosen.playback?.rate||1;state.volume=normalizeVolume(chosen.playback?.volume);syncSpeedPicker();syncVolumeControl();
  state.tuning=chosen.playback?.tuning||'C';state.sustain=chosen.playback?.sustain??PLAYER_RULES.sustain.default;
  refreshWorkspace();renderLibrary();saveLibrary();
- toast(kind==='new'?'已另存为新曲谱，已结束编辑':kind==='direct'?'已保存，已结束编辑':'已结束编辑，未保存修改');
+ toast(kind==='new'?'已另存为新曲谱，请选择导出格式':kind==='direct'?'已保存，已结束编辑':'已结束编辑，未保存修改');
+ if(kind==='new')openExport(true,action==='home');
 }
 function openSongInfo(){if(!state.project)return;syncEditorFields();for(let id of ['metaTitle','metaSubtitle','metaDescription'])$(id).readOnly=!state.editMode;$('saveMetadata').hidden=!state.editMode;$('metadataDialog').showModal()}
 

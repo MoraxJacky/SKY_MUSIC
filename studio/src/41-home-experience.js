@@ -103,6 +103,7 @@ function resetHomePresentation(){
 function pauseHomePresentation(){stopHomeCarousel();clearHomeCardPhysics();stopHomeFlow()}
 function resumeHomePresentation(){scheduleHomeCarousel();startHomeFlow()}
 function bindHomeExperience(){
+ bindHomeScrollChrome();bindLibraryFilterPicker();
  if(!document.createComment)return;
  const track=$('homeThemeTrack'),artTrack=$('homeThemeArtTrack'),dotHost=$('homeThemeDots');
  const definitions=Object.values(APP_CONFIG.platform.themes).map(pack=>pack.definition);
@@ -311,4 +312,26 @@ function bindCreateThemePicker(){
  const toggle=$('createThemeToggle'),menu=$('createThemeMenu');toggle.onclick=()=>menu.matches(':popover-open')?closeCreateThemePicker():openCreateThemePicker();toggle.onkeydown=e=>{if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();openCreateThemePicker()}};
  menu.onkeydown=e=>{const options=[...menu.children],index=options.indexOf(document.activeElement);let next=index;if(e.key==='ArrowDown')next=(index+1)%options.length;else if(e.key==='ArrowUp')next=(index+options.length-1)%options.length;else if(e.key==='Home')next=0;else if(e.key==='End')next=options.length-1;else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeCreateThemePicker(true);return}else if(e.key==='Tab'){closeCreateThemePicker(true);return}else return;e.preventDefault();options[next].focus()};
  document.addEventListener('pointerdown',e=>{if(menu.matches(':popover-open')&&!menu.contains(e.target)&&!toggle.contains(e.target))closeCreateThemePicker()});window.addEventListener('resize',()=>closeCreateThemePicker());$('createDialog').addEventListener('close',()=>closeCreateThemePicker());$('createDialog').addEventListener('cancel',e=>{if(menu.matches(':popover-open')){e.preventDefault();closeCreateThemePicker(true)}});$('createTitle').oninput=()=>$('createTitle').setCustomValidity('');$('createTheme').onchange=syncCreateThemePicker;
+}
+
+
+// Keep navigation anchored while the library fades out below it, without painting a header panel.
+function bindHomeScrollChrome(){
+ if(!document.createComment)return;
+ const home=$('homeView'),header=home.querySelector('.home-top'),body=home.querySelector('.home-body');let pending=0;
+ const paint=()=>{pending=0;const scrolled=home.scrollTop>1;home.classList.toggle('home-scrolled',scrolled);const cutoff=scrolled?Math.max(0,header.getBoundingClientRect().bottom-body.getBoundingClientRect().top):0;body.style.setProperty('--home-content-cutoff',cutoff+'px')};
+ const schedule=()=>{if(!pending)pending=requestAnimationFrame(paint)};home.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule);new ResizeObserver(schedule).observe(header);paint();
+}
+let libraryFilterPicker=null;
+function syncLibraryFilterPicker(){libraryFilterPicker?.sync()}
+function bindLibraryFilterPicker(){
+ if(!document.createComment)return;
+ const select=$('libraryFilter'),trigger=$('libraryFilterToggle'),menu=$('libraryFilterMenu'),value=$('libraryFilterValue');
+ const close=(focus=false)=>{if(menu.matches(':popover-open'))menu.hidePopover();trigger.setAttribute('aria-expanded','false');if(focus)trigger.focus()};
+ const sync=()=>{value.textContent=select.selectedOptions[0]?.textContent||'全部曲目';for(const option of menu.children){const active=option.dataset.value===select.value;option.setAttribute('aria-selected',String(active));option.tabIndex=active?0:-1}};
+ for(const item of select.options){const option=document.createElement('button');option.type='button';option.role='option';option.dataset.value=item.value;const label=document.createElement('span');label.textContent=item.textContent;const check=document.createElement('span');check.className='theme-choice-check';check.innerHTML=appIcon('check');option.append(label,check);option.onclick=()=>{select.value=item.value;select.dispatchEvent(new Event('change',{bubbles:true}));sync();close(true)};menu.append(option)}
+ const open=()=>{sync();const rect=trigger.getBoundingClientRect();menu.style.width=Math.max(150,rect.width)+'px';menu.style.left=Math.min(rect.left,innerWidth-Math.max(150,rect.width)-12)+'px';menu.style.top=rect.bottom+6+'px';menu.style.maxHeight=Math.max(100,innerHeight-rect.bottom-18)+'px';menu.showPopover();trigger.setAttribute('aria-expanded','true');menu.querySelector('[aria-selected=true]')?.focus({preventScroll:true})};
+ trigger.onclick=()=>menu.matches(':popover-open')?close():open();trigger.onkeydown=e=>{if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();open()}};
+ menu.onkeydown=e=>{const options=[...menu.children],index=options.indexOf(document.activeElement);let next=index;if(e.key==='ArrowDown')next=(index+1)%options.length;else if(e.key==='ArrowUp')next=(index+options.length-1)%options.length;else if(e.key==='Home')next=0;else if(e.key==='End')next=options.length-1;else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close(true);return}else if(e.key==='Tab'){close(true);return}else return;e.preventDefault();options[next].focus()};
+ document.addEventListener('pointerdown',e=>{if(menu.matches(':popover-open')&&!menu.contains(e.target)&&!trigger.contains(e.target))close()});$('homeView').addEventListener('scroll',()=>close(),{passive:true});window.addEventListener('resize',()=>close());select.addEventListener('change',sync);libraryFilterPicker={sync,close};sync();
 }

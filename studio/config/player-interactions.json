@@ -39,7 +39,7 @@
     "instrumentSnapDelayMs": 110,
     "instrumentRowsBelow": 2,
     "speedRowsBelow": 2,
-    "speedMinimumRows": 2,
+    "speedMinimumRows": 3,
     "speedMaxStepPx": 24
   },
   "volume": {

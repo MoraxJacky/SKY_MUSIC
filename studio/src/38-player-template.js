@@ -16,21 +16,31 @@ function resolvedPlayerColors(project){
  if(/^#[0-9a-f]{6}$/i.test(theme.backgroundColor||''))colors.stageEnd=colors.backdrop=theme.backgroundColor;
  return colors;
 }
+// Surface tokens are shared by the page and top-layer dialogs, without binding interactions.
+const PLATFORM_DIALOG_COLORS={surfaceStart:'#132a3b',surfaceEnd:'#0d1c2c',text:'#edf6ff',muted:'#b9d1e1',border:'#718ba3',accent:'#d8eaf8',button:'#203c50',hover:'#2d4c61',activeStart:'#38566d',activeEnd:'#29465b',backdrop:'#0d1c2c'};
+function applySurfaceTokens(host,colors,material={surfaceGradient:true,surfaceAngle:135,activeGradient:true,activeAngle:145}){
+ for(const [name,value]of Object.entries(colors))host.style.setProperty('--player-'+name.replace(/[A-Z]/g,c=>'-'+c.toLowerCase()),value);
+ host.style.setProperty('--player-surface-paint',material.surfaceGradient?`linear-gradient(${material.surfaceAngle}deg,${colors.surfaceStart},${colors.surfaceEnd})`:colors.surfaceEnd);
+ host.style.setProperty('--player-active-paint',material.activeGradient?`linear-gradient(${material.activeAngle}deg,${colors.activeStart},${colors.activeEnd})`:colors.activeEnd);
+}
+function syncDialogAppearance(){
+ const project=state.mode==='player'?state.project:null,colors=project?resolvedPlayerColors(project):PLATFORM_DIALOG_COLORS,material=project?sanitizeThemeMaterials(themeDefinition(project).materials):undefined;
+ for(const dialog of document.querySelectorAll('.work-dialog:not(.platform-dialog)')){
+  dialog.classList.add('context-dialog');dialog.dataset.theme=project?sceneId(project):'platform';applySurfaceTokens(dialog,colors,material);
+ }
+}
 function syncStatusNotificationAppearance(){
  const el=$('toast');if(!el?.style?.setProperty)return;
  const preview=$('homeThemeDialog')?.open?homeExperience.preview?.project:null,project=preview||(state.mode==='player'?state.project:null);
  const colors=project?resolvedPlayerColors(project):{surfaceStart:'#273e56',surfaceEnd:'#172b42',text:'#edf6ff',border:'#718ba3',accent:'#d8eaf8'};
- document.body.style.setProperty('--control-focus-accent',colors.accent);
+ document.body.style.setProperty('--control-focus-accent',colors.accent);syncDialogAppearance();
  for(const key of ['surfaceStart','surfaceEnd','text','border','accent'])el.style.setProperty('--notice-'+key,colors[key]);el.dataset.theme=project?sceneId(project):'platform';
 }
 function applyPlayerTemplate(project,host){
  const id=sceneId(project),definition=themeDefinition(project),decor=definition.decorations,theme=project.theme||{},colors=resolvedPlayerColors(project);
  state.playerColors=colors;applyThemeClasses(host,definition);
  host.dataset.template=PLAYER_TEMPLATE_ID;host.dataset.theme=id;
- for(let [name,value]of Object.entries(colors))host.style.setProperty('--player-'+name.replace(/[A-Z]/g,c=>'-'+c.toLowerCase()),value);
- const material=sanitizeThemeMaterials(definition.materials);
- host.style.setProperty('--player-surface-paint',material.surfaceGradient?`linear-gradient(${material.surfaceAngle}deg,${colors.surfaceStart},${colors.surfaceEnd})`:colors.surfaceEnd);
- host.style.setProperty('--player-active-paint',material.activeGradient?`linear-gradient(${material.activeAngle}deg,${colors.activeStart},${colors.activeEnd})`:colors.activeEnd);
+ applySurfaceTokens(host,colors,sanitizeThemeMaterials(definition.materials));
  host.style.setProperty('--gold',colors.accent);host.style.setProperty('--theme-accent',colors.accent);host.style.setProperty('--note',colors.note);host.style.setProperty('--chord',colors.chord);
  host.style.setProperty('--glow-strength',String((theme.glow??58)/100));
  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;

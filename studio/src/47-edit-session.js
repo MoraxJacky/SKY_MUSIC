@@ -34,11 +34,12 @@ function completeEdit(kind){
  scoreConsole.views.set(original.id,editorView);if(kind==='new')scoreConsole.views.set(chosen.id,{...editorView});const playerView=scoreConsole.returnView;scoreConsole.returnView=null;applyTimelineView(playerView);
  state.history.delete(original.id);state.future.delete(original.id);updateEditButton();
  saveLibrary();
- if(action==='home'){returnHomeFromPlayer();return}
+ if(action==='home'&&kind!=='new'){returnHomeFromPlayer();return}
  try{history.replaceState(null,'','#song='+encodeURIComponent(chosen.id))}catch(error){}
  state.rate=chosen.playback?.rate||1;state.volume=normalizeVolume(chosen.playback?.volume);syncSpeedPicker();syncVolumeControl();
  state.tuning=chosen.playback?.tuning||'C';state.sustain=chosen.playback?.sustain??PLAYER_RULES.sustain.default;
  refreshWorkspace();renderLibrary();saveLibrary();
- toast(kind==='new'?'已另存为新曲谱，已结束编辑':kind==='direct'?'已保存，已结束编辑':'已结束编辑，未保存修改');
+ toast(kind==='new'?'已另存为新曲谱，请选择导出格式':kind==='direct'?'已保存，已结束编辑':'已结束编辑，未保存修改');
+ if(kind==='new')openExport(true,action==='home');
 }
 function openSongInfo(){if(!state.project)return;syncEditorFields();for(let id of ['metaTitle','metaSubtitle','metaDescription'])$(id).readOnly=!state.editMode;$('saveMetadata').hidden=!state.editMode;$('metadataDialog').showModal()}

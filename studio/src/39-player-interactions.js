@@ -191,8 +191,10 @@ function createDownwardPicker(config){
  function close(returnFocus=false){cancelWheel();menu.hidden=true;trigger.setAttribute('aria-expanded','false');if(returnFocus)trigger.focus()}
  function position(){
   const rect=trigger.getBoundingClientRect();view.row=rect.height;view.step=rect.height+PLAYER_RULES.selectors.instrumentRowGapPx;
-  const origin=Math.min(view.position,Math.max(0,items.length-(config.minimumRows||1)));
-  const below=Math.min(config.rowsBelow()*view.step,(items.length-1-origin)*view.step,Math.max(0,innerHeight-rect.bottom-8));
+  // minimumRows includes the baseline row: keep both lower hit targets at the end.
+  const visibleRows=Math.min(items.length,Math.max(config.minimumRows||1,config.rowsBelow()+1));
+  const origin=Math.min(view.position,Math.max(0,items.length-visibleRows));
+  const below=Math.min((visibleRows-1)*view.step,Math.max(0,innerHeight-rect.bottom-8));
   menu.style.width=rect.width+'px';menu.style.left=rect.left+'px';menu.style.top=rect.top+'px';menu.style.height=(rect.height+below)+'px';focus.style.top=((view.position-origin)*view.step)+'px';focus.style.height=rect.height+'px';
   buttons.forEach((button,i)=>{const y=(i-origin)*view.step;button.style.top=y+'px';button.style.height=view.row+'px';button.style.visibility=y+view.row>0&&y<view.row+below?'visible':'hidden'});menu.dataset.position=String(view.position);
  }
@@ -286,7 +288,7 @@ function startScoreEntrance(){
  });
  const notes=displayedBeat().notes,stampScaleTime=span/(cfg.stampDelayMs+Math.max(0,notes.length-1)*cfg.stampStepMs+cfg.stampMs),stampMs=cfg.stampMs*stampScaleTime;
  [...$('keyBoard').children].filter(key=>notes.includes(Number(key.dataset.note))).forEach((key,index)=>{
-  const delay=blank+(cfg.stampDelayMs+index*cfg.stampStepMs)*stampScaleTime,n=Number(key.dataset.note)-1,column=n%5,row=Math.floor(n/5);a.keys.push({el:key,delay});key.style.zIndex='3';key.style.transformOrigin=(column===0?'left':column===4?'right':'center')+' '+(row===0?'top':row===2?'bottom':'center');
+  const delay=blank+(cfg.stampDelayMs+index*cfg.stampStepMs)*stampScaleTime;a.keys.push({el:key,delay});key.style.zIndex='3';key.style.transformOrigin='center center';
   animate(key,[{opacity:0,transform:'translateY(0px) scale(1)',boxShadow:'0 0 0 '+colors.accent+'00',easing:'cubic-bezier(.16,.8,.3,1)'},{offset:cfg.stampGrowEnd,opacity:1,transform:'translateY(-'+cfg.stampRisePx+'px) scale('+cfg.stampScale+')',boxShadow:'0 0 28px '+colors.accent+'99',easing:'cubic-bezier(.2,.6,.3,1)'},{offset:cfg.stampHighlightEnd,opacity:1,transform:'translateY(-'+cfg.stampRisePx+'px) scale('+cfg.stampScale+')',boxShadow:'0 0 20px '+colors.accent+'77',easing:'cubic-bezier(.3,.05,.35,1)'},{opacity:1,transform:'translateY(0px) scale(1)',boxShadow:'0 0 10px '+colors.accent+'33'}],delay,stampMs,'forwards');
  });
  const duration=cfg.durationMs;

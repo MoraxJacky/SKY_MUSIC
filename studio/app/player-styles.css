@@ -1025,3 +1025,52 @@ body{--control-focus-accent:#d8eaf8;--control-focus-border:color-mix(in srgb,var
 .platform-dialog :is(.btn-outline,.icon-btn){border-color:#c7e6f066;color:#e4f2fb;background:#d5eaff08}
 .platform-dialog :is(.btn-outline,.icon-btn):hover{border-color:#effaffb3;background:#d5eaff16;box-shadow:0 0 12px #ffffff12}
 .platform-dialog .eyebrow{color:#c7e3f1}
+/* Home navigation remains at its opening position; only content scrolls underneath. */
+.home-view .home-top{position:sticky;top:var(--home-top-space);z-index:40;flex-shrink:0}
+.home-view.home-scrolled .home-body{clip-path:inset(var(--home-content-cutoff,0px) 0 0);mask-image:linear-gradient(to bottom,transparent var(--home-content-cutoff,0px),#000 calc(var(--home-content-cutoff,0px) + 28px));-webkit-mask-image:linear-gradient(to bottom,transparent var(--home-content-cutoff,0px),#000 calc(var(--home-content-cutoff,0px) + 28px))}
+.home-view .home-top-actions>.btn-quiet:hover,.home-view .home-top-actions>.btn-quiet:focus-visible{background:#cfeaff19;border-color:#e4f4ff66;color:#f2faff}
+.home-view .home-top-actions>.btn-outline:hover,.home-view .home-top-actions>.btn-outline:focus-visible{background:#284a60bd;border-color:#d8efffa3;color:#f2faff}
+.home-view .library-filter-toggle{width:auto;min-width:92px;height:34px;border-color:#a9ced563;background:#112b3bcc;font-size:12px;border-radius:10px;white-space:nowrap}
+.home-view .library-filter-toggle:hover,.home-view .library-filter-toggle:focus-visible{border-color:#e8f7ffb3;box-shadow:0 0 10px #ffffff18;background:#244459dd}
+#libraryFilter[hidden]{display:none!important}
+#libraryFilterMenu button{margin:0;white-space:nowrap}
+.home-view #libraryCount{display:inline-flex;align-items:center;justify-content:center;flex:none;min-height:30px;padding:4px 10px;border:1px solid #d7ecff40;border-radius:8px;background:#10293bc9;color:#f0f8ff;font-size:13px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:0 1px 3px #07111e80}
+.home-view .home-carousel-action .theme-preview-open{box-shadow:0 3px 0 #536f7880,0 7px 13px #04132666,inset 0 1px 1px #ffffff8c;transition:box-shadow .18s ease,transform .18s ease,background .18s ease}
+.home-view .home-carousel-action .theme-preview-open:hover,.home-view .home-carousel-action .theme-preview-open:focus-visible{background:linear-gradient(125deg,#edf8f5,#c4dde0);box-shadow:0 4px 0 #536f7880,0 10px 18px #04132673,inset 0 1px 1px #ffffffaa;transform:translateY(-1px)}
+.home-view .home-carousel-action .theme-preview-open:active{transform:translateY(2px);box-shadow:0 1px 0 #536f7880,0 3px 7px #04132655}
+@media(prefers-reduced-motion:reduce){.home-view .home-carousel-action .theme-preview-open{transition:none}}
+/* Top-layer surfaces use the same resolved theme tokens as the player shell. */
+.work-dialog.context-dialog{background:var(--player-surface-paint);color:var(--player-text);border-color:var(--player-border);box-shadow:0 26px 90px #020914b3,inset 0 1px #ffffff18}
+.work-dialog.context-dialog::backdrop{background:color-mix(in srgb,var(--player-backdrop) 78%,transparent);backdrop-filter:blur(8px)}
+.work-dialog.context-dialog :is(h2,h3,strong){color:var(--player-text)}
+.work-dialog.context-dialog :is(p,.dialog-sub,.import-description,small,label,.muted){color:var(--player-muted)}
+.work-dialog.context-dialog :is(button,input:not([type=range]),select,textarea){background:var(--player-button);border-color:var(--player-border);color:var(--player-text)}
+.work-dialog.context-dialog button:hover{background:var(--player-hover);border-color:color-mix(in srgb,var(--player-accent) 40%,white);box-shadow:0 0 12px #ffffff12}
+.work-dialog.context-dialog .btn-quiet{background:transparent;border-color:transparent}
+.work-dialog.context-dialog .btn-quiet:hover{background:var(--player-hover);border-color:var(--player-border)}
+.work-dialog.context-dialog .btn-primary{background:linear-gradient(135deg,color-mix(in srgb,var(--player-accent) 74%,white),var(--player-accent));border-color:var(--player-accent);color:var(--player-backdrop)}
+.work-dialog.context-dialog .export-options button:first-child{background:var(--player-active-paint);border-color:var(--player-accent)}
+.work-dialog.context-dialog .export-options button span{color:var(--player-muted)}
+.work-dialog.context-dialog .export-options button:hover{background:var(--player-hover);border-color:var(--player-accent)}
+.work-dialog.context-dialog .import-dropzone{background:color-mix(in srgb,var(--player-button) 65%,transparent);border-color:var(--player-border)}
+.work-dialog.context-dialog input[type=range]{accent-color:var(--player-accent)}
+/* Legend swatches and both score views resolve the same category palette. */
+.player-view .roll-foot .dot{box-shadow:inset 0 0 0 1px #ffffff30,0 1px 3px #0004}
+.player-view .roll-foot .note-a{background:var(--player-note)}
+.player-view .roll-foot .note-b{background:var(--player-chord)}
+.player-view .roll-foot .note-poly{background:var(--player-poly)}
+.work-dialog.context-dialog .theme-choices button.is-active{border-color:var(--player-accent);box-shadow:inset 0 0 0 1px var(--player-accent)}
+
+/* Shared breathing room reserves the same outer boundary for every song theme. */
+.player-view{--player-outer-gutter:clamp(20px,3vw,52px);padding-left:var(--player-outer-gutter);padding-right:var(--player-outer-gutter);padding-bottom:clamp(24px,3.6dvh,40px)}
+.player-view .player-header{padding-left:0;padding-right:0}
+@media(max-width:900px){.player-view{--player-outer-gutter:16px;padding-bottom:28px}}
+@media(max-width:600px){.player-view{--player-outer-gutter:12px;padding-bottom:24px}}
+.home-view .light-cone .cover-tag{font-size:10px;line-height:1.3;font-weight:600;padding:4px 7px;opacity:1;color:#eef7fb;background:#173244d9;border-color:#e3f3ff70;text-shadow:0 1px 2px #07121e80}
+.home-view .light-cone:hover .cover-tag,.home-view .light-cone:focus-within .cover-tag{opacity:1}
+.theme-repository-dialog .dialog-head h2{margin:0 0 6px}.theme-repository-dialog .dialog-head .eyebrow{display:block;font-size:9px}
+.home-view .library-grid>.add-card{justify-content:center;align-items:center;gap:12px;text-align:center;padding:20px}
+.home-view .library-grid>.add-card .plus{display:flex;align-items:center;justify-content:center;line-height:1}
+.home-view .library-grid>.add-card .plus .app-icon{width:32px;height:32px}
+.home-view .library-grid>.add-card strong{font-size:15px;line-height:1.4;margin:0}
+@media(max-width:900px){.home-view{height:100dvh}}
