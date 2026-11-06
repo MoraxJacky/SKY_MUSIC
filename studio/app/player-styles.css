@@ -431,3 +431,9 @@ body:has(dialog[open]){overflow:hidden}
 @media(max-width:850px){.player-view .score-console{height:96dvh;max-height:96dvh;padding:14px}.console-layout{display:block;overflow:auto}.console-score{height:540px}.score-console[data-mode=fine] .console-score{height:420px}.console-side{margin-top:14px;overflow:visible}.console-footer{flex-wrap:wrap}.console-head h2{font-size:19px}.console-tabs{gap:5px}.console-tabs button{font-size:13px;padding:7px}.console-footer>div{width:100%;justify-content:flex-end}}
 
 .console-side #consoleInspectorSlot>summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--player-accent)}.console-side #consoleInspectorSlot[open]>summary{margin-bottom:12px}
+
+/* Console preview displays the A/B halves of a 32-beat group separately. */
+.player-view #consoleGridSlot .beat-grid{grid-template-rows:repeat(2,minmax(0,1fr));min-height:130px}
+.score-console[data-mode=generate] .console-score{grid-template-rows:minmax(245px,.8fr) minmax(310px,1fr);overflow:auto}
+.player-view #consoleGridSlot .page-actions span{min-width:74px;white-space:nowrap}
+@media(max-width:850px){.score-console[data-mode=generate] .console-score{height:570px}}

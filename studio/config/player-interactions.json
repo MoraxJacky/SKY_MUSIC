@@ -65,6 +65,7 @@
       "record",
       "fine",
       "generate"
-    ]
+    ],
+    "beatRowsPerSection": 2
   }
 }
