@@ -27,6 +27,7 @@ with sync_playwright() as pw:
  }''')
  page.reload();page.wait_for_function("Boolean(window.__SKY_STUDIO_TEST__.THEME_DEFINITIONS['registered-test'])")
  assert page.evaluate("window.__SKY_STUDIO_TEST__.state.library.some(p=>p.theme.id==='registered-test')")
+ page.evaluate("()=>{const t=window.__SKY_STUDIO_TEST__;t.openSong(t.state.library.find(p=>p.theme.id==='registered-test').id)}")
  with page.expect_download() as dl:page.evaluate('window.__SKY_STUDIO_TEST__.exportPlatformEntry(window.__SKY_STUDIO_TEST__.state.project)')
  download=dl.value;download.save_as(out/'roundtrip.skymusic');doc=json.loads((out/'roundtrip.skymusic').read_text('utf-8'));assert doc['theme']=={'id':'registered-test'};assert doc['music']['events'];assert 'definition' not in doc['theme']
  # Old ZIP project remains readable.

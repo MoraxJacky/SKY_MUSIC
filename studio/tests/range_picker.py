@@ -92,7 +92,10 @@ with sync_playwright() as pw:
             assert menu.is_hidden()
             assert page.evaluate('window.__SKY_STUDIO_TEST__.state.tuning') == key
         assert page.evaluate('JSON.stringify(window.__SKY_STUDIO_TEST__.state.project.score)') == score
+        saved_id=page.evaluate('window.__SKY_STUDIO_TEST__.state.project.id')
         page.reload()
+        assert page.locator('#homeView').is_visible()
+        page.evaluate('id=>window.__SKY_STUDIO_TEST__.openSong(id)',saved_id)
         assert page.locator('#keyRangeValue').inner_text() == 'B 大调'
         if width == 1366:
             page.locator('#playBtn').click()

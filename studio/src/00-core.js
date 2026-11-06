@@ -13,6 +13,7 @@ const KEY_DEGREES={C:['C','D','E','F','G','A','B'],Db:['D♭','E♭','F','G♭',
 KEY_ROOTS['sky-original']=60;KEY_DEGREES['sky-original']=KEY_DEGREES.C;
 const BUILTINS=(window.SKY_BUILTINS||[]).map(p=>({...copy(p),originKind:'builtin'}));
 const BUILTIN_IDS=new Set(BUILTINS.map(p=>p.id));
+const LOCALLY_LOADED_IDS=new Set();
 const SAMPLES=window.SKY_SAMPLES||{};
 const SCENE_EMBEDS=window.SKY_EMBED_SCENES||{};
 const PRESETS=Object.fromEntries(Object.entries(THEME_DEFINITIONS).map(([id,t])=>[id,{id,name:t.name,accent:t.defaults.accent,stage:id}]));
@@ -73,7 +74,7 @@ const eventLabel=(e,tuning=state.tuning)=>e?.notes?.length?e.notes.map(n=>noteNa
 const songNotes=p=>scoreEvents(p).reduce((s,e)=>s+e.notes.length,0);
 function toast(text,ms=3500){const el=$('toast');el.textContent=text;el.hidden=false;clearTimeout(state.toastTimer);state.toastTimer=setTimeout(()=>el.hidden=true,ms)}
 function saveLibrary(){state.beatLayoutCache=null;if(state.editMode&&state.project&&state.editBaseline){state.editDirty=snapshot(state.project)!==state.editBaseline;updateEditButton()}try{localStorage.setItem('sky-studio-projects-v03',JSON.stringify(state.library.map(p=>({...p,_imageBytes:null,_imageUrl:(p._imageUrl?.length||0)<500000?p._imageUrl:null}))))}catch(e){console.warn('本地收藏缓存空间不足',e);toast(e?.name==='SecurityError'?'当前预览环境禁止本地保存，请导出 .skymusic 文件':'本地存储空间不足，请导出 .skymusic 备份',6000)}scheduleDbBackup?.()}
-function loadLibrary(){try{let saved=JSON.parse(localStorage.getItem('sky-studio-projects-v03')||localStorage.getItem('sky-studio-projects-v02')||'[]');if(Array.isArray(saved)){for(const p of saved.slice(0,40)){try{let n=normalize({...p,originKind:BUILTIN_IDS.has(p.id)?'builtin':(p.originKind||'user')});{let idx=state.library.findIndex(q=>q.id===n.id);if(idx>=0)state.library[idx]=n;else state.library.push(n)}}catch(e){}}}}catch(e){}}
+function loadLibrary(){try{let saved=JSON.parse(localStorage.getItem('sky-studio-projects-v03')||localStorage.getItem('sky-studio-projects-v02')||'[]');if(Array.isArray(saved)){for(const p of saved.slice(0,40)){try{let n=normalize({...p,originKind:BUILTIN_IDS.has(p.id)?'builtin':(p.originKind||'user')});LOCALLY_LOADED_IDS.add(n.id);{let idx=state.library.findIndex(q=>q.id===n.id);if(idx>=0)state.library[idx]=n;else state.library.push(n)}}catch(e){}}}}catch(e){}}
 function downloadBytes(name,bytes,mime){let url=URL.createObjectURL(new Blob([bytes],{type:mime}));let a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000)}
 function sceneId(p){return PRESETS[p?.theme?.id]?p.theme.id:APP_CONFIG.defaultTheme}
 function setTheme(id){if(!state.project||!state.editMode)return;let next=PRESETS[id]||PRESETS[APP_CONFIG.defaultTheme];rememberEdit();state.project.theme=normalize({score:{events:[]},theme:{id:next.id,...THEME_DEFINITIONS[next.id].defaults,...THEME_DEFINITIONS[next.id].initialOverrides}}).theme;state.project._imageUrl=null;state.project._imageBytes=null;applyTheme();saveLibrary();renderLibrary();toast('已切换至 '+next.name+' 主题')}
