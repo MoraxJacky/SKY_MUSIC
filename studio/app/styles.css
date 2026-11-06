@@ -392,3 +392,6 @@ body:has(dialog[open]){overflow:hidden}
 .player-view .control-inline:is(.volume-control,.sustain-control){gap:4px;min-width:0}
 .player-view :is(.volume-control,.sustain-control) input[type=range]{margin:0}
 .player-view :is(.volume-control,.sustain-control) output{min-width:30px;text-align:left}
+
+/* Match the v7 roll crosshair and reserve touch drags for timeline seeking. */
+.player-view #rollCanvas{cursor:crosshair;touch-action:none;user-select:none}

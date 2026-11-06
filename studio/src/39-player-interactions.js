@@ -3,9 +3,34 @@ function syncVolumeControl(){
  const rules=PLAYER_RULES.volume,percent=Math.round(state.volume*100),slider=$(rules.sliderId);
  slider.value=String(percent);slider.setAttribute('aria-valuetext',percent===0?'静音':percent+'%');$(rules.outputId).textContent=percent+'%';updateVolumeAudio();
 }
+let cancelRollDrag=()=>{};
+function bindRollPointerSeek(){
+ const canvas=$('rollCanvas');let drag=null;
+ const stop=()=>{const pointerId=drag?.pointerId;drag=null;if(pointerId!==undefined&&canvas.hasPointerCapture(pointerId))canvas.releasePointerCapture(pointerId)};
+ cancelRollDrag=stop;
+ const move=event=>{
+  if(!drag||event.pointerId!==drag.pointerId)return;
+  if(state.project!==drag.project||state.mode!=='player'){stop();return}
+  const fraction=clamp((event.clientX-drag.rectLeft-drag.left)/drag.plotW,0,1);
+  const end=drag.end<state.project.durationMs?drag.end-.001:drag.end;
+  seekTo(clamp(drag.begin+fraction*drag.windowMs,0,end),false,drag);
+ };
+ canvas.addEventListener('pointerdown',event=>{
+  if(!PLAYER_RULES.roll.pointerSeek||!state.project||event.button!==0||event.isPrimary===false)return;
+  const rect=canvas.getBoundingClientRect(),frame=rollFrame(),geometry=rollPlotGeometry(rect,frame),x=event.clientX-rect.left,y=event.clientY-rect.top;
+  if(geometry.plotW<=0||x<geometry.left||x>geometry.left+geometry.plotW||y<geometry.top-6||y>rect.height-geometry.bottom+6)return;
+  event.preventDefault();pauseSong();cancelRollFinish();
+  drag={...frame,...geometry,rectLeft:rect.left,pointerId:event.pointerId,project:state.project};canvas.setPointerCapture(event.pointerId);move(event);
+ });
+ canvas.addEventListener('pointermove',move);
+ canvas.addEventListener('pointerup',event=>{if(drag&&event.pointerId===drag.pointerId){move(event);stop()}});
+ canvas.addEventListener('pointercancel',stop);canvas.addEventListener('lostpointercapture',()=>{drag=null});
+ window.addEventListener('blur',stop);
+}
 function bindPlayerInteractions(){
  $(PLAYER_RULES.volume.sliderId).oninput=ev=>{state.volume=normalizeVolume(Number(ev.target.value)/100);if(state.project){state.project.playback.volume=state.volume;saveLibrary()}syncVolumeControl()};
 
+ bindRollPointerSeek();
  $('backLibrary').onclick=goHome;
  $('rollWindow').innerHTML='';for(const seconds of PLAYER_RULES.roll.windowsSeconds){const option=document.createElement('option');option.value=String(seconds);option.textContent=seconds+'秒';$('rollWindow').append(option)}
  $('playBtn').onclick=()=>playPause();$('restartBtn').onclick=()=>seekTo(0);

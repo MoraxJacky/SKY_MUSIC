@@ -254,13 +254,13 @@ function lowerBound(arr,t){let l=0,r=arr.length;while(l<r){let m=(l+r)>>1;if(arr
 function scheduleAudio(){if(!state.isPlaying)return;let events=scoreEvents(state.project),now=realPosition(),lookahead=Math.min(state.project.durationMs,now+170*state.rate);while(state.scheduleIndex<events.length&&events[state.scheduleIndex].timeMs<=lookahead){let e=events[state.scheduleIndex++];if(!e.notes.length||e.timeMs<now-35)continue;let at=state.audioCtx.currentTime+Math.max(0,(e.timeMs-now)/(1000*state.rate));for(let n of e.notes)triggerSample(n,at,e.durationMs,e.notes.length,e.velocity||85)}}
 async function playPause(){if(state.isPlaying){pauseSong();return}if(!state.project)return;cancelRollFinish();try{toast('正在准备音源…',1300);if(!await preloadPiano())return}catch(err){console.error(err);toast('音源加载失败：'+err.message,6000);return}if(state.position>=state.project.durationMs-80){state.position=0;state.rollPageStart=0}state.isPlaying=true;beginClock();$('playBtn').textContent='Ⅱ 暂停';state.sceneBase=performance.now();state.raf=requestAnimationFrame(playFrame);toast('开始演奏',1000)}
 function pauseSong(){if(!state.isPlaying)return;state.position=clamp(realPosition(),0,state.project.durationMs);state.isPlaying=false;clearInterval(state.interval);cancelAnimationFrame(state.raf);stopVoices();$('playBtn').textContent='▶ 播放';updateVisual();$('stageStatus').textContent='已暂停'}
-function seekTo(time,preserveRoll=false){
+function seekTo(time,preserveRoll=false,rollView=null){
  if(!state.project)return;
  const was=state.isPlaying,frame=rollFrame(was?realPosition():state.position),fraction=frame.phase/frame.windowMs;
  cancelRollFinish();
  if(was){clearInterval(state.interval);stopVoices()}
  state.position=clamp(time,0,Math.max(0,state.project.durationMs));
- state.rollPageStart=preserveRoll?rollSeekOrigin(state.position,fraction):Math.floor(Math.max(0,state.position-(state.position>=state.project.durationMs ? .001 : 0))/(state.windowSec*1000))*state.windowSec*1000;
+ state.rollPageStart=rollView?rollView.begin:preserveRoll?rollSeekOrigin(state.position,fraction):Math.floor(Math.max(0,state.position-(state.position>=state.project.durationMs ? .001 : 0))/(state.windowSec*1000))*state.windowSec*1000;
  state.lastSelected=-1;
  // Re-anchor the running audio clock directly: rapid drag events never spawn async play calls.
  if(was)beginClock();
@@ -538,9 +538,34 @@ function syncVolumeControl(){
  const rules=PLAYER_RULES.volume,percent=Math.round(state.volume*100),slider=$(rules.sliderId);
  slider.value=String(percent);slider.setAttribute('aria-valuetext',percent===0?'静音':percent+'%');$(rules.outputId).textContent=percent+'%';updateVolumeAudio();
 }
+let cancelRollDrag=()=>{};
+function bindRollPointerSeek(){
+ const canvas=$('rollCanvas');let drag=null;
+ const stop=()=>{const pointerId=drag?.pointerId;drag=null;if(pointerId!==undefined&&canvas.hasPointerCapture(pointerId))canvas.releasePointerCapture(pointerId)};
+ cancelRollDrag=stop;
+ const move=event=>{
+  if(!drag||event.pointerId!==drag.pointerId)return;
+  if(state.project!==drag.project||state.mode!=='player'){stop();return}
+  const fraction=clamp((event.clientX-drag.rectLeft-drag.left)/drag.plotW,0,1);
+  const end=drag.end<state.project.durationMs?drag.end-.001:drag.end;
+  seekTo(clamp(drag.begin+fraction*drag.windowMs,0,end),false,drag);
+ };
+ canvas.addEventListener('pointerdown',event=>{
+  if(!PLAYER_RULES.roll.pointerSeek||!state.project||event.button!==0||event.isPrimary===false)return;
+  const rect=canvas.getBoundingClientRect(),frame=rollFrame(),geometry=rollPlotGeometry(rect,frame),x=event.clientX-rect.left,y=event.clientY-rect.top;
+  if(geometry.plotW<=0||x<geometry.left||x>geometry.left+geometry.plotW||y<geometry.top-6||y>rect.height-geometry.bottom+6)return;
+  event.preventDefault();pauseSong();cancelRollFinish();
+  drag={...frame,...geometry,rectLeft:rect.left,pointerId:event.pointerId,project:state.project};canvas.setPointerCapture(event.pointerId);move(event);
+ });
+ canvas.addEventListener('pointermove',move);
+ canvas.addEventListener('pointerup',event=>{if(drag&&event.pointerId===drag.pointerId){move(event);stop()}});
+ canvas.addEventListener('pointercancel',stop);canvas.addEventListener('lostpointercapture',()=>{drag=null});
+ window.addEventListener('blur',stop);
+}
 function bindPlayerInteractions(){
  $(PLAYER_RULES.volume.sliderId).oninput=ev=>{state.volume=normalizeVolume(Number(ev.target.value)/100);if(state.project){state.project.playback.volume=state.volume;saveLibrary()}syncVolumeControl()};
 
+ bindRollPointerSeek();
  $('backLibrary').onclick=goHome;
  $('rollWindow').innerHTML='';for(const seconds of PLAYER_RULES.roll.windowsSeconds){const option=document.createElement('option');option.value=String(seconds);option.textContent=seconds+'秒';$('rollWindow').append(option)}
  $('playBtn').onclick=()=>playPause();$('restartBtn').onclick=()=>seekTo(0);
@@ -684,8 +709,8 @@ function snowPopulate(element,count,scope='world'){element.innerHTML='';for(let 
 function renderLibrary(){let q=$('songSearch').value.trim().toLowerCase(),c=$('libraryCards');c.innerHTML='';let filter=$('libraryFilter').value;let visible=state.library.filter(p=>(p.title+' '+p.subtitle+' '+(p.author||'')).toLowerCase().includes(q)).filter(p=>filter==='favorite'?p.favorite:filter==='recent'?p.lastOpened>0:true);if(filter==='recent')visible.sort((a,b)=>b.lastOpened-a.lastOpened);$('libraryCount').textContent=state.library.length+' 首乐曲';for(let song of visible){let card=document.createElement('article');card.className='song-card';let scene=sceneId(song);const cover=(platformCover(song)||THEME_DEFINITIONS[scene].decorations.cover)?`<img alt="" src="${platformCover(song)||song._imageUrl||themeAsset(THEME_DEFINITIONS[scene].decorations.cover,song)}">`:'';card.innerHTML=`<div class="song-cover ${scene}"><span class="cover-tag">${song.originKind==='builtin'?'内置歌曲':song.originKind==='imported'?'导入曲谱':'我的曲谱'}</span>${cover}</div><div class="song-details"><div><h3></h3><p></p></div><button class="card-play">▶</button></div>`;card.querySelector('h3').textContent=song.card?.title||song.title;card.querySelector('p').textContent=song.card?.subtitle||durationFmt(song.durationMs)+' · '+songNotes(song)+' 音符 · '+(PRESETS[scene]?.name||'主题');card.querySelector('.card-play').onclick=()=>openSong(song.id);card.querySelector('.song-cover').onclick=()=>openSong(song.id);
  let actions=document.createElement('div');actions.className='song-card-actions';for(let [label,func,title] of [[song.favorite?'★':'☆',()=>favoriteSong(song.id),'收藏'],['✎',()=>renameSong(song.id),'重命名'],['⧉',()=>duplicateSong(song.id),'制作副本'],['×',()=>deleteSong(song.id),'删除项目']]){let btn=document.createElement('button');btn.textContent=label;btn.title=title;btn.setAttribute('aria-label',title);btn.onclick=e=>{e.stopPropagation();func()};actions.append(btn)}card.querySelector('.song-cover').append(actions);c.append(card)}let add=document.createElement('button');add.className='song-card add-card';add.innerHTML='<span class="plus">＋</span><strong>导入新的乐曲</strong><span>SKYMUSIC · MIDI · MUSICXML · AUDIO</span>';add.onclick=()=>openImport();c.append(add)}
 function openImport(){$('importDialog').showModal()}
-function mountPlatformProject(id){invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();pauseSong();let p=state.library.find(p=>p.id===id);if(!p){toast('找不到歌曲');return}state.project=p;state.editMode=false;state.editDirty=false;state.editSource=null;state.editBaseline=null;updateEditButton();p.lastOpened=Date.now();saveLibrary();state.position=0;state.rollPageStart=0;state.selected=0;state.lastSelected=-1;state.page=-1;state.rate=p.playback.rate||1;state.tuning=p.playback.tuning||'C';state.sustain=Number.isFinite(p.playback.sustain)?p.playback.sustain:.45;state.volume=normalizeVolume(p.playback.volume);syncVolumeControl();$('homeView').hidden=true;$('playerView').hidden=false;state.mode='player';$('playBtn').textContent='▶ 播放';$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';syncSpeedPicker();$('sustainSlider').value=Math.round(state.sustain*100);$('sustainValue').textContent=Math.round(state.sustain*100)+'%';$('instrumentSelect').value=p.playback.instrument||'offline';$('keySelect').value=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs);$('playBtn').disabled=false;applyTheme();initializeScene();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();try{localStorage.setItem('sky-last-song',id)}catch(e){console.warn('最近播放缓存不可用',e)}requestAnimationFrame(drawRoll);try{history.replaceState(null,'','#song='+encodeURIComponent(id))}catch(e){}}
-function goHome(){invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();if(state.editMode){requestFinishEdit('home');return}pauseSong();state.mode='home';$('playerView').hidden=true;$('homeView').hidden=false;try{history.replaceState(null,'',location.pathname)}catch(e){};renderLibrary();toast('已返回音乐馆',1000)}
+function mountPlatformProject(id){cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();pauseSong();let p=state.library.find(p=>p.id===id);if(!p){toast('找不到歌曲');return}state.project=p;state.editMode=false;state.editDirty=false;state.editSource=null;state.editBaseline=null;updateEditButton();p.lastOpened=Date.now();saveLibrary();state.position=0;state.rollPageStart=0;state.selected=0;state.lastSelected=-1;state.page=-1;state.rate=p.playback.rate||1;state.tuning=p.playback.tuning||'C';state.sustain=Number.isFinite(p.playback.sustain)?p.playback.sustain:.45;state.volume=normalizeVolume(p.playback.volume);syncVolumeControl();$('homeView').hidden=true;$('playerView').hidden=false;state.mode='player';$('playBtn').textContent='▶ 播放';$('songTitle').textContent=p.title;$('songSubtitle').textContent=p.subtitle;$('durationHeader').textContent=durationFmt(p.durationMs);$('noteCountHeader').textContent=songNotes(p)+' NOTES';syncSpeedPicker();$('sustainSlider').value=Math.round(state.sustain*100);$('sustainValue').textContent=Math.round(state.sustain*100)+'%';$('instrumentSelect').value=p.playback.instrument||'offline';$('keySelect').value=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';$('seekSlider').max=p.durationMs;$('seekMax').textContent=durationFmt(p.durationMs);$('playBtn').disabled=false;applyTheme();initializeScene();renderKeyBoard();renderBeatGrid(true);updateVisual();refreshHistoryButtons();try{localStorage.setItem('sky-last-song',id)}catch(e){console.warn('最近播放缓存不可用',e)}requestAnimationFrame(drawRoll);try{history.replaceState(null,'','#song='+encodeURIComponent(id))}catch(e){}}
+function goHome(){cancelRollDrag();invalidateInstrumentChange();closeInstrumentPicker();closeSpeedPicker();closeRangePicker();cancelRollFinish();if(state.editMode){requestFinishEdit('home');return}pauseSong();state.mode='home';$('playerView').hidden=true;$('homeView').hidden=false;try{history.replaceState(null,'',location.pathname)}catch(e){};renderLibrary();toast('已返回音乐馆',1000)}
 function applyTheme(){let p=state.project;if(!p)return;let theme=sceneId(p),host=$('playerView');applyPlayerTemplate(p,host);initializeScene()}
 function beatIndex(time){let events=scoreEvents(state.project);return clamp(lowerBound(events,time+1)-1,0,Math.max(events.length-1,0))}
 function stepEvent(direction){if(!state.project)return;pauseSong();let events=scoreEvents(state.project),index=clamp(state.selected+direction,0,events.length-1);if(events[index])seekTo(events[index].timeMs)}
@@ -742,7 +767,11 @@ function rollTimeLabels(frame=rollFrame()){
  return labels.sort((a,b)=>a.timeMs-b.timeMs);
 }
 function rollTimeText(timeMs){return Number((timeMs/1000).toFixed(3))+'s'}
-function drawRoll(){if(!state.project||state.mode!=='player')return;let cv=$('rollCanvas'),rect=cv.getBoundingClientRect();if(rect.width<30||rect.height<30)return;let dpr=Math.min(2,devicePixelRatio||1);if(cv.width!==Math.round(rect.width*dpr)||cv.height!==Math.round(rect.height*dpr)){cv.width=Math.round(rect.width*dpr);cv.height=Math.round(rect.height*dpr)}const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);let W=rect.width,H=rect.height,left=59,top=25,bottom=23,sec=state.windowSec,{begin,end,windowMs,phase}=rollFrame();c.font='10px ui-monospace,monospace';const right=Math.max(13,c.measureText(rollTimeText(end)).width/2+4),plotW=W-left-right,rowH=(H-top-bottom)/15;
+function rollPlotGeometry(rect,frame=rollFrame(),context=$('rollCanvas').getContext('2d')){
+ context.save();context.font='10px ui-monospace,monospace';const right=Math.max(13,context.measureText(rollTimeText(frame.end)).width/2+4);context.restore();
+ return {left:59,top:25,bottom:23,right,plotW:rect.width-59-right};
+}
+function drawRoll(){if(!state.project||state.mode!=='player')return;let cv=$('rollCanvas'),rect=cv.getBoundingClientRect();if(rect.width<30||rect.height<30)return;let dpr=Math.min(2,devicePixelRatio||1);if(cv.width!==Math.round(rect.width*dpr)||cv.height!==Math.round(rect.height*dpr)){cv.width=Math.round(rect.width*dpr);cv.height=Math.round(rect.height*dpr)}const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);let W=rect.width,H=rect.height,left=59,top=25,bottom=23,sec=state.windowSec,{begin,end,windowMs,phase}=rollFrame();const {plotW}=rollPlotGeometry(rect,{begin,end},c),rowH=(H-top-bottom)/15;
  const colors=state.playerColors||PLAYER_APPEARANCE[APP_CONFIG.defaultTheme];
  const paper=themeDefinition().rollPalette||{base:colors.surfaceEnd,light:colors.surfaceStart,medium:colors.gridEnd,dark:colors.rest,label:colors.muted,anchor:colors.accent};
  c.clearRect(0,0,W,H);c.fillStyle=paper.base;c.fillRect(0,0,W,H);
@@ -886,6 +915,6 @@ function install(){restorePlatformThemes();state.library=BUILTINS.map(p=>normali
  }
 // Avoid editing the user-provided v7 backup: all transforms occur on copied score objects.
 
-window.__SKY_STUDIO_TEST__={state,openSong,goHome,normalize,makeZip,readZip,unpackProject,parseMIDI,parseCSV,parseMusicXML,exportProject,exportMIDI,exportCSV,importFile,createProject,renameSong,renameConfirmed,duplicateSong,deleteSong,deleteConfirmed,completeEdit,openEditor,requestFinishEdit,KEY_ROOTS,noteMidi,noteName,rollFrame,rollTimeLabels,platformController,importFiles,importPlatformFile,readMusicResource,exportPlatformEntry,projectEntry,PLAYER_RULES,THEME_DEFINITIONS,bindPlayerInteractions,INSTRUMENTS,loadInstrumentBank,preloadPiano,triggerSample,chooseInstrument,undo,redo,eventInsert,eventRemove,applyThemeFields,analyseSkyGrid,applyPlayerTemplate,PLAYER_TEMPLATE_ID};
+window.__SKY_STUDIO_TEST__={state,openSong,goHome,normalize,makeZip,readZip,unpackProject,parseMIDI,parseCSV,parseMusicXML,exportProject,exportMIDI,exportCSV,importFile,createProject,renameSong,renameConfirmed,duplicateSong,deleteSong,deleteConfirmed,completeEdit,openEditor,requestFinishEdit,KEY_ROOTS,noteMidi,noteName,rollFrame,rollTimeLabels,rollPlotGeometry,platformController,importFiles,importPlatformFile,readMusicResource,exportPlatformEntry,projectEntry,PLAYER_RULES,THEME_DEFINITIONS,bindPlayerInteractions,INSTRUMENTS,loadInstrumentBank,preloadPiano,triggerSample,chooseInstrument,undo,redo,eventInsert,eventRemove,applyThemeFields,analyseSkyGrid,applyPlayerTemplate,PLAYER_TEMPLATE_ID};
 install();startDbBackup();
 })();

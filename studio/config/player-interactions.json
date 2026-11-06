@@ -22,7 +22,8 @@
       "10": 1,
       "12": 5,
       "20": 5
-    }
+    },
+    "pointerSeek": true
   },
   "keyboard": {
     "playPause": "Space",
