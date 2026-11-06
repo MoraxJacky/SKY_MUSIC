@@ -74,7 +74,7 @@ python -X utf8 scripts/configuration.py --check
 
 旧版的原始交付、素材和历史验证记录仍保留在外层基线目录。
 
-音量同属共用交互：`player-interactions.json.volume` 定义默认 25%、独立的整体输出增益 8（始终按 0–100% 线性缩放，初始值不参与标定）、25ms 过渡和 UI 控件 ID；具体值保存在单曲 `playback.volume`，无需为主题或歌曲新增处理器。UI 识别契约见 `docs/PLAYER_TEMPLATE.md` 的“音量交互和 UI 识别”。
+音量同属共用交互：`player-interactions.json.volume` 定义默认 25%、独立的整体输出增益 10（始终按 0–100% 线性缩放，初始值不参与标定）、25ms 过渡和 UI 控件 ID；具体值保存在单曲 `playback.volume`，无需为主题或歌曲新增处理器。UI 识别契约见 `docs/PLAYER_TEMPLATE.md` 的“音量交互和 UI 识别”。
 
 谱面编辑弹窗共用 `editor.entry` 指向的 `src/46-score-console.js`，初始模式为 `editor.initialMode`。录制、单音符精细修改与数字谱生成复用相同工作副本及主题模板，新增歌曲无需新写编辑页面。
 
@@ -87,3 +87,5 @@ python -X utf8 scripts/configuration.py --check
 `home-interactions.json` 单独保存首页轮播计时、卡片弹簧/翻转/视差与噪声光雾参数，入口为 `src/41-home-experience.js`。它不包含数字谱、播放器状态或主题处理器；主题横幅仅读取六款平台预设作展示，不更改歌曲主题。详细行为见 [HOME_EXPERIENCE.md](../docs/HOME_EXPERIENCE.md)。
 
 六主题插画v2的资源索引在 `themes/elements.json`，每套预设通过 `elementRefs` 引用自己的场景、双人小景和挂件。`decorations.layout` 只控制场景填充与角色/挂件百分比构图，由共享模板校验并应用；不能携带音乐或处理器。详细路径、来源及提示词见 [THEME_ART_V2.md](../docs/THEME_ART_V2.md)。
+
+音量与延音共用 `valuePicker` 的单格竖向平滑选取；0–100 有界、不循环。`volume.controlId` / `sustain.controlId` 指向可识别的 spinbutton。通知生命周期归共用交互 `notifications`，颜色由模板解析器独立提供；倍速末端 `selectors.speedMinimumRows` 保留两个真实选项。

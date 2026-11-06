@@ -28,9 +28,9 @@
   },
   "rollPalette": {
     "base": "#142b40",
-    "light": "#38526b",
-    "medium": "#29425b",
-    "dark": "#1d354d",
+    "light": "#2d465e",
+    "medium": "#20384f",
+    "dark": "#142c42",
     "label": "#bfd5e6",
     "anchor": "#d1e9fa"
   },

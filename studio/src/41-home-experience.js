@@ -166,7 +166,7 @@ function startHomeFlow(){
 function openHomeThemePreview(id){
  const definition=THEME_DEFINITIONS[id];if(!definition)return;
  stopHomeCarousel();homeExperience.preview={id,project:{title:definition.displayName,theme:{id,...copy(definition.defaults),...copy(definition.initialOverrides)},card:{}}};
- resetHomeThemePreview();$('homeThemeDialog').showModal();
+ resetHomeThemePreview();$('homeThemeDialog').showModal();syncStatusNotificationAppearance();
 }
 function resetHomeThemePreview(){
  const preview=homeExperience.preview;if(!preview)return;const d=THEME_DEFINITIONS[preview.id];preview.project.theme={id:d.id,...copy(d.defaults),...copy(d.initialOverrides)};
@@ -181,11 +181,12 @@ function paintHomeThemePreview(){
  const decor=d.decorations,path=decor.cover||decor.scene.image||(decor.scene.type==='frames'?decor.scene.framePattern.replace('{index}','00'):null),image=$('homeThemeSampleImage');image.hidden=!path;if(path)image.src=themeAsset(path,p);
  for(const [id,path]of [['homeThemeSampleCompanion',decor.companion],['homeThemeSampleCharm',decor.ornaments?.[0]]]){const img=$(id);img.hidden=!path;if(path)img.src=themeAsset(path,p)}
  $('homeThemeSampleRoll').style.backgroundImage='linear-gradient(90deg,transparent calc(25% - 1px),#ffffff14 25%,transparent calc(25% + 1px)),linear-gradient(180deg,'+Array.from({length:15},(_,i)=>{const color=d.rollPalette[['light','medium','dark','medium','light'][i%5]];return color+' '+(i/15*100)+'%,'+color+' '+((i+1)/15*100)+'%'}).join(',')+')';
+ syncStatusNotificationAppearance();
 }
 function bindHomeThemePreview(){
  const roll=$('homeThemeSampleRoll');for(const [left,top,width]of [[9,13,14],[24,40,10],[41,27,18],[63,60,12],[78,80,14]]){const note=document.createElement('i');note.style.cssText='left:'+left+'%;top:'+top+'%;width:'+width+'%';roll.append(note)}
  for(let i=0;i<15;i++){const key=document.createElement('span');key.textContent=String(i%5+1);if([2,6,10].includes(i))key.className='sample-active';$('homeThemeSampleKeys').append(key)}
  for(const id of ['homePreviewName','homePreviewAccent','homePreviewBackground','homePreviewGlow','homePreviewMotion'])$(id).addEventListener('input',paintHomeThemePreview);
  $('homePreviewReset').onclick=resetHomeThemePreview;$('homePreviewExport').onclick=()=>{if(homeExperience.preview)exportTheme(homeExperience.preview.project)};
- $('homeThemeDialog').addEventListener('close',()=>{homeExperience.preview=null;scheduleHomeCarousel()});
+ $('homeThemeDialog').addEventListener('close',()=>{homeExperience.preview=null;syncStatusNotificationAppearance();scheduleHomeCarousel()});
 }

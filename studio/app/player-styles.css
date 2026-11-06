@@ -413,17 +413,6 @@ body:has(dialog[open]){overflow:hidden}
 /* Decoration visibility belongs to theme data, independently of the preset ID. */
 .player-view .stage-pane[data-motif=off]::before,.player-view .stage-pane[data-motif=off]::after{display:none}
 
-/* Shared volume control: named native slider for keyboard and UI recognition. */
-.player-view .volume-control{display:flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;white-space:nowrap}
-.player-view .volume-control input{width:clamp(42px,5vw,78px);margin:0}
-.player-view .volume-control output{min-width:33px;text-align:right;color:#f0d8b5;font:11px Georgia,serif}
-.player-view .volume-control input:focus-visible{outline:2px solid var(--theme-accent);outline-offset:3px;border-radius:4px}
-@media(min-width:901px) and (max-width:1100px){.player-view .player-control-row{gap:6px}.player-view .volume-control{gap:4px}.player-view .volume-control input{width:42px}}
-
-/* Volume and sustain share the same themed range and percentage colors. */
-.player-view :is(.volume-control,.sustain-control) input[type=range]{accent-color:var(--gold)}
-.player-view :is(.volume-control,.sustain-control) output{color:#f0d8b5}
-
 /* Playback speed shares the instrument picker template at its original compact width. */
 .player-view .speed-control .instrument-toggle{width:72px;gap:6px}
 
@@ -865,3 +854,17 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
 .theme-sample-scene .theme-sample-companion{position:absolute;left:2%;bottom:4%;width:48%;height:84%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 4px 5px #07111d44);pointer-events:none}
 .theme-sample-scene .theme-sample-charm{position:absolute;right:4%;bottom:10%;width:17%;height:37%;object-fit:contain;filter:none;pointer-events:none}
 .theme-sample-scene>span{z-index:2;text-shadow:0 2px 7px #061322;background:linear-gradient(90deg,#08131b66,transparent);padding:4px 0}
+
+/* One visible value cell with theme control colors; only Play matches the gold range chip. */
+.player-view :is(.key-range-toggle,.instrument-toggle,.value-picker,#playBtn){height:32px;box-sizing:border-box;line-height:normal}
+.player-view #playBtn{border:1px solid #f3d29e;border-radius:9px;background:linear-gradient(125deg,#e1c78f,#b88c58);color:#203a2a;box-shadow:inset 0 1px #fff4d744,0 0 10px #f0c88222;font-size:12px;font-weight:700}
+.player-view #playBtn:hover{background:linear-gradient(125deg,#f1daa8,#d0aa70);box-shadow:0 0 13px #f0c88255;border-color:#fff0c4}
+.player-view .value-picker{border:1px solid var(--player-border);border-radius:9px;background:var(--player-button);color:var(--player-text);box-shadow:inset 0 1px #ffffff10;font-size:12px;font-weight:600}
+.player-view .value-picker:hover,.player-view .value-picker:focus-visible{background:var(--player-hover);border-color:var(--theme-accent);outline:1px solid var(--theme-accent);outline-offset:-2px}
+.player-view #playBtn{display:inline-flex;align-items:center;justify-content:center;padding:0 16px;white-space:nowrap}
+.player-view :is(.sustain-control,.volume-control){gap:7px;flex:none}
+.player-view .value-picker{width:48px;min-width:48px;overflow:hidden;cursor:ns-resize;touch-action:none;overscroll-behavior:contain;font-variant-numeric:tabular-nums}
+.value-picker-track{will-change:transform;pointer-events:none}
+.value-picker-track span{display:flex;height:30px;align-items:center;justify-content:center}
+/* Global status is painted by the same theme resolver as player panels. */
+.toast{inset:auto auto 22px 50%;margin:0;width:max-content;max-width:min(550px,calc(100vw - 32px));pointer-events:none;border-color:var(--notice-border,#718ba3);background:linear-gradient(135deg,var(--notice-surfaceStart,#273e56),var(--notice-surfaceEnd,#172b42));color:var(--notice-text,#edf6ff);box-shadow:0 9px 32px #0006,inset 0 1px var(--notice-accent,#d8eaf8)}

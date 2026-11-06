@@ -10,10 +10,20 @@ function sanitizeThemeMaterials(raw={}){const base=APP_CONFIG.themeTemplate.mate
 function sanitizeThemeLayout(raw={}){const result={sceneFit:raw.sceneFit==='cover'?'cover':'contain'};for(const [key,fallback,min,max]of [['companionWidth',28,12,60],['companionHeight',64,20,95],['companionLeft',8,0,70],['companionBottom',9,0,60],['ornamentWidth',14,4,25],['ornamentHeight',32,8,50],['ornamentRight',3,0,40],['ornamentBottom',11,0,60]])result[key]=clamp(Number.isFinite(raw[key])?raw[key]:fallback,min,max);return result}
 function sanitizeKeyFeedback(raw={},colors={}){const base=APP_CONFIG.themeTemplate.keyFeedback,shapes=['snowflake','star','spark','butterfly','drop','diamond'];return {enabled:raw.enabled===true,shape:shapes.includes(raw.shape)?raw.shape:'star',element:typeof raw.element==='string'?raw.element:null,count:clamp(Math.round(Number(raw.count)||base.count),1,16),durationMs:clamp(Number(raw.durationMs)||base.durationMs,180,1500),spreadPx:clamp(Number(raw.spreadPx)||base.spreadPx,8,100),risePx:clamp(Number(raw.risePx)||base.risePx,8,100),sizePx:clamp(Number(raw.sizePx)||base.sizePx,6,24),colors:(raw.colors||[colors.accent,colors.note]).filter(color=>/^#[0-9a-f]{6}$/i.test(color)).slice(0,4)}}
 function sanitizePlayerAppearance(raw){let result={};if(!raw||typeof raw!=='object')return result;for(let key of Object.keys(PLAYER_APPEARANCE.christmas))if(/^#[0-9a-f]{6}$/i.test(raw[key]||''))result[key]=raw[key];return result}
-function applyPlayerTemplate(project,host){
- const id=sceneId(project),definition=themeDefinition(project),decor=definition.decorations,theme=project.theme||{},colors={...definition.appearance,...sanitizePlayerAppearance(theme.appearance)};
+function resolvedPlayerColors(project){
+ const definition=themeDefinition(project),theme=project?.theme||{},colors={...definition.appearance,...sanitizePlayerAppearance(theme.appearance)};
  if(/^#[0-9a-f]{6}$/i.test(theme.accent||''))colors.accent=theme.accent;
  if(/^#[0-9a-f]{6}$/i.test(theme.backgroundColor||''))colors.stageEnd=colors.backdrop=theme.backgroundColor;
+ return colors;
+}
+function syncStatusNotificationAppearance(){
+ const el=$('toast');if(!el?.style?.setProperty)return;
+ const preview=$('homeThemeDialog')?.open?homeExperience.preview?.project:null,project=preview||(state.mode==='player'?state.project:null);
+ const colors=project?resolvedPlayerColors(project):{surfaceStart:'#273e56',surfaceEnd:'#172b42',text:'#edf6ff',border:'#718ba3',accent:'#d8eaf8'};
+ for(const key of ['surfaceStart','surfaceEnd','text','border','accent'])el.style.setProperty('--notice-'+key,colors[key]);el.dataset.theme=project?sceneId(project):'platform';
+}
+function applyPlayerTemplate(project,host){
+ const id=sceneId(project),definition=themeDefinition(project),decor=definition.decorations,theme=project.theme||{},colors=resolvedPlayerColors(project);
  state.playerColors=colors;applyThemeClasses(host,definition);
  host.dataset.template=PLAYER_TEMPLATE_ID;host.dataset.theme=id;
  for(let [name,value]of Object.entries(colors))host.style.setProperty('--player-'+name.replace(/[A-Z]/g,c=>'-'+c.toLowerCase()),value);
@@ -32,7 +42,7 @@ function applyPlayerTemplate(project,host){
  const layout=sanitizeThemeLayout(decor.layout);$('stagePane').dataset.sceneFit=project._imageUrl?'contain':layout.sceneFit;for(const [key,value]of Object.entries(layout))if(typeof value==='number')$('stagePane').style.setProperty('--art-'+key.replace(/[A-Z]/g,c=>'-'+c.toLowerCase()),value+'%');
  const companion=document.querySelector('.stage-companion');if(companion){companion.hidden=!decor.companion||Boolean(project._imageUrl);if(decor.companion)companion.src=themeAsset(decor.companion,project)}
  for(const image of document.querySelectorAll('[data-theme-decoration]')){const path=decor.ornaments?.[0];image.hidden=!path;if(path)image.src=themeAsset(path,project)}
- $('sceneName').textContent=themeCaption(project);
+ $('sceneName').textContent=themeCaption(project);syncStatusNotificationAppearance();
 }
 
 function populateThemeChoices(){

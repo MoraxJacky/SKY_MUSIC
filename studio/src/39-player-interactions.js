@@ -1,7 +1,37 @@
 // One player interaction entry for every score and theme.
-function syncVolumeControl(){
- const rules=PLAYER_RULES.volume,percent=Math.round(state.volume*100),slider=$(rules.sliderId);
- slider.value=String(percent);slider.setAttribute('aria-valuetext',percent===0?'静音':percent+'%');$(rules.outputId).textContent=percent+'%';updateVolumeAudio();
+// Notification timing belongs to the interaction layer; colors belong to the template.
+function toast(text,ms=PLAYER_RULES.notifications.durationMs){
+ const el=$(PLAYER_RULES.notifications.controlId);clearTimeout(state.toastTimer);
+ syncStatusNotificationAppearance();el.textContent=text;el.hidden=false;
+ if(el.showPopover&&!el.matches(':popover-open'))el.showPopover();
+ state.toastTimer=setTimeout(()=>{if(el.hidePopover&&el.matches(':popover-open'))el.hidePopover();el.hidden=true},ms);
+}
+const playerValuePickers=new Map();
+function cancelPlayerValueScroll(){for(const picker of playerValuePickers.values())picker.cancel()}
+function syncPlayerValue(kind){
+ const el=$(PLAYER_RULES[kind].controlId),percent=Math.round(state[kind]*100);
+ el.value=String(percent);el.setAttribute('aria-valuenow',String(percent));el.setAttribute('aria-valuetext',kind==='volume'&&percent===0?'静音':percent+'%');
+ playerValuePickers.get(kind)?.sync(percent);
+}
+function syncVolumeControl(){syncPlayerValue('volume');updateVolumeAudio()}
+function syncSustainControl(){syncPlayerValue('sustain');updateSustainAudio()}
+function bindPlayerValuePicker(kind){
+ const el=$(PLAYER_RULES[kind].controlId),row=PLAYER_RULES.valuePicker.rowHeightPx;
+ const commit=percent=>{const value=clamp(Math.round(Number.isFinite(percent)?percent:state[kind]*100),0,100);if(state[kind]===value/100)return;state[kind]=value/100;el.value=String(value);el.setAttribute('aria-valuenow',String(value));el.setAttribute('aria-valuetext',kind==='volume'&&value===0?'静音':value+'%');if(state.project){state.project.playback[kind]=state[kind];saveLibrary()}if(kind==='volume')updateVolumeAudio();else updateSustainAudio()};
+ el.oninput=()=>{commit(Number(el.value));playerValuePickers.get(kind)?.sync(Math.round(state[kind]*100))};
+ // The headless DOM harness does not implement scrolling; the real browser owns animation.
+ if(!document.createComment)return;
+ const track=el.querySelector('.value-picker-track');let position=(100-Math.round(state[kind]*100))*row,drag=null;
+ for(let n=100;n>=0;n--){const cell=document.createElement('span');cell.textContent=String(n);track.append(cell)}
+ const paint=value=>{position=value;track.style.transform='translateY('+(-position)+'px)';commit(100-value/row)};
+ const wheel=bindSmoothWheel(track,el,'y',PLAYER_RULES.valuePicker.wheelMaxStepPx,{read:()=>position,write:paint,max:()=>100*row,snap:value=>Math.round(value/row)*row,wheelGain:PLAYER_RULES.valuePicker.wheelGain});
+ const sync=value=>{wheel();position=(100-value)*row;track.style.transform='translateY('+(-position)+'px)'};
+ el.onkeydown=event=>{let value=Math.round(state[kind]*100);if(['ArrowUp','ArrowRight'].includes(event.key))value++;else if(['ArrowDown','ArrowLeft'].includes(event.key))value--;else if(event.key==='Home')value=0;else if(event.key==='End')value=100;else return;event.preventDefault();event.stopPropagation();commit(value);sync(Math.round(state[kind]*100))};
+ el.addEventListener('pointerdown',event=>{if(event.button!==0)return;wheel();el.focus();drag={id:event.pointerId,y:event.clientY,start:position};el.setPointerCapture(event.pointerId)});
+ el.addEventListener('pointermove',event=>{if(drag?.id===event.pointerId){event.preventDefault();paint(clamp(drag.start+drag.y-event.clientY,0,100*row))}});
+ const stop=event=>{if(drag?.id!==event.pointerId)return;drag=null;if(el.hasPointerCapture(event.pointerId))el.releasePointerCapture(event.pointerId);wheel.to(Math.round(position/row)*row)};
+ el.addEventListener('pointerup',stop);el.addEventListener('pointercancel',stop);
+ playerValuePickers.set(kind,{sync,cancel:wheel});sync(Math.round(state[kind]*100));
 }
 let cancelRollDrag=()=>{};
 function bindRollPointerSeek(){
@@ -29,13 +59,13 @@ function bindRollPointerSeek(){
  window.addEventListener('blur',stop);
 }
 function bindPlayerInteractions(){
- $(PLAYER_RULES.volume.sliderId).oninput=ev=>{state.volume=normalizeVolume(Number(ev.target.value)/100);if(state.project){state.project.playback.volume=state.volume;saveLibrary()}syncVolumeControl()};
+ bindPlayerValuePicker('volume');bindPlayerValuePicker('sustain');
 
  bindRollPointerSeek();
  $('backLibrary').onclick=goHome;
  $('rollWindow').innerHTML='';for(const seconds of PLAYER_RULES.roll.windowsSeconds){const option=document.createElement('option');option.value=String(seconds);option.textContent=seconds+'秒';$('rollWindow').append(option)}
  $('playBtn').onclick=()=>playPause();$('restartBtn').onclick=()=>seekTo(0);
- $('sustainSlider').oninput=ev=>{state.sustain=Number(ev.target.value)/100;$('sustainValue').textContent=Math.round(state.sustain*100)+'%';if(state.project){state.project.playback.sustain=state.sustain;saveLibrary()}updateSustainAudio()};
+
  $('speedSelect').onchange=ev=>{let was=state.isPlaying;if(was)pauseSong();state.rate=Number(ev.target.value);syncSpeedPicker();if(state.project){state.project.playback.rate=state.rate;saveLibrary()}if(was)playPause()};
  $('rollWindow').onchange=ev=>{const finishing=Boolean(state.rollFinish),frame=rollFrame(),fraction=frame.phase/frame.windowMs;cancelRollFinish();state.windowSec=Number(ev.target.value);state.rollPageStart=rollSeekOrigin(state.position,fraction);if(finishing)finishRollScan();else drawRoll()};
  $('rollWindow').value=String(state.windowSec);$('stepPrev').onclick=()=>stepEvent(-1);$('stepNext').onclick=()=>stepEvent(1);
@@ -100,7 +130,7 @@ function bindSmoothWheel(track,host,axis='x',limit=24,model=null){
   event.preventDefault();let delta=event.deltaY+event.deltaX;
   if(event.deltaMode===1)delta*=16;if(event.deltaMode===2)delta*=axis==='x'?track.clientWidth:track.clientHeight;
   if(!delta)return;if(!raf)target=read();
-  target=bound(target+Math.sign(delta)*Math.min(limit,Math.abs(delta)*PLAYER_RULES.selectors.wheelGain));start();
+  target=bound(target+Math.sign(delta)*Math.min(limit,Math.abs(delta)*(model?.wheelGain??PLAYER_RULES.selectors.wheelGain)));start();
   clearTimeout(snapTimer);
   if(model?.snap)snapTimer=setTimeout(()=>{target=bound(model.snap(target));start()},PLAYER_RULES.selectors.instrumentSnapDelayMs);
  },{passive:false});
@@ -150,14 +180,15 @@ function createDownwardPicker(config){
  function close(returnFocus=false){cancelWheel();menu.hidden=true;trigger.setAttribute('aria-expanded','false');if(returnFocus)trigger.focus()}
  function position(){
   const rect=trigger.getBoundingClientRect();view.row=rect.height;view.step=rect.height+PLAYER_RULES.selectors.instrumentRowGapPx;
-  const below=Math.min(config.rowsBelow()*view.step,(items.length-1-view.position)*view.step,Math.max(0,innerHeight-rect.bottom-8));
-  menu.style.width=rect.width+'px';menu.style.left=rect.left+'px';menu.style.top=rect.top+'px';menu.style.height=(rect.height+below)+'px';focus.style.top='0px';focus.style.height=rect.height+'px';
-  buttons.forEach((button,i)=>{const y=(i-view.position)*view.step;button.style.top=y+'px';button.style.height=view.row+'px';button.style.visibility=y+view.row>0&&y<view.row+below?'visible':'hidden'});menu.dataset.position=String(view.position);
+  const origin=Math.min(view.position,Math.max(0,items.length-(config.minimumRows||1)));
+  const below=Math.min(config.rowsBelow()*view.step,(items.length-1-origin)*view.step,Math.max(0,innerHeight-rect.bottom-8));
+  menu.style.width=rect.width+'px';menu.style.left=rect.left+'px';menu.style.top=rect.top+'px';menu.style.height=(rect.height+below)+'px';focus.style.top=((view.position-origin)*view.step)+'px';focus.style.height=rect.height+'px';
+  buttons.forEach((button,i)=>{const y=(i-origin)*view.step;button.style.top=y+'px';button.style.height=view.row+'px';button.style.visibility=y+view.row>0&&y<view.row+below?'visible':'hidden'});menu.dataset.position=String(view.position);
  }
  function move(value){view.position=clamp(value,0,items.length-1);position();if(options.contains(document.activeElement)&&document.activeElement.style.visibility==='hidden')menu.focus({preventScroll:true})}
  function open(){config.beforeOpen();sync();cancelWheel();view.position=Math.max(0,items.findIndex(item=>item.value===config.selected()));menu.hidden=false;trigger.setAttribute('aria-expanded','true');position();buttons.find(button=>button.dataset.value===config.selected())?.focus({preventScroll:true})}
  menu.tabIndex=-1;
- cancelWheel=bindSmoothWheel(options,menu,'y',PLAYER_RULES.selectors.instrumentMaxStepPx,{read:()=>view.position*view.step,write:pixels=>move(pixels/view.step),max:()=>(items.length-1)*view.step,snap:pixels=>Math.round(pixels/view.step)*view.step});
+ cancelWheel=bindSmoothWheel(options,menu,'y',config.maxStepPx||PLAYER_RULES.selectors.instrumentMaxStepPx,{read:()=>view.position*view.step,write:pixels=>move(pixels/view.step),max:()=>(items.length-1)*view.step,snap:pixels=>Math.round(pixels/view.step)*view.step});
  trigger.onclick=()=>menu.hidden?open():close();trigger.onkeydown=event=>{if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();open()}};
  menu.onkeydown=event=>{
   const focused=buttons.indexOf(document.activeElement),index=focused>=0?focused:Math.round(view.position);let next;
@@ -191,7 +222,7 @@ function bindInstrumentPicker(){
 }
 function bindSpeedPicker(){
  $('speedSelect').innerHTML='';for(const rate of PLAYER_RULES.playbackRates){const option=document.createElement('option');option.value=String(rate);option.textContent=rate.toFixed(2)+'×';$('speedSelect').append(option)}
- speedPicker=createDownwardPicker({trigger:'speedToggle',menu:'speedMenu',options:'speedOptions',focus:'speedCurrent',attribute:'speed',items:PLAYER_RULES.playbackRates.map(rate=>({value:String(rate),label:rate.toFixed(2)+'×'})),selected:()=>String(state.rate),rowsBelow:()=>PLAYER_RULES.selectors.speedRowsBelow,beforeOpen:()=>{closeRangePicker();closeInstrumentPicker()},choose:value=>{$('speedSelect').value=value;$('speedSelect').onchange({target:$('speedSelect')});closeSpeedPicker(true)}});
+ speedPicker=createDownwardPicker({trigger:'speedToggle',menu:'speedMenu',options:'speedOptions',focus:'speedCurrent',attribute:'speed',maxStepPx:PLAYER_RULES.selectors.speedMaxStepPx,minimumRows:PLAYER_RULES.selectors.speedMinimumRows,items:PLAYER_RULES.playbackRates.map(rate=>({value:String(rate),label:rate.toFixed(2)+'×'})),selected:()=>String(state.rate),rowsBelow:()=>PLAYER_RULES.selectors.speedRowsBelow,beforeOpen:()=>{closeRangePicker();closeInstrumentPicker()},choose:value=>{$('speedSelect').value=value;$('speedSelect').onchange({target:$('speedSelect')});closeSpeedPicker(true)}});
 }
 
 function seekBeatPage(direction){if(!state.project)return;pauseSong();const layout=beatLayout(),size=beatPageSize(),slot=clamp((Math.floor(beatDisplayIndex()/size)+direction)*size,0,layout.count-1);seekTo(layout.grid?Math.round(slot*layout.step):scoreEvents(state.project)[slot].timeMs)}

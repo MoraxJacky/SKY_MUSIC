@@ -38,15 +38,16 @@
     "instrumentRowGapPx": 5,
     "instrumentSnapDelayMs": 110,
     "instrumentRowsBelow": 2,
-    "speedRowsBelow": 2
+    "speedRowsBelow": 2,
+    "speedMinimumRows": 2,
+    "speedMaxStepPx": 24
   },
   "volume": {
     "default": 0.25,
-    "maxGain": 8,
+    "maxGain": 10,
     "rampSeconds": 0.025,
-    "sliderId": "volumeSlider",
-    "outputId": "volumeValue",
-    "label": "音量"
+    "label": "音量",
+    "controlId": "volumePicker"
   },
   "playbackRates": [
     0.25,
@@ -69,5 +70,18 @@
     "beatRowsPerSection": 2,
     "selectionOutline": "#ff5964",
     "crossPageFocusFraction": 0.25
+  },
+  "sustain": {
+    "controlId": "sustainPicker",
+    "label": "延音"
+  },
+  "valuePicker": {
+    "rowHeightPx": 30,
+    "wheelMaxStepPx": 30,
+    "wheelGain": 0.3
+  },
+  "notifications": {
+    "controlId": "toast",
+    "durationMs": 3500
   }
 }

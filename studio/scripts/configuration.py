@@ -24,8 +24,11 @@ def render(root):
     assert all(player['roll']['labelIntervalSecondsByWindow'][str(window)] > 0 for window in player['roll']['windowsSeconds'])
     assert player['playbackRates'] and all(0.25 <= rate <= 2 for rate in player['playbackRates'])
     assert player['selectors']['instrumentRowsBelow'] >= 0 and player['selectors']['speedRowsBelow'] >= 0
-    assert 0 <= player['volume']['default'] <= 1 and 0 < player['volume']['maxGain'] <= 8
+    assert 0 <= player['volume']['default'] <= 1 and 0 < player['volume']['maxGain'] <= 12
     assert 0 < player['volume']['rampSeconds'] <= 0.1
+    assert player['selectors']['speedMinimumRows'] >= 2
+    assert 0 < player['valuePicker']['rowHeightPx'] <= 40 and 0 < player['valuePicker']['wheelGain'] <= 1
+    assert player['notifications']['durationMs'] > 0
     elements = load('themes/elements.json')['elements']
     template = load('themes/template.json')
     themes = {}

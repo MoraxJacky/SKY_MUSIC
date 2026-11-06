@@ -107,19 +107,17 @@
 
 ## 音量交互和 UI 识别
 
-所有歌曲、音色和主题共用 `volumeSlider`（原生 slider，可访问名称“音量”、`data-control="volume"`）与 `volumeValue`（百分比输出）。0–100%，0 为静音；方向键微调、Home/End 到边界。规则集中在 `config/player-interactions.json` 的 `volume`，绑定归 `src/39-player-interactions.js`。样式使用当前主题颜色；窄屏同播放栏换行。
+所有歌曲、音色和主题共用 `volumePicker`（音量）和 `sustainPicker`（延音）。两者均为命名 `spinbutton`，`data-control` 分别为 `volume` / `sustain`，通过 `aria-valuenow` 识别当前值。只显示一格整数，范围 0–100，无滑块和外置百分比。鼠标悬停滚轮上下平滑切换，向上增加；上下方向键每次 1，Home/End 到边界，也支持竖向拖动。数值到达边界停止，不循环。两者使用当前主题普通控件配色（button/text/border/hover）；只复用平滑滑动方式。播放键使用音域金色按钮配色，主播放栏控件统一 32px 高度。
 
-音量保存于每首歌的 `playback.volume`（0–1），随完整 `.skymusic` 保存；纯谱 `.skytrack` 不携带音量。缺省改为 25%，已有歌曲主动保存的音量值继续保留。音量与延音滑块共用 `var(--gold)` 配色及相同的百分比文字色。
+交互与缓动位于 `src/39-player-interactions.js`，参数位于 `config/player-interactions.json` 的 `valuePicker` / `volume` / `sustain`。数值仍保存到单曲 `playback.volume` / `playback.sustain`；音量缺省位置仍为 25，已有保存值保持不变。`volume.maxGain` 从 8 调为 10，使相同位置的电平约增加 1.94 dB。实际增益始终为 `数值 / 100 × maxGain`，25 不作为归一化分母；25ms 平滑输出、0 静音、不中断播放。
 
-默认位置与输出增益是两项独立配置：`volume.default = 0.25` 只控制新歌曲/缺省设置的初始滑块位置；`volume.maxGain = 8` 独立定义提高后的整体输出范围。实际增益始终是 `滑块百分比 / 100 × maxGain`，25% 仅表示最大输出的四分之一，不作为参照值或归一化分母。以后修改默认百分比不改变音量曲线和最大输出。
-
-滑块 0 为静音，100% 为完整输出范围，中间按比例连续变化，界面以 1% 微调；输出增益比不等于主观响度比。压缩器后统一控制干声、延音混响和试听，25ms 平滑过渡，不暂停播放。
+底部通知的展示、替换与计时统一由 `src/39-player-interactions.js` 的 `toast()` 控制，DOM 为 `toast` / `data-control="notification"`，`role=status`。`src/38-player-template.js` 仅解析主题颜色并写入通知 CSS 变量，切换主题时立即刷新已显示通知；首页使用平台蓝色，首页主题预览使用隔离预览主题。支持浏览器中用 manual popover 保持在弹窗上方，无焦点抢占。主题不得改变通知时长或事件处理。
 
 卷帘时间轴：8s/10s 窗口每 1 秒标注，12s/20s 每 5 秒标注，配置归 `roll.labelIntervalSecondsByWindow`。每秒竖线及细分格保留；最终音符附近补充可见范围内最近的整秒标签（无整秒时显示精确时间），必要时让相邻常规标签避让。文字中心与对应竖线共用同一横坐标，右侧留足文字空间，最终谱面不增加空白时长。
 
 音色菜单的下方可见数量由 `selectors.instrumentRowsBelow` 控制，基准框上方始终没有扩展区域。
 
-倍速和音色共用 `createDownwardPicker()`、同一组样式及平滑滚轮/触摸/键盘处理，均固定原选择框并仅向下展开。倍速保留 0.25×–2.00×，下方可见两项由 `selectors.speedRowsBelow` 控制；选中即收回，播放中更换继续同步音乐。UI 识别入口为 `speedToggle`（名称“选择倍速”）和 `speedMenu`（listbox，名称“倍速选项”），原 `speedSelect` 保留作隐藏兼容适配。音域、音色、倍速打开时相互收起。
+倍速和音色共用 `createDownwardPicker()`、同一组样式及平滑滚轮/触摸/键盘处理，均固定原选择框并仅向下展开。倍速保留 0.25×–2.00×，下方可见两项由 `selectors.speedRowsBelow` 控制；末尾 `speedMinimumRows=2` 保留最后两个真实选项和滚轮命中区域，焦点框随当前项移动，无空白占位；选中即收回，播放中更换继续同步音乐。UI 识别入口为 `speedToggle`（名称“选择倍速”）和 `speedMenu`（listbox，名称“倍速选项”），原 `speedSelect` 保留作隐藏兼容适配。音域、音色、倍速打开时相互收起。
 
 卷帘指针定位由共用交互入口 `bindRollPointerSeek()` 绑定，配置为 `roll.pointerSeek`。鼠标为旧版十字光标；点击谱面或拖动扫描条均暂停并连续定位，音符列、逐拍乐谱、15 键与音乐位置同步。拖动锁定当前谱面时间范围，并沿用绘制坐标，避免拖动过程中换页或尾页比例不一致；拖出谱面时夹取到左右端点，结束后保持暂停。支持鼠标、触摸和触控笔，取消指针或离开页面会释放捕获。原谱面进度条继续保持扫描条比例，不与直接拖动混用。
 

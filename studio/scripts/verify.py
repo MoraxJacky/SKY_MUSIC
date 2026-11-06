@@ -13,10 +13,11 @@ for k,n in Counter(ids).items():
  if n>1:errors.append('Duplicate DOM id '+k)
 for k in set(re.findall(r'''\$\(['\"]([^'\"]+)['\"]\)''',js)):
  if k not in ids and k!='sceneCanvas':errors.append('Missing DOM control '+k)
-volume=json.loads((root/'config/player-interactions.json').read_text(encoding='utf-8'))['volume']
-for control in ['sliderId','outputId']:
- if volume[control] not in ids:errors.append('Missing volume UI control '+volume[control])
-if not re.search(r'id="volumeSlider"[^>]*aria-label="音量"',h):errors.append('Volume slider must expose an accessible name')
+rules=json.loads((root/'config/player-interactions.json').read_text(encoding='utf-8'))
+for kind in ['volume','sustain']:
+ control=rules[kind]['controlId']
+ if control not in ids:errors.append('Missing player value control '+control)
+ if not re.search(r'id="'+control+r'"[^>]*role="spinbutton"[^>]*aria-label="'+rules[kind]['label']+'"',h):errors.append('Value picker must expose a named spinbutton '+control)
 standalone=(root/'SkyMusicStudio_独立版.html').read_text(encoding='utf-8')
 if re.search(r'<script\b[^>]*\bsrc=',standalone):errors.append('Standalone has external JavaScript')
 for name in ['canon','starlight-demo','citylights-demo']:
