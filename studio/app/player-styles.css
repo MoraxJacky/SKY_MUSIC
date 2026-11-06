@@ -441,3 +441,8 @@ body:has(dialog[open]){overflow:hidden}
 /* Editing focus is separate from playback focus and singles out one pitch dot. */
 .player-view .beat.editor-selected{outline:2px solid #ffe2a3;outline-offset:-2px;box-shadow:inset 0 0 12px #ffe2a330,0 0 12px #e7bc7144}
 .player-view .beat .mini-dot.editor-note{background:#fff8d5;border-color:#fffdf2;box-shadow:0 0 0 1px #ffe2a3,0 0 7px #ffda8c;position:relative;z-index:1}
+
+/* Keep the instrument chevron centered in a fixed right-hand icon slot. */
+.player-view #instrumentToggle .instrument-arrow-slot{display:grid;place-items:center;width:14px;height:14px;flex:0 0 14px;line-height:1}
+.player-view #instrumentToggle .select-chevron{width:12px;height:12px}
+.player-view #instrumentValue{min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:left}
