@@ -410,3 +410,8 @@ body:has(dialog[open]){overflow:hidden}
 
 /* Playback speed shares the instrument picker template at its original compact width. */
 .player-view .speed-control .instrument-toggle{width:72px;gap:6px}
+
+/* Center navigation geometry independently of font metrics and legacy button padding. */
+.player-view :is(#stepPrev,#stepNext,#pagePrev,#pageNext){display:grid;place-items:center;padding:0;width:28px;min-width:28px;height:28px;line-height:1;flex:none}
+.player-view .nav-chevron{display:block;width:14px;height:14px;flex:none;pointer-events:none}
+.player-view .key-range-toggle .range-chevron{width:12px;height:12px;flex:0 0 12px}
