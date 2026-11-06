@@ -9,7 +9,7 @@ function updateEditButton(){
  const info=$('saveMetadata');if(info)info.hidden=!on;
 }
 function requestFinishEdit(action='exit'){
- if(!state.editMode){if(action==='home')goHome();return}
+ closeConsoleRangePicker(); if(!state.editMode){if(action==='home')goHome();return}
  stopConsoleRecording();pauseSong();cancelRollDrag();const drag=scoreConsole.fine;scoreConsole.fine=null;if(drag&&drag.canvas.hasPointerCapture(drag.pointerId))drag.canvas.releasePointerCapture(drag.pointerId);
  state.pendingEditAction=action;
  if(!$('saveChoiceDialog').open)$('saveChoiceDialog').showModal();

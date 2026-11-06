@@ -589,6 +589,7 @@ function setTuningButtons(){
  const key=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';
  $('keySelect').value=key;$('keyRangeValue').textContent=key==='sky-original'?'光遇原调':KEY_DEGREES[key][0]+' 大调';syncInstrumentPicker();
  for(const button of document.querySelectorAll('#keyRangeMenu [data-key]'))button.setAttribute('aria-selected',String(button.dataset.key===key));
+ syncConsoleRangePicker();
 }
 let cancelRangeWheel=()=>{};
 function cancelRangeScroll(){cancelRangeWheel()}
@@ -627,12 +628,13 @@ function bindRangePicker(){
  window.addEventListener('scroll',event=>{if(!menu.hidden&&event.target!==menu&&!menu.contains(event.target))closeRangePicker()},true);
 }
 
-// A reusable bounded wheel animation for both instrument and range pickers.
+// Shared wheel easing; circular models keep a continuous, unbounded position.
 function bindSmoothWheel(track,host,axis='x',limit=24,model=null){
  let raf=0,target=0,position=0,last=0,snapTimer=0;
  const read=()=>model?model.read():(axis==='x'?track.scrollLeft:track.scrollTop);
  const write=value=>{if(model)model.write(value);else if(axis==='x')track.scrollLeft=value;else track.scrollTop=value};
  const maximum=()=>Math.max(0,model?model.max():(axis==='x'?track.scrollWidth-track.clientWidth:track.scrollHeight-track.clientHeight));
+ const bound=value=>model?.loop?value:clamp(value,0,maximum());
  const cancel=()=>{cancelAnimationFrame(raf);clearTimeout(snapTimer);raf=0};
  const animate=now=>{
   if(host.hidden){cancel();return}const dt=Math.min(40,now-last);last=now;
@@ -641,17 +643,45 @@ function bindSmoothWheel(track,host,axis='x',limit=24,model=null){
   write(position);raf=requestAnimationFrame(animate);
  };
  const start=()=>{if(!raf){position=read();last=performance.now();raf=requestAnimationFrame(animate)}};
- cancel.to=value=>{cancel();target=clamp(value,0,maximum());start()};
+ cancel.to=value=>{cancel();target=bound(value);start()};
  host.addEventListener('wheel',event=>{
   event.preventDefault();let delta=event.deltaY+event.deltaX;
   if(event.deltaMode===1)delta*=16;if(event.deltaMode===2)delta*=axis==='x'?track.clientWidth:track.clientHeight;
   if(!delta)return;if(!raf)target=read();
-  target=clamp(target+Math.sign(delta)*Math.min(limit,Math.abs(delta)*PLAYER_RULES.selectors.wheelGain),0,maximum());start();
+  target=bound(target+Math.sign(delta)*Math.min(limit,Math.abs(delta)*PLAYER_RULES.selectors.wheelGain));start();
   clearTimeout(snapTimer);
-  if(model?.snap)snapTimer=setTimeout(()=>{target=clamp(model.snap(target),0,maximum());start()},PLAYER_RULES.selectors.instrumentSnapDelayMs);
+  if(model?.snap)snapTimer=setTimeout(()=>{target=bound(model.snap(target));start()},PLAYER_RULES.selectors.instrumentSnapDelayMs);
  },{passive:false});
  host.addEventListener('pointerdown',cancel);host.addEventListener('keydown',cancel);
  return cancel;
+}
+// Inline circular variant of the shared range strip. Each key has one semantic option;
+// offscreen cells wrap outside the faded viewport, so there are no ends or duplicate IDs.
+let consoleRangePicker=null;
+function syncConsoleRangePicker(){consoleRangePicker?.sync()}
+function closeConsoleRangePicker(returnFocus=false){consoleRangePicker?.close(returnFocus)}
+function bindConsoleRangePicker(){
+ const trigger=$('consoleRangeToggle'),menu=$('consoleRangeMenu'),track=$('consoleRangeTrack');
+ const items=[...$('keySelect').options].map(option=>({key:option.value,label:option.textContent}));
+ const step=49,count=items.length,wrap=n=>((n%count)+count)%count;
+ const view={position:0,touch:null,suppressClick:false};let cancelWheel=()=>{};
+ const buttons=items.map((item,index)=>{const button=document.createElement('button');button.type='button';button.dataset.key=item.key;button.textContent=item.key==='sky-original'?'光遇':KEY_DEGREES[item.key][0];button.title=item.label;button.setAttribute('role','option');button.tabIndex=-1;button.onclick=()=>{if(view.suppressClick){view.suppressClick=false;return}if(!canEditScore())return;$('consoleTuning').value=item.key;$('consoleTuning').onchange({target:$('consoleTuning')});close(true)};track.append(button);return button});
+ function render(){for(let index=0;index<count;index++){const offset=wrap(index-view.position/step+count/2)-count/2;buttons[index].style.transform='translateX('+(offset*step)+'px)'}menu.dataset.position=String(view.position/step)}
+ function sync(){const index=items.findIndex(item=>item.key===state.tuning),selected=items[index]||items[1];$('consoleRangeValue').textContent=selected.label;for(const [i,button]of buttons.entries())button.setAttribute('aria-selected',String(items[i].key===selected.key))}
+ function close(returnFocus=false){cancelWheel();const drag=view.touch;view.touch=null;if(drag&&menu.hasPointerCapture(drag.id))menu.releasePointerCapture(drag.id);menu.hidden=true;trigger.hidden=false;trigger.setAttribute('aria-expanded','false');if(returnFocus)trigger.focus()}
+ function open(){if(!canEditScore())return;closeRangePicker();sync();view.suppressClick=false;view.position=Math.max(0,items.findIndex(item=>item.key===state.tuning))*step;trigger.hidden=true;menu.hidden=false;trigger.setAttribute('aria-expanded','true');render();buttons[wrap(Math.round(view.position/step))].focus({preventScroll:true})}
+ cancelWheel=bindSmoothWheel(track,menu,'x',PLAYER_RULES.selectors.rangeMaxStepPx,{loop:true,read:()=>view.position,write:value=>{view.position=value;render()}});
+ trigger.onclick=open;trigger.onkeydown=event=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();open()}};
+ menu.onkeydown=event=>{view.suppressClick=false;let index=buttons.indexOf(document.activeElement),next;
+  if(event.key==='ArrowLeft'||event.key==='ArrowUp')next=wrap(index-1);if(event.key==='ArrowRight'||event.key==='ArrowDown')next=wrap(index+1);if(event.key==='Home')next=0;if(event.key==='End')next=count-1;
+  if(next!==undefined){event.preventDefault();event.stopPropagation();cancelWheel();const center=Math.round(view.position/step);let delta=wrap(next-wrap(center));if(delta>count/2)delta-=count;view.position=(center+delta)*step;render();buttons[next].focus({preventScroll:true})}
+  if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close(true)}if(event.key==='Tab')close(true);
+ };
+ menu.addEventListener('pointerdown',event=>{if(event.button!==0)return;view.suppressClick=false;view.touch={id:event.pointerId,x:event.clientX,y:event.clientY,start:view.position,moved:false}});
+ menu.addEventListener('pointermove',event=>{const drag=view.touch;if(!drag||drag.id!==event.pointerId)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;if(!drag.moved&&Math.abs(dy)>Math.abs(dx)+4){view.touch=null;return}if(!drag.moved&&Math.abs(dx)<4)return;drag.moved=true;view.suppressClick=true;menu.setPointerCapture(event.pointerId);view.position=drag.start-dx;render();event.preventDefault()});
+ const endDrag=event=>{if(view.touch?.id!==event.pointerId)return;view.touch=null;if(menu.hasPointerCapture(event.pointerId))menu.releasePointerCapture(event.pointerId)};menu.addEventListener('pointerup',endDrag);menu.addEventListener('pointercancel',endDrag);
+ document.addEventListener('pointerdown',event=>{if(!menu.hidden&&!menu.contains(event.target)&&!trigger.contains(event.target))close()});
+ consoleRangePicker={sync,close};sync();
 }
 // One downward picker template for instruments and playback speed.
 function createDownwardPicker(config){
@@ -913,7 +943,7 @@ function scheduleDbBackup(){if(!dbInstance)return;clearTimeout(dbSaveTimer);dbSa
 // One editing work copy, three views of the same score and player controls.
 const scoreConsole={mode:PLAYER_RULES.editor.initialMode,recording:false,start:0,at:0,raf:0,homes:[],fine:null,views:new Map(),returnView:null};
 function setConsoleMode(mode){
- stopConsoleRecording();scoreConsole.mode=mode;const fine=mode==='fine',generate=mode==='generate';
+ closeConsoleRangePicker();stopConsoleRecording();scoreConsole.mode=mode;const fine=mode==='fine',generate=mode==='generate';
  $('scoreConsole').dataset.mode=mode;$('consoleEditActions').parentElement.scrollTop=0;$('rollCanvas').title=fine?'点击音符选中；横向拖动改时间，纵向拖动改音高，拖动右边缘改长度':'点击或拖动扫描条定位，松开后保持暂停';
  for(const button of document.querySelectorAll('[data-console-mode]')){const on=button.dataset.consoleMode===mode;button.setAttribute('aria-selected',String(on));button.tabIndex=on?0:-1}
  $('consoleLayout').setAttribute('aria-labelledby',mode==='fine'?'consoleFineTab':generate?'consoleGenerateTab':'consoleRecordTab');
@@ -926,11 +956,11 @@ function openScoreConsole(){
  applyPlayerTemplate(state.project,$('scoreConsole'));setConsoleMode(scoreConsole.mode);syncEditorFields();updateScoreConsole();
 }
 function closeScoreConsole(){
- if(!document.createComment){$('scoreConsole').close();return}stopConsoleRecording();pauseSong();scoreConsole.fine=null;
+ closeConsoleRangePicker(); if(!document.createComment){$('scoreConsole').close();return}stopConsoleRecording();pauseSong();scoreConsole.fine=null;
  if($('scoreConsole').open)$('scoreConsole').close();for(const {panel,marker} of scoreConsole.homes){marker.replaceWith(panel)}scoreConsole.homes=[];renderBeatGrid(true);renderKeyBoard();updateVisual();requestAnimationFrame(()=>{drawRoll();initializeScene()});
 }
 function updateScoreConsole(){
- if(!$('scoreConsole')?.open)return;$('consoleClock').textContent=positionFmt(state.position);$('consolePlay').textContent=state.isPlaying?'暂停':'播放';$('consoleTuning').value=state.tuning;
+ if(!$('scoreConsole')?.open)return;$('consoleClock').textContent=positionFmt(state.position);$('consolePlay').textContent=state.isPlaying?'暂停':'播放';$('consoleTuning').value=state.tuning;syncConsoleRangePicker();
  $('consoleUndo').disabled=!historyItems(state.history,state.project.id).length;$('consoleRedo').disabled=!historyItems(state.future,state.project.id).length;
  $('consoleStatus').textContent=scoreConsole.recording?'录制中 · 所有改动可撤销':state.editDirty?'工作副本已修改 · 尚未保存':'编辑工作副本，保存后生效';
  const event=scoreEvents(state.project)[state.selected];for(const button of $('consoleNoteKeys').children)button.setAttribute('aria-pressed',String(event?.notes.includes(Number(button.dataset.note))));
@@ -966,7 +996,7 @@ function bindScoreConsole(){
  $('consoleClose').onclick=()=>requestFinishEdit('exit');$('scoreConsole').addEventListener('cancel',event=>{event.preventDefault();requestFinishEdit('exit')});$('saveChoiceDialog').addEventListener('cancel',event=>{event.preventDefault();event.stopPropagation()});
  for(const button of document.querySelectorAll('[data-console-mode]')){button.onclick=()=>setConsoleMode(button.dataset.consoleMode);button.onkeydown=event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const buttons=[...document.querySelectorAll('[data-console-mode]')],index=buttons.indexOf(button),next=event.key==='Home'?0:event.key==='End'?2:(index+(event.key==='ArrowRight'?1:2))%3;setConsoleMode(buttons[next].dataset.consoleMode);buttons[next].focus()}}}
  $('consoleSave').onclick=()=>{stopConsoleRecording();requestFinishEdit('exit')};$('consoleUndo').onclick=undo;$('consoleRedo').onclick=redo;$('consolePrev').onclick=()=>stepConsoleEvent(-1);$('consoleNext').onclick=()=>stepConsoleEvent(1);$('consolePlay').onclick=()=>{stopConsoleRecording();playPause()};$('consoleRecordStart').onclick=startConsoleRecording;$('consoleGenerate').onclick=generateConsoleScore;
- $('consoleTuning').innerHTML=$('keySelect').innerHTML;$('consoleTuning').onchange=event=>{$('keySelect').value=event.target.value;$('keySelect').onchange({target:$('keySelect')})};
+ $('consoleTuning').innerHTML=$('keySelect').innerHTML;$('consoleTuning').onchange=event=>{$('keySelect').value=event.target.value;$('keySelect').onchange({target:$('keySelect')})};bindConsoleRangePicker();
  for(let n=1;n<=15;n++){const button=document.createElement('button');button.textContent=n;button.dataset.note=n;button.setAttribute('aria-label','当前事件音符 '+n);button.onclick=()=>toggleNote(n);$('consoleNoteKeys').append(button)}
  const codes=['KeyQ','KeyW','KeyE','KeyR','KeyT','KeyA','KeyS','KeyD','KeyF','KeyG','KeyZ','KeyX','KeyC','KeyV','KeyB'];
  $('scoreConsole').addEventListener('keydown',event=>{if(event.ctrlKey||event.metaKey){if(event.code==='KeyS'){event.preventDefault();stopConsoleRecording();requestFinishEdit('exit')}if(event.code==='KeyZ'){event.preventDefault();event.shiftKey?redo():undo()}if(event.code==='KeyY'){event.preventDefault();redo()}return}if(event.target.closest('input,select,textarea'))return;const note=codes.indexOf(event.code)+1;if(note&&scoreConsole.recording){event.preventDefault();if(!event.repeat)scoreConsoleCapture(note)}if(event.code==='Space'&&!event.target.closest('button')){event.preventDefault();$('consolePlay').click()}});
@@ -1011,7 +1041,7 @@ function updateEditButton(){
  const info=$('saveMetadata');if(info)info.hidden=!on;
 }
 function requestFinishEdit(action='exit'){
- if(!state.editMode){if(action==='home')goHome();return}
+ closeConsoleRangePicker(); if(!state.editMode){if(action==='home')goHome();return}
  stopConsoleRecording();pauseSong();cancelRollDrag();const drag=scoreConsole.fine;scoreConsole.fine=null;if(drag&&drag.canvas.hasPointerCapture(drag.pointerId))drag.canvas.releasePointerCapture(drag.pointerId);
  state.pendingEditAction=action;
  if(!$('saveChoiceDialog').open)$('saveChoiceDialog').showModal();

@@ -53,6 +53,7 @@ function setTuningButtons(){
  const key=Object.hasOwn(KEY_ROOTS,state.tuning)?state.tuning:'C';
  $('keySelect').value=key;$('keyRangeValue').textContent=key==='sky-original'?'光遇原调':KEY_DEGREES[key][0]+' 大调';syncInstrumentPicker();
  for(const button of document.querySelectorAll('#keyRangeMenu [data-key]'))button.setAttribute('aria-selected',String(button.dataset.key===key));
+ syncConsoleRangePicker();
 }
 let cancelRangeWheel=()=>{};
 function cancelRangeScroll(){cancelRangeWheel()}
@@ -91,12 +92,13 @@ function bindRangePicker(){
  window.addEventListener('scroll',event=>{if(!menu.hidden&&event.target!==menu&&!menu.contains(event.target))closeRangePicker()},true);
 }
 
-// A reusable bounded wheel animation for both instrument and range pickers.
+// Shared wheel easing; circular models keep a continuous, unbounded position.
 function bindSmoothWheel(track,host,axis='x',limit=24,model=null){
  let raf=0,target=0,position=0,last=0,snapTimer=0;
  const read=()=>model?model.read():(axis==='x'?track.scrollLeft:track.scrollTop);
  const write=value=>{if(model)model.write(value);else if(axis==='x')track.scrollLeft=value;else track.scrollTop=value};
  const maximum=()=>Math.max(0,model?model.max():(axis==='x'?track.scrollWidth-track.clientWidth:track.scrollHeight-track.clientHeight));
+ const bound=value=>model?.loop?value:clamp(value,0,maximum());
  const cancel=()=>{cancelAnimationFrame(raf);clearTimeout(snapTimer);raf=0};
  const animate=now=>{
   if(host.hidden){cancel();return}const dt=Math.min(40,now-last);last=now;
@@ -105,17 +107,45 @@ function bindSmoothWheel(track,host,axis='x',limit=24,model=null){
   write(position);raf=requestAnimationFrame(animate);
  };
  const start=()=>{if(!raf){position=read();last=performance.now();raf=requestAnimationFrame(animate)}};
- cancel.to=value=>{cancel();target=clamp(value,0,maximum());start()};
+ cancel.to=value=>{cancel();target=bound(value);start()};
  host.addEventListener('wheel',event=>{
   event.preventDefault();let delta=event.deltaY+event.deltaX;
   if(event.deltaMode===1)delta*=16;if(event.deltaMode===2)delta*=axis==='x'?track.clientWidth:track.clientHeight;
   if(!delta)return;if(!raf)target=read();
-  target=clamp(target+Math.sign(delta)*Math.min(limit,Math.abs(delta)*PLAYER_RULES.selectors.wheelGain),0,maximum());start();
+  target=bound(target+Math.sign(delta)*Math.min(limit,Math.abs(delta)*PLAYER_RULES.selectors.wheelGain));start();
   clearTimeout(snapTimer);
-  if(model?.snap)snapTimer=setTimeout(()=>{target=clamp(model.snap(target),0,maximum());start()},PLAYER_RULES.selectors.instrumentSnapDelayMs);
+  if(model?.snap)snapTimer=setTimeout(()=>{target=bound(model.snap(target));start()},PLAYER_RULES.selectors.instrumentSnapDelayMs);
  },{passive:false});
  host.addEventListener('pointerdown',cancel);host.addEventListener('keydown',cancel);
  return cancel;
+}
+// Inline circular variant of the shared range strip. Each key has one semantic option;
+// offscreen cells wrap outside the faded viewport, so there are no ends or duplicate IDs.
+let consoleRangePicker=null;
+function syncConsoleRangePicker(){consoleRangePicker?.sync()}
+function closeConsoleRangePicker(returnFocus=false){consoleRangePicker?.close(returnFocus)}
+function bindConsoleRangePicker(){
+ const trigger=$('consoleRangeToggle'),menu=$('consoleRangeMenu'),track=$('consoleRangeTrack');
+ const items=[...$('keySelect').options].map(option=>({key:option.value,label:option.textContent}));
+ const step=49,count=items.length,wrap=n=>((n%count)+count)%count;
+ const view={position:0,touch:null,suppressClick:false};let cancelWheel=()=>{};
+ const buttons=items.map((item,index)=>{const button=document.createElement('button');button.type='button';button.dataset.key=item.key;button.textContent=item.key==='sky-original'?'光遇':KEY_DEGREES[item.key][0];button.title=item.label;button.setAttribute('role','option');button.tabIndex=-1;button.onclick=()=>{if(view.suppressClick){view.suppressClick=false;return}if(!canEditScore())return;$('consoleTuning').value=item.key;$('consoleTuning').onchange({target:$('consoleTuning')});close(true)};track.append(button);return button});
+ function render(){for(let index=0;index<count;index++){const offset=wrap(index-view.position/step+count/2)-count/2;buttons[index].style.transform='translateX('+(offset*step)+'px)'}menu.dataset.position=String(view.position/step)}
+ function sync(){const index=items.findIndex(item=>item.key===state.tuning),selected=items[index]||items[1];$('consoleRangeValue').textContent=selected.label;for(const [i,button]of buttons.entries())button.setAttribute('aria-selected',String(items[i].key===selected.key))}
+ function close(returnFocus=false){cancelWheel();const drag=view.touch;view.touch=null;if(drag&&menu.hasPointerCapture(drag.id))menu.releasePointerCapture(drag.id);menu.hidden=true;trigger.hidden=false;trigger.setAttribute('aria-expanded','false');if(returnFocus)trigger.focus()}
+ function open(){if(!canEditScore())return;closeRangePicker();sync();view.suppressClick=false;view.position=Math.max(0,items.findIndex(item=>item.key===state.tuning))*step;trigger.hidden=true;menu.hidden=false;trigger.setAttribute('aria-expanded','true');render();buttons[wrap(Math.round(view.position/step))].focus({preventScroll:true})}
+ cancelWheel=bindSmoothWheel(track,menu,'x',PLAYER_RULES.selectors.rangeMaxStepPx,{loop:true,read:()=>view.position,write:value=>{view.position=value;render()}});
+ trigger.onclick=open;trigger.onkeydown=event=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();open()}};
+ menu.onkeydown=event=>{view.suppressClick=false;let index=buttons.indexOf(document.activeElement),next;
+  if(event.key==='ArrowLeft'||event.key==='ArrowUp')next=wrap(index-1);if(event.key==='ArrowRight'||event.key==='ArrowDown')next=wrap(index+1);if(event.key==='Home')next=0;if(event.key==='End')next=count-1;
+  if(next!==undefined){event.preventDefault();event.stopPropagation();cancelWheel();const center=Math.round(view.position/step);let delta=wrap(next-wrap(center));if(delta>count/2)delta-=count;view.position=(center+delta)*step;render();buttons[next].focus({preventScroll:true})}
+  if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close(true)}if(event.key==='Tab')close(true);
+ };
+ menu.addEventListener('pointerdown',event=>{if(event.button!==0)return;view.suppressClick=false;view.touch={id:event.pointerId,x:event.clientX,y:event.clientY,start:view.position,moved:false}});
+ menu.addEventListener('pointermove',event=>{const drag=view.touch;if(!drag||drag.id!==event.pointerId)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;if(!drag.moved&&Math.abs(dy)>Math.abs(dx)+4){view.touch=null;return}if(!drag.moved&&Math.abs(dx)<4)return;drag.moved=true;view.suppressClick=true;menu.setPointerCapture(event.pointerId);view.position=drag.start-dx;render();event.preventDefault()});
+ const endDrag=event=>{if(view.touch?.id!==event.pointerId)return;view.touch=null;if(menu.hasPointerCapture(event.pointerId))menu.releasePointerCapture(event.pointerId)};menu.addEventListener('pointerup',endDrag);menu.addEventListener('pointercancel',endDrag);
+ document.addEventListener('pointerdown',event=>{if(!menu.hidden&&!menu.contains(event.target)&&!trigger.contains(event.target))close()});
+ consoleRangePicker={sync,close};sync();
 }
 // One downward picker template for instruments and playback speed.
 function createDownwardPicker(config){

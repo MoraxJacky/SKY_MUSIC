@@ -535,3 +535,12 @@ body:has(dialog[open]){overflow:hidden}
 /* The song notation footer contains preview information only. */
 .player-view .grid-foot{grid-template-columns:minmax(0,1fr) auto}
 .player-view .grid-foot #gridHint{text-align:right}
+
+/* In-place console range: the selected gold button is replaced by a looping strip. */
+.console-transport>.console-range-control{grid-column:1 / -1;position:relative;display:grid;place-items:center;justify-self:center;width:min(272px,100%);height:42px;margin:0;gap:0;min-width:0}
+.player-view .console-range-control .key-range-toggle{min-width:110px;height:34px}
+.player-view .console-range-control .key-range-menu{position:absolute;inset:0;width:100%;height:42px;animation:console-range-fade .15s ease-out;transform:none}
+.player-view .console-range-control .key-range-track{position:relative;display:block;padding:0;overflow:hidden;touch-action:pan-y;cursor:grab}
+.player-view .console-range-control .key-range-track button{position:absolute;left:calc(50% - 22px);top:6px;width:44px;min-width:44px;height:30px;min-height:30px;padding:4px 2px;white-space:nowrap;will-change:transform;transition:background .18s,border-color .18s}
+@keyframes console-range-fade{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.player-view .console-range-control .key-range-menu{animation:none}}
