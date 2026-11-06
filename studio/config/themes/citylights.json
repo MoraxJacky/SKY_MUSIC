@@ -1,41 +1,72 @@
 {
   "schemaVersion": 1,
   "id": "citylights",
-  "name": "CITY OF STARS",
+  "name": "VALLEY OF TRIUMPH",
   "defaults": {
-    "accent": "#f0c3a8",
+    "accent": "#f2c39b",
     "motion": "ambient",
-    "snow": 18,
-    "glow": 58
+    "snow": 0,
+    "glow": 50
   },
   "appearance": {},
   "decorations": {
-    "classes": [
-      "theme-starlight",
-      "theme-citylights"
-    ],
+    "classes": [],
     "tree": false,
-    "motif": true,
+    "motif": false,
     "choiceGlyph": "☾"
   },
-  "displayName": "城市暮光",
+  "displayName": "霞谷落日",
   "initialOverrides": {
-    "accent": "#f0c3a8",
+    "accent": "#f2c39b",
     "motion": "ambient",
-    "snow": 12,
-    "glow": 53,
-    "name": "CITY OF STARS"
+    "name": "VALLEY OF TRIUMPH",
+    "snow": 0,
+    "glow": 50
   },
   "elementRefs": {
     "identity": "citylights.identity",
-    "cover": null,
+    "cover": "citylights.scene",
     "tree": null,
-    "stage": "symbol.stage",
+    "stage": "citylights.scene",
     "palette": "palette.citylights",
     "effects": [
-      "effect.snow",
-      "effect.glow",
-      "effect.lights"
-    ]
+      "effect.glow"
+    ],
+    "ornaments": [
+      "citylights.charm"
+    ],
+    "companion": "sky.pianist"
+  },
+  "description": "双塔 · 霞光与滑行轨迹",
+  "legacyNames": [
+    "CITY OF STARS"
+  ],
+  "rollPalette": {
+    "base": "#261f2a",
+    "light": "#503840",
+    "medium": "#352831",
+    "dark": "#281f29",
+    "label": "#dfc5b5",
+    "anchor": "#f2c39b"
+  },
+  "template": "template",
+  "materials": {
+    "surfaceGradient": true,
+    "surfaceAngle": 155,
+    "activeGradient": true,
+    "activeAngle": 145
+  },
+  "keyFeedback": {
+    "enabled": true,
+    "element": "particle.spark",
+    "colors": [
+      "#f2c39b",
+      "#f6dfb9"
+    ],
+    "count": 8,
+    "sizePx": 12,
+    "durationMs": 720,
+    "risePx": 58,
+    "spreadPx": 48
   }
 }

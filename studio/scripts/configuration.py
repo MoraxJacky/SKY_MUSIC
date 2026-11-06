@@ -20,11 +20,25 @@ def render(root):
     assert 0 <= player['volume']['default'] <= 1 and 0 < player['volume']['maxGain'] <= 8
     assert 0 < player['volume']['rampSeconds'] <= 0.1
     elements = load('themes/elements.json')['elements']
+    template = load('themes/template.json')
     themes = {}
     for path in sorted((folder / 'themes').glob('*.json')):
-        if path.name in ['style-rules.json', 'elements.json']:
+        if path.name in ['style-rules.json', 'elements.json', 'template.json']:
             continue
         theme = json.loads(path.read_text(encoding='utf-8'))
+        assert theme.get('template', 'template') == 'template'
+        theme['appearance'] = {**template['appearance'], **theme.get('appearance', {})}
+        theme['materials'] = {**template['materials'], **theme.get('materials', {})}
+        theme['keyFeedback'] = {**template['keyFeedback'], **theme.get('keyFeedback', {})}
+        assert all(isinstance(theme['materials'][key], bool) for key in ['surfaceGradient', 'activeGradient'])
+        assert all(0 <= theme['materials'][key] <= 360 for key in ['surfaceAngle', 'activeAngle'])
+        feedback = theme['keyFeedback']
+        if feedback.get('element'):
+            particle = elements[feedback['element']]
+            assert particle['kind'] == 'particle' and particle['shape'] in ['snowflake', 'star', 'spark', 'butterfly', 'drop', 'diamond']
+            feedback['shape'] = particle['shape']
+        assert 1 <= feedback['count'] <= 16 and 180 <= feedback['durationMs'] <= 1500
+        assert all(re.fullmatch(r'#[0-9a-fA-F]{6}', color) for color in feedback['colors'])
         assert not ({'score', 'events', 'interaction', 'player', 'songs'} & theme.keys()), 'Theme must not contain score/interaction definitions'
         assert path.stem == theme['id'] and theme['id'] not in themes
         refs = theme['elementRefs']
@@ -32,23 +46,30 @@ def render(root):
         assert all(value in elements for value in refs.get('effects', []))
         identity = elements[refs['identity']]
         scene = elements[refs['stage']]
-        assert scene['kind'] in ['frames', 'symbol']
+        assert scene['kind'] in ['frames', 'symbol', 'image']
         theme['decorations']['identity'] = {'image': identity.get('path'), 'glyph': identity.get('glyph', '✧')}
         theme['decorations']['cover'] = elements[refs['cover']]['path'] if refs.get('cover') else None
         theme['decorations']['treeImage'] = elements[refs['tree']]['path'] if refs.get('tree') else None
-        theme['decorations']['scene'] = {'type': scene['kind'], 'frameCount': scene.get('count', 0), 'framePattern': scene.get('pattern'), 'periodMs': scene.get('periodMs', 6000)}
+        theme['decorations']['scene'] = {'type': scene['kind'], 'frameCount': scene.get('count', 0), 'framePattern': scene.get('pattern'), 'periodMs': scene.get('periodMs', 6000), **({'image': scene['path']} if scene['kind'] == 'image' else {})}
+        assert all(value in elements and elements[value]['kind'] == 'image' for value in refs.get('ornaments', []))
+        theme['decorations']['companion'] = elements[refs['companion']]['path'] if refs.get('companion') else None
+        theme['decorations']['ornaments'] = [elements[value]['path'] for value in refs.get('ornaments', [])]
         theme['decorations']['effects'] = [elements[value]['type'] for value in refs.get('effects', [])]
         if refs.get('palette'):
-            theme['appearanceOverrides'] = theme.get('appearance', {})
+            theme['appearanceOverrides'] = json.loads(path.read_text(encoding='utf-8')).get('appearance', {})
             theme['appearance'] = {**elements[refs['palette']]['colors'], **theme['appearanceOverrides']}
         theme['elements'] = elements
         assert all(re.fullmatch(r'#[0-9a-fA-F]{6}', color) for color in theme['appearance'].values())
+        if 'rollPalette' in theme:
+            assert set(theme['rollPalette']) == {'base', 'light', 'medium', 'dark', 'label', 'anchor'}
+            assert all(re.fullmatch(r'#[0-9a-fA-F]{6}', color) for color in theme['rollPalette'].values())
         themes[theme['id']] = theme
     library = load('library.json')
     order = library.get('themeOrder', [])
     themes = {key: themes[key] for key in order + [key for key in themes if key not in order]}
     assert library['defaultTheme'] in themes
     songs, ids, entries, music_files, theme_files, packages = [], set(), [], {}, {}, {}
+    theme_files = {'themes/' + key + '.skytheme': {'format': 'skytheme', 'schemaVersion': 2, 'definition': theme} for key, theme in themes.items()}
     for entry_path in library['entries']:
         assert re.fullmatch(r'songs/[a-z0-9-]+\.json', entry_path)
         entry = load(entry_path)
@@ -88,7 +109,7 @@ def render(root):
     assert set(used) == set(rules), 'Every theme style slot must have exactly one definition'
     assert len(used) == len(set(used))
     compact = lambda obj: json.dumps(obj, ensure_ascii=False, separators=(',', ':'))
-    config = {'player': player, 'themes': themes, 'defaultTheme': library['defaultTheme'], 'elements': elements,
+    config = {'player': player, 'themes': themes, 'themeTemplate': template, 'defaultTheme': library['defaultTheme'], 'elements': elements,
               'platform': {'entries': entries, 'music': music_files, 'themes': theme_files}}
     packages.update({'app/library/' + key: json.dumps(value, ensure_ascii=False, separators=(',', ':')) + '\n' for key, value in {**music_files, **theme_files}.items()})
     return {**packages,

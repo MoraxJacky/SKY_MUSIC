@@ -34,17 +34,20 @@ function savePlatformTheme(pack){
 }
 function sanitizeThemeDefinition(raw){
  if(!raw||typeof raw!=='object'||!/^[-a-zA-Z0-9_]{1,80}$/.test(raw.id||''))throw Error('主题定义缺少有效 ID');
+ if(['score','events','interaction','player','songs','script','handlers'].some(key=>Object.hasOwn(raw,key)))throw Error('主题只能包含外观参数和素材，不能包含谱面或交互处理器');
  raw=copy(raw);
  if(raw.elementRefs){
   const refs=raw.elementRefs,elements=raw.elements||{},element=id=>{if(!elements[id])throw Error('主题缺少元素 '+id);return elements[id]};
   const identity=element(refs.identity),scene=element(refs.stage);
   raw.decorations={...raw.decorations,identity:{image:identity.path||null,glyph:identity.glyph||'✧'},cover:refs.cover?element(refs.cover).path:null,treeImage:refs.tree?element(refs.tree).path:null,
-   scene:{type:scene.kind,frameCount:scene.count||0,framePattern:scene.pattern||null,periodMs:scene.periodMs||6000},effects:(refs.effects||[]).map(id=>element(id).type)};
+   scene:{type:scene.kind,frameCount:scene.count||0,framePattern:scene.pattern||null,periodMs:scene.periodMs||6000,...(scene.kind==='image'?{image:scene.path}:{})},companion:refs.companion?element(refs.companion).path:null,ornaments:(refs.ornaments||[]).map(id=>element(id).path),effects:(refs.effects||[]).map(id=>element(id).type)};
   if(refs.palette)raw.appearance={...element(refs.palette).colors,...(raw.appearanceOverrides||raw.appearance)};
  }
  const base=THEME_DEFINITIONS[raw.id]||THEME_DEFINITIONS[APP_CONFIG.defaultTheme],definition=copy(base),input=raw.decorations||{};
  definition.elementRefs=raw.elementRefs||{};definition.appearanceOverrides=raw.appearanceOverrides||{};definition.id=raw.id;definition.name=String(raw.name||base.name).slice(0,100);definition.displayName=String(raw.displayName||definition.name).slice(0,60);
+ definition.description=String(raw.description||'').slice(0,160);definition.legacyNames=(raw.legacyNames||[]).filter(value=>typeof value==='string').slice(0,8);
  definition.appearance={...base.appearance,...sanitizePlayerAppearance(raw.appearance)};
+ definition.materials=sanitizeThemeMaterials(raw.materials);const feedback={...raw.keyFeedback};if(feedback.element&&raw.elements?.[feedback.element]?.kind==='particle')feedback.shape=raw.elements[feedback.element].shape;definition.keyFeedback=sanitizeKeyFeedback(feedback,definition.appearance);
  definition.defaults={...base.defaults,...raw.defaults};definition.initialOverrides=Object.fromEntries(Object.entries(raw.initialOverrides||{}).filter(([key])=>['accent','backgroundColor','snow','glow','motion','name','customStage'].includes(key)));
  const image=path=>{if(path!=null)safeResourcePath(path,path.slice(path.lastIndexOf('.')));if(path&&!path.startsWith('assets/'))throw Error('主题资源必须位于 assets/');return path||null};
  const scene=input.scene||base.decorations.scene;
@@ -52,16 +55,17 @@ function sanitizeThemeDefinition(raw){
  if(scene.type==='frames'&&(!Number.isInteger(scene.frameCount)||scene.frameCount<1||scene.frameCount>48))throw Error('主题帧数超出范围');
  const classes=(input.classes||base.decorations.classes).filter(name=>['theme-starlight','theme-citylights'].includes(name));
  definition.decorations={classes,identity:{image:image(input.identity?.image),glyph:String(input.identity?.glyph||'✧').slice(0,8)},
-  tree:Boolean(input.tree),treeImage:image(input.treeImage),motif:Boolean(input.motif),cover:image(input.cover),choiceGlyph:String(input.choiceGlyph||'✧').slice(0,8),
+  companion:image(input.companion),ornaments:(input.ornaments||[]).slice(0,3).map(image),tree:Boolean(input.tree),treeImage:image(input.treeImage),motif:Boolean(input.motif),cover:image(input.cover),choiceGlyph:String(input.choiceGlyph||'✧').slice(0,8),
   effects:(input.effects||['snow','glow','lights']).filter(type=>['snow','glow','lights'].includes(type)),scene:{type:scene.type,frameCount:scene.type==='frames'?scene.frameCount:0,framePattern:scene.type==='frames'?image(scene.framePattern):null,periodMs:clamp(Number(scene.periodMs)||6000,100,60000),...(scene.type==='image'?{image:image(scene.image)}:{})}};
  definition.elements={};for(const [id,element] of Object.entries(raw.elements||{})){
+  if(element.kind==='particle'&&['snowflake','star','spark','butterfly','drop','diamond'].includes(element.shape))definition.elements[id]={kind:'particle',shape:element.shape};
   if(element.kind==='image')definition.elements[id]={kind:'image',path:image(element.path)};
   if(element.kind==='symbol')definition.elements[id]={kind:'symbol',glyph:String(element.glyph||'✧').slice(0,8)};
   if(element.kind==='frames'&&Number.isInteger(element.count)&&element.count>=1&&element.count<=48)definition.elements[id]={kind:'frames',pattern:image(element.pattern),count:element.count,periodMs:clamp(Number(element.periodMs)||6000,100,60000)};
   if(element.kind==='palette')definition.elements[id]={kind:'palette',colors:sanitizePlayerAppearance(element.colors)};
   if(element.kind==='effect'&&['snow','glow','lights'].includes(element.type))definition.elements[id]={kind:'effect',type:element.type};
  }
- if(raw.rollPalette&&Object.values(raw.rollPalette).every(value=>/^#[0-9a-f]{6}$/i.test(value)))definition.rollPalette=copy(raw.rollPalette);
+ definition.rollPalette=rollPaletteForTheme({},definition.appearance);for(const key of Object.keys(definition.rollPalette))if(/^#[0-9a-f]{6}$/i.test(raw.rollPalette?.[key]||''))definition.rollPalette[key]=raw.rollPalette[key];
  return definition;
 }
 function registerThemeDefinition(definition){
@@ -90,7 +94,7 @@ async function readThemeResource(bytes){
   if(manifest?.format!=='skytheme'||manifest.schemaVersion!==2||!files['theme.json'])throw Error('不是受支持的 .skytheme 主题');
   raw=JSON.parse(DECODER.decode(files['theme.json']));
   for(const [path,payload] of Object.entries(files))if(path.startsWith('assets/')){
-   const mime=path.endsWith('.png')?'image/png':path.endsWith('.jpg')||path.endsWith('.jpeg')?'image/jpeg':'image/webp';
+   const mime=path.endsWith('.svg')?'image/svg+xml':path.endsWith('.png')?'image/png':path.endsWith('.jpg')||path.endsWith('.jpeg')?'image/jpeg':'image/webp';
    assets[path]='data:'+mime+';base64,'+bytesToBase64(payload);
   }
  }else{
@@ -129,8 +133,8 @@ async function themeResourceBytes(project){
  const definition=copy(themeDefinition(project));definition.appearanceOverrides={...(definition.appearanceOverrides||{}),...Object.fromEntries(Object.entries(sanitizePlayerAppearance(project.theme.appearance)).filter(([key,value])=>value!==definition.appearance[key]))};definition.appearance={...definition.appearance,...definition.appearanceOverrides};definition.initialOverrides=copy(project.theme);delete definition.initialOverrides.id;delete definition.initialOverrides.definition;delete definition.initialOverrides.assets;
  if(customThemeChanged(project)){definition.id='custom-'+Date.now();definition.name=project.theme.name||definition.name;definition.displayName=definition.name;}
  const files={'manifest.json':JSON.stringify({format:'skytheme',schemaVersion:2}),'theme.json':JSON.stringify(definition),'scene.json':JSON.stringify(project.theme)};
- if(project._imageUrl?.startsWith('data:image/')){definition.decorations.scene={type:'image',image:'assets/custom-stage.webp',frameCount:0,framePattern:null,periodMs:6000};definition.decorations.cover='assets/custom-stage.webp';definition.elements['custom.cover']={kind:'image',path:'assets/custom-stage.webp'};definition.elementRefs={};files['assets/custom-stage.webp']=base64ToBytes(project._imageUrl.split(',')[1]);files['theme.json']=JSON.stringify(definition);}
- const decor=definition.decorations,paths=new Set([decor.identity.image,decor.treeImage,decor.cover,decor.scene.image]);
+ if(project._imageUrl?.startsWith('data:image/')){definition.decorations.scene={type:'image',image:'assets/custom-stage.webp',frameCount:0,framePattern:null,periodMs:6000};definition.decorations.cover='assets/custom-stage.webp';definition.elements['custom.cover']={kind:'image',path:'assets/custom-stage.webp'};definition.decorations.companion=null;delete definition.elementRefs;files['assets/custom-stage.webp']=base64ToBytes(project._imageUrl.split(',')[1]);files['theme.json']=JSON.stringify(definition);}
+ const decor=definition.decorations,paths=new Set([decor.identity.image,decor.treeImage,decor.cover,decor.scene.image,decor.companion,...(decor.ornaments||[])]);
  if(decor.scene.type==='frames')for(let i=0;i<decor.scene.frameCount;i++)paths.add(decor.scene.framePattern.replace('{index}',String(i).padStart(2,'0')));
  const cover=(definition.elements||APP_CONFIG.elements)[project.card?.coverElement];if(cover?.kind==='image')paths.add(cover.path);
  for(const path of paths)if(path&&!files[path]){safeResourcePath(path,path.slice(path.lastIndexOf('.')));const uri=themeAsset(path,project);if(uri.startsWith('data:image/'))files[path]=base64ToBytes(uri.split(',')[1]);else{const response=await fetch(uri);if(!response.ok)throw Error('无法打包主题资源 '+path);files[path]=new Uint8Array(await response.arrayBuffer())}}

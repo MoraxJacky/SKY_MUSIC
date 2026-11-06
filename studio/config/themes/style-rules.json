@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "rules": {
-    "theme-001": ".song-cover.starlight{background:radial-gradient(ellipse at 54% 45%,#ec9fab3b,transparent 45%),linear-gradient(155deg,#151936,#322957 60%,#543f5c)}",
-    "theme-002": ".song-cover.starlight:before{content:\"✧  ·  ✦   ·   ✧\";position:absolute;top:11%;color:#eed2a9;letter-spacing:50px;text-shadow:0 0 15px #f9cde0}",
-    "theme-003": ".song-cover.starlight:after{content:\"♬\";font:100px Georgia,serif;color:#efcbb6aa;filter:drop-shadow(0 0 18px #f9deb6aa)}",
+    "theme-001": "",
+    "theme-002": "",
+    "theme-003": "",
     "theme-004": ".player-view.theme-starlight{--gold:#f2c9dd;--panel:#1d263d;--panel-soft:#202f4a;--border:rgba(230,192,228,.28);--theme-accent:#f2c9dd;--note:#acb8e9;--chord:#f2c9dd}",
     "theme-005": ".player-view.theme-starlight .play-controls{background:linear-gradient(115deg,#242849f2,#242d50f2,#382f54f2)}",
     "theme-006": ".player-view.theme-starlight .pane{background:linear-gradient(135deg,#202b49f2,#1c2b43e6)}",

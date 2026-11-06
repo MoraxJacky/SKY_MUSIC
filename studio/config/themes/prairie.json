@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "id": "prairie",
+  "appearance": {},
+  "decorations": {
+    "classes": [],
+    "tree": false,
+    "motif": false,
+    "choiceGlyph": "✧"
+  },
+  "defaults": {
+    "accent": "#dcd7a2",
+    "motion": "ambient",
+    "snow": 0,
+    "glow": 50
+  },
+  "name": "DAYLIGHT PRAIRIE",
+  "displayName": "云野浮岛",
+  "description": "浮岛钟塔 · 金色蝴蝶",
+  "legacyNames": [],
+  "initialOverrides": {
+    "accent": "#dcd7a2",
+    "motion": "ambient",
+    "name": "DAYLIGHT PRAIRIE",
+    "snow": 0,
+    "glow": 50
+  },
+  "elementRefs": {
+    "identity": "prairie.identity",
+    "cover": "prairie.scene",
+    "tree": null,
+    "stage": "prairie.scene",
+    "palette": "palette.prairie",
+    "effects": [
+      "effect.glow"
+    ],
+    "ornaments": [
+      "prairie.charm"
+    ],
+    "companion": "sky.pianist"
+  },
+  "rollPalette": {
+    "base": "#152e30",
+    "light": "#375a49",
+    "medium": "#224134",
+    "dark": "#19342e",
+    "label": "#bfcebd",
+    "anchor": "#dcd7a2"
+  },
+  "template": "template",
+  "materials": {
+    "surfaceGradient": true,
+    "surfaceAngle": 125,
+    "activeGradient": true,
+    "activeAngle": 145
+  },
+  "keyFeedback": {
+    "enabled": true,
+    "element": "particle.butterfly",
+    "colors": [
+      "#dcd7a2",
+      "#deedbc"
+    ],
+    "count": 8,
+    "sizePx": 15,
+    "durationMs": 820,
+    "risePx": 58,
+    "spreadPx": 48
+  }
+}

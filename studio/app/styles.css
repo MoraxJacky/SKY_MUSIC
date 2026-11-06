@@ -515,3 +515,120 @@ body:has(dialog[open]){overflow:hidden}
 .player-view .console-range-control .key-range-track button{min-height:30px;padding:4px 2px;white-space:nowrap}
 @keyframes console-range-fade{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.player-view .console-range-control .key-range-menu{animation:none}}
+
+/* Shared rhythm: themes only supply materials, never geometry. */
+.player-view{--layout-gap:12px;--panel-pad:14px;gap:var(--layout-gap)}
+.player-view .workspace,.player-view .workspace-left{gap:var(--layout-gap)}
+.player-view .pane{padding:var(--panel-pad)}
+.player-view .pane-top{min-height:30px;margin:0 0 10px;padding:0;gap:12px}
+.player-view .keys-pane .pane-top{margin-bottom:10px}
+.player-view .roll-body{background:var(--player-surface-end);border-color:var(--player-border)}
+.player-view .roll-foot{padding-top:8px;color:var(--player-muted)}
+.player-view .theme-charm{position:absolute;left:calc(50% - 23px);top:0;width:46px;height:23px;object-fit:contain;opacity:.48;pointer-events:none;user-select:none;z-index:2}
+.player-view .stage-charm{left:auto;top:auto;right:14px;bottom:30px;width:64px;height:55px;opacity:.62;z-index:4}
+.player-view .stage-caption{padding:8px 12px}
+.player-view .song-titles span{color:var(--player-accent)}
+.player-view .grid-foot{margin-top:8px}
+.player-view .theme-choices,.scene-dialog .theme-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.scene-dialog{color:var(--player-text,#fff8eb);background:linear-gradient(140deg,var(--player-surface-start,#17372f),var(--player-surface-end,#0d2826))}
+.scene-dialog .theme-choices button{padding:14px 12px;text-align:left;min-height:64px;background:var(--player-button);border:1px solid var(--player-border);color:var(--player-text);border-radius:12px}
+.scene-dialog .theme-choices button.is-active{border-color:var(--player-accent);box-shadow:inset 0 0 0 1px var(--player-accent)}
+.scene-dialog .theme-choices small{display:block;margin-top:6px;color:var(--player-muted);font-size:11px;line-height:1.5}
+@media(min-width:901px){
+ .player-view .workspace-right{padding:0;border:0;background:none;box-shadow:none;overflow:visible;gap:var(--layout-gap)}
+ .player-view .workspace-right::before,.player-view .workspace-right::after{content:none}
+ .player-view .workspace-right>.grid-pane{padding:var(--panel-pad);border:1px solid color-mix(in srgb,var(--player-accent) 27%,transparent);border-radius:17px;background:linear-gradient(143deg,var(--player-surface-start),var(--player-surface-end));box-shadow:0 16px 60px #0005;overflow:hidden}
+ .player-view .workspace-right>#stagePane{margin:0;border:1px solid color-mix(in srgb,var(--player-accent) 27%,transparent);border-radius:17px;min-height:110px}
+ .player-view .beat-grid{margin:0 auto;gap:6px}
+ .player-view .score-console{gap:var(--layout-gap)}
+ .console-layout,.console-score,.console-side{gap:var(--layout-gap)}
+ .console-side>section,.console-side>.console-transport,.console-side #consoleInspectorSlot{padding:12px}
+}
+@media(min-width:901px) and (max-height:790px){
+ .player-view{--layout-gap:10px;--panel-pad:11px}
+ .player-view .pane-top{min-height:27px;margin-bottom:8px}
+ .player-view .keys-pane .pane-top{margin-bottom:8px}
+ .player-view .beat-grid{gap:5px}
+ .console-side>section,.console-side>.console-transport,.console-side #consoleInspectorSlot{padding:9px}
+}
+@media(max-width:900px){.player-view{--panel-pad:12px}.player-view .workspace-right{gap:var(--layout-gap)}.scene-dialog .theme-choices{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.player-view .theme-charm:not(.stage-charm){display:none}.player-view .pane-top{gap:8px}}
+/* Two full card rows use the available desktop viewport instead of a fixed short cover. */
+@media(min-width:901px){
+ .home-view{--home-hero-height:clamp(180px,24dvh,270px);--home-card-height:max(144px,calc((100dvh - 64px - var(--home-hero-height) - 164px)/2))}
+ .home-top{height:64px}
+ .home-body{width:100%;max-width:1400px;padding:16px 28px;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:var(--home-hero-height) auto auto 18px;gap:16px}
+ .home-hero{height:var(--home-hero-height);min-height:0}
+ .hero-copy{padding:18px 28px;display:flex;flex-direction:column;justify-content:center}
+ .hero-copy h1{font-size:clamp(27px,2.6vw,40px);line-height:1.25;margin:8px 0}
+ .hero-copy p{margin:0 0 10px;font-size:12px;line-height:1.6}
+ .hero-actions button{padding:7px 14px}
+ .library-heading{min-height:50px;margin:0;align-items:center}
+ .library-grid{gap:16px;grid-auto-rows:var(--home-card-height)}
+ .library-grid>.song-card{height:100%;min-height:0}
+ .song-cover{height:auto;min-height:0;flex:1}
+ .song-details{flex:0 0 68px;min-height:68px;padding:12px 16px}
+ .library-grid>.add-card{padding:16px}
+ .home-footer{height:18px;line-height:18px;margin:0}
+}
+.song-cover{background:radial-gradient(ellipse at 65% 15%,color-mix(in srgb,var(--card-accent,#e8c88a) 12%,transparent),transparent 65%),linear-gradient(150deg,var(--card-stage-start,#132e2c),var(--card-stage-end,#193c38))}
+.song-cover img{object-position:center}
+
+/* Preset material parameters and a single passive, pointer-transparent feedback layer. */
+.player-view .pane,.player-view .workspace-right>.grid-pane,.console-side>section,.console-side>.console-transport,.console-side #consoleInspectorSlot{background:var(--player-surface-paint)}
+.player-view .beat.active,.player-view .key-tile.active{background:var(--player-active-paint)}
+.key-feedback-layer{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:250;contain:strict}
+.key-particle{position:absolute;pointer-events:none;will-change:transform,opacity;filter:drop-shadow(0 0 3px currentColor)}
+.key-particle svg{width:100%;height:100%;display:block}
+body:has(#scoreConsole[open]) .key-feedback-layer{display:none}
+@media(prefers-reduced-motion:reduce){.key-feedback-layer{display:none}}
+@media(min-width:901px){.hero-copy h1{font-size:clamp(27px,2.3vw,36px);line-height:1.15;margin:6px 0}.hero-copy p{margin-bottom:8px}}
+@media(min-width:901px) and (max-height:790px){.hero-copy{padding:12px 24px}.hero-copy h1{font-size:29px;margin:4px 0}.hero-copy p{font-size:11.5px;line-height:1.5;margin-bottom:6px}.hero-actions button{padding:6px 14px}}
+
+/* Platform identity stays independent of all six song themes. */
+.home-view{position:relative;isolation:isolate;background:#091a29;color:#eaf0ed}
+.home-atmosphere{position:fixed;inset:0;overflow:hidden;z-index:-1;pointer-events:none;background:#0b1b2c}
+.home-art{width:100%;height:100%;object-fit:cover;object-position:center top;opacity:.72}
+.home-shade{position:absolute;inset:0;background:linear-gradient(90deg,#071725bf,#091d2c55 55%,#12273822),linear-gradient(0deg,#071725e8,transparent 90%)}
+.home-aura{position:absolute;display:block;width:58vw;height:58vw;border-radius:50%;filter:blur(65px);mix-blend-mode:screen;will-change:transform,opacity}
+.aura-one{left:-15%;top:-26%;background:radial-gradient(ellipse,#71bdcb38,transparent 65%);animation:home-breathe 18s ease-in-out infinite}
+.aura-two{right:-12%;top:12%;background:radial-gradient(ellipse,#f0d7a929,transparent 65%);animation:home-flow 25s ease-in-out infinite}
+@keyframes home-breathe{0%,100%{transform:translate(0,0) scale(.92);opacity:.4}50%{transform:translate(6%,9%) scale(1.12);opacity:.85}}
+@keyframes home-flow{0%,100%{transform:translate(0,0) scale(1);opacity:.5}50%{transform:translate(-11%,12%) scale(1.1);opacity:.85}}
+.home-view .home-top{max-width:1400px;border-color:#b9dce424;background:#0b1e2b55;backdrop-filter:blur(10px)}
+.home-view .home-hero{background:linear-gradient(100deg,#10283bbf,#152e4044 65%,#29465a11);border-color:#b2d2d34a;box-shadow:0 16px 50px #020d1744,inset 0 1px #deedf51a;border-radius:22px}
+.home-view .hero-illustration{background:none;position:relative;pointer-events:none}
+.home-scene-caption{position:absolute;right:24px;bottom:20px;color:#f2e5c9;font:15px Georgia,'Microsoft YaHei',serif;text-align:right;letter-spacing:3px;text-shadow:0 2px 12px #071725}
+.home-scene-caption small{display:block;margin-top:7px;font:8px 'Segoe UI',sans-serif;letter-spacing:2px;color:#d3e0e2}
+.home-view .eyebrow{color:#bad9dd}.home-view .hero-copy p{color:#c8d8dc}.home-view .hero-copy h1 span{color:#d1e5df}
+.home-view .btn-primary,.home-view .song-details .card-play{background:linear-gradient(125deg,#d8e5d5,#adc9c8);color:#17323b;border-color:#d2e6de}
+.home-view .btn-outline{border-color:#9bbfc67a;background:#17314388;color:#e0eeed}
+.home-view .wordmark strong,.home-view .mark{color:#c8dfda}.home-view .mark{border-color:#b8d2d168}
+.home-view .song-card{background:linear-gradient(145deg,#173140dd,#102634ed);border-color:#b6d5d338;box-shadow:0 12px 32px #020b1644}
+.home-view .song-card:hover{border-color:#c6e0d694}.home-view .song-details p{color:#bacdd1}
+.home-view .add-card{background:#17313e66;color:#c0d7d8}.home-view .add-card .plus,.home-view .home-footer span{color:#c9ddd6}
+.home-view .home-footer{color:#a6c0c8}.home-view .library-tools input,.home-view .library-tools select{background:#112b3bcc;border-color:#9bbfc64a;color:#dce9e7}
+body:has(#homeView:not([hidden])) .world-sky .flakes{display:none}
+.player-view .stage-companion{position:absolute;left:8%;bottom:9%;width:28%;height:64%;object-fit:contain;object-position:center bottom;z-index:3;opacity:.87;pointer-events:none;user-select:none;filter:drop-shadow(0 5px 7px #0004)}
+@media(min-width:901px){.home-top{padding-left:28px;padding-right:28px}}
+@media(max-width:900px){.home-art{object-position:63% top}.home-view .hero-illustration{position:absolute;inset:0;opacity:.8}.home-scene-caption{right:18px;bottom:16px}.home-view .home-top{backdrop-filter:none}.home-view .hero-copy{z-index:2}.home-view .home-hero{background:linear-gradient(90deg,#0d263ce0,#17344377)}}
+@media(max-width:600px){.home-scene-caption{display:none}.home-aura{width:110vw;height:110vw;filter:blur(45px)}}
+@media(prefers-reduced-motion:reduce){.home-aura{animation:none!important;will-change:auto}}
+
+body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
+
+.player-view .key-tile.active .key-no,.player-view .key-tile.active .key-name{color:var(--player-text)}
+
+@media(max-width:600px){
+ .home-view .home-top{height:72px;min-height:72px;gap:8px;padding:10px 14px}
+ .home-view .wordmark{gap:8px;font-size:16px;min-width:0}.home-view .wordmark>span:last-child{white-space:nowrap}.home-view .wordmark small{font-size:7px;letter-spacing:1.2px}
+ .home-view .mark{width:30px;height:30px;flex:none;font-size:23px}
+ .home-view .home-top-actions{gap:6px;flex:none}.home-view .home-top-actions button{min-height:36px;padding:7px 10px}
+ .home-view #newSongBtn,.home-view .home-top-actions [data-import]{font-size:0}
+ .home-view #newSongBtn::after{content:'＋ 新建';font-size:12px}.home-view .home-top-actions [data-import]::after{content:'↥ 导入';font-size:12px}
+ .home-view .library-heading{display:flex;flex-direction:column;align-items:stretch;gap:12px;margin:22px 0 16px}
+ .home-view .library-heading h2{white-space:nowrap;font-size:23px}.home-view .library-heading .eyebrow{letter-spacing:2px;font-size:9px}
+ .home-view .library-tools{display:grid;grid-template-columns:minmax(0,1fr) 92px auto;gap:8px;font-size:11px}
+ .home-view .library-tools input,.home-view .library-tools select{width:100%;min-width:0;max-width:none}
+ .home-view #libraryCount{white-space:nowrap}.home-view .hero-copy>.eyebrow{font-size:8px;letter-spacing:1.2px}
+}

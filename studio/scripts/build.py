@@ -21,16 +21,20 @@ site=site.replace('src="assets/christmas/snowflake.webp"','src="'+flake_uri+'"')
 for decoration in ['legacy-tree.png']:
  uri='data:image/png;base64,'+base64.b64encode((APP/f'assets/christmas/{decoration}').read_bytes()).decode()
  site=site.replace(f'src="assets/christmas/{decoration}"',f'src="{uri}"')
+home_art='assets/platform/music-islands-v1.png'
+home_uri='data:image/png;base64,'+base64.b64encode((APP/home_art).read_bytes()).decode()
+site=site.replace('src="'+home_art+'"','src="'+home_uri+'"')
 theme_assets={}
 config_text=(APP/'js/studio-config.js').read_text(encoding='utf-8')
 config_data=json.loads(config_text.split('window.SKY_STUDIO_CONFIG=',1)[1].rstrip(';\n'))
 for definition in config_data['themes'].values():
  decoration=definition['decorations']
- paths=[decoration['identity'].get('image'),decoration.get('cover'),decoration.get('treeImage')]
+ paths=[decoration['identity'].get('image'),decoration.get('cover'),decoration.get('treeImage'),decoration.get('companion'),*decoration.get('ornaments',[])]
  scene=decoration['scene']
+ if scene['type']=='image':paths.append(scene['image'])
  if scene['type']=='frames':paths.extend(scene['framePattern'].replace('{index}',str(i).zfill(2)) for i in range(scene['frameCount']))
  for asset in filter(None,paths):
-  mime='image/png' if asset.endswith('.png') else 'image/webp'
+  mime={'.png':'image/png','.svg':'image/svg+xml','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp'}[Path(asset).suffix.lower()]
   theme_assets[asset]='data:'+mime+';base64,'+base64.b64encode((APP/asset).read_bytes()).decode()
 preload='<script>window.SKY_THEME_ASSETS='+json.dumps(theme_assets,separators=(',',':'))+';window.SKY_STAGE_FRAMES='+'['+','.join('window.SKY_THEME_ASSETS['+json.dumps(f'assets/christmas/stage_{i:02d}.webp')+']' for i in range(24))+']'+';window.SKY_INLINE_STAGE=window.SKY_THEME_ASSETS["assets/christmas/stage_00.webp"]'+';</script>'
 site=site.replace('<script src="js/builtins.js"></script>',preload+'\n<script src="js/builtins.js"></script>')

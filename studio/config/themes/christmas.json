@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "id": "christmas",
-  "name": "CHRISTMAS NIGHT",
+  "name": "DAYS OF FEAST",
   "defaults": {
-    "accent": "#e8c88a",
+    "accent": "#eac68a",
     "motion": "ambient",
-    "snow": 50,
-    "glow": 58
+    "snow": 35,
+    "glow": 50
   },
   "appearance": {},
   "decorations": {
@@ -20,13 +20,16 @@
     "light": "#244438",
     "medium": "#112e29",
     "dark": "#0b2825",
-    "label": "#b0c8b6",
-    "anchor": "#eed09e"
+    "label": "#b4c9bf",
+    "anchor": "#eac68a"
   },
   "displayName": "圣诞雪夜",
   "initialOverrides": {
-    "accent": "#f2ca86",
-    "motion": "ambient"
+    "accent": "#eac68a",
+    "motion": "ambient",
+    "name": "DAYS OF FEAST",
+    "snow": 35,
+    "glow": 50
   },
   "elementRefs": {
     "identity": "christmas.identity",
@@ -35,9 +38,36 @@
     "stage": "christmas.stage",
     "palette": "palette.christmas",
     "effects": [
-      "effect.snow",
       "effect.glow",
+      "effect.snow",
       "effect.lights"
+    ],
+    "ornaments": [
+      "christmas.charm"
     ]
+  },
+  "description": "红围巾 · 冬日礼物与烛光",
+  "legacyNames": [
+    "CHRISTMAS NIGHT"
+  ],
+  "template": "template",
+  "materials": {
+    "surfaceGradient": true,
+    "surfaceAngle": 143,
+    "activeGradient": true,
+    "activeAngle": 145
+  },
+  "keyFeedback": {
+    "enabled": true,
+    "element": "particle.snowflake",
+    "colors": [
+      "#eac68a",
+      "#ddf1c4"
+    ],
+    "count": 8,
+    "sizePx": 12,
+    "durationMs": 720,
+    "risePx": 58,
+    "spreadPx": 48
   }
 }

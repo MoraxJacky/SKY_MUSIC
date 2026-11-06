@@ -1,37 +1,72 @@
 {
   "schemaVersion": 1,
   "id": "starlight",
-  "name": "STARLIGHT PIANO",
+  "name": "STARLIGHT DESERT",
   "defaults": {
-    "accent": "#c9b6f5",
+    "accent": "#e7bfd7",
     "motion": "ambient",
-    "snow": 18,
-    "glow": 58
+    "snow": 0,
+    "glow": 50
   },
   "appearance": {},
   "decorations": {
-    "classes": [
-      "theme-starlight"
-    ],
+    "classes": [],
     "tree": false,
-    "motif": true,
+    "motif": false,
     "choiceGlyph": "✧"
   },
-  "displayName": "星空钢琴",
+  "displayName": "星光沙漠",
   "initialOverrides": {
-    "accent": "#eac1d7",
-    "motion": "ambient"
+    "accent": "#e7bfd7",
+    "motion": "ambient",
+    "name": "STARLIGHT DESERT",
+    "snow": 0,
+    "glow": 50
   },
   "elementRefs": {
     "identity": "starlight.identity",
-    "cover": null,
+    "cover": "starlight.scene",
     "tree": null,
-    "stage": "symbol.stage",
+    "stage": "starlight.scene",
     "palette": "palette.starlight",
     "effects": [
-      "effect.snow",
-      "effect.glow",
-      "effect.lights"
-    ]
+      "effect.glow"
+    ],
+    "ornaments": [
+      "starlight.charm"
+    ],
+    "companion": "sky.pianist"
+  },
+  "description": "玻璃罩玫瑰 · 沙丘与星群",
+  "legacyNames": [
+    "STARLIGHT PIANO"
+  ],
+  "rollPalette": {
+    "base": "#181c35",
+    "light": "#413955",
+    "medium": "#29253e",
+    "dark": "#1d1c33",
+    "label": "#cbbdd8",
+    "anchor": "#e7bfd7"
+  },
+  "template": "template",
+  "materials": {
+    "surfaceGradient": true,
+    "surfaceAngle": 135,
+    "activeGradient": true,
+    "activeAngle": 145
+  },
+  "keyFeedback": {
+    "enabled": true,
+    "element": "particle.star",
+    "colors": [
+      "#e7bfd7",
+      "#e4d6f5"
+    ],
+    "count": 9,
+    "sizePx": 12,
+    "durationMs": 720,
+    "risePx": 58,
+    "spreadPx": 48
   }
 }

@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "id": "rainforest",
+  "appearance": {},
+  "decorations": {
+    "classes": [],
+    "tree": false,
+    "motif": false,
+    "choiceGlyph": "✧"
+  },
+  "defaults": {
+    "accent": "#a9d6c9",
+    "motion": "ambient",
+    "snow": 0,
+    "glow": 50
+  },
+  "name": "HIDDEN FOREST",
+  "displayName": "雨林幽光",
+  "description": "雨亭 · 发光水母与雨丝",
+  "legacyNames": [],
+  "initialOverrides": {
+    "accent": "#a9d6c9",
+    "motion": "ambient",
+    "name": "HIDDEN FOREST",
+    "snow": 0,
+    "glow": 50
+  },
+  "elementRefs": {
+    "identity": "rainforest.identity",
+    "cover": "rainforest.scene",
+    "tree": null,
+    "stage": "rainforest.scene",
+    "palette": "palette.rainforest",
+    "effects": [
+      "effect.glow"
+    ],
+    "ornaments": [
+      "rainforest.charm"
+    ],
+    "companion": "sky.pianist"
+  },
+  "rollPalette": {
+    "base": "#102930",
+    "light": "#275057",
+    "medium": "#193840",
+    "dark": "#102e36",
+    "label": "#afccc9",
+    "anchor": "#a9d6c9"
+  },
+  "template": "template",
+  "materials": {
+    "surfaceGradient": false,
+    "surfaceAngle": 145,
+    "activeGradient": true,
+    "activeAngle": 145
+  },
+  "keyFeedback": {
+    "enabled": true,
+    "element": "particle.drop",
+    "colors": [
+      "#a9d6c9",
+      "#c5e8d3"
+    ],
+    "count": 8,
+    "sizePx": 12,
+    "durationMs": 820,
+    "risePx": 48,
+    "spreadPx": 38
+  }
+}

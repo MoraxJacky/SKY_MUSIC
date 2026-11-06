@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "id": "vault",
+  "appearance": {},
+  "decorations": {
+    "classes": [],
+    "tree": false,
+    "motif": false,
+    "choiceGlyph": "✧"
+  },
+  "defaults": {
+    "accent": "#e4cf96",
+    "motion": "ambient",
+    "snow": 0,
+    "glow": 50
+  },
+  "name": "VAULT OF KNOWLEDGE",
+  "displayName": "禁阁星图",
+  "description": "悬浮石台 · 遥鲲与星图",
+  "legacyNames": [],
+  "initialOverrides": {
+    "accent": "#e4cf96",
+    "motion": "ambient",
+    "name": "VAULT OF KNOWLEDGE",
+    "snow": 0,
+    "glow": 50
+  },
+  "elementRefs": {
+    "identity": "vault.identity",
+    "cover": "vault.scene",
+    "tree": null,
+    "stage": "vault.scene",
+    "palette": "palette.vault",
+    "effects": [
+      "effect.glow"
+    ],
+    "ornaments": [
+      "vault.charm"
+    ],
+    "companion": "sky.pianist"
+  },
+  "rollPalette": {
+    "base": "#151d32",
+    "light": "#373e5b",
+    "medium": "#242c43",
+    "dark": "#192136",
+    "label": "#c9c6d3",
+    "anchor": "#e4cf96"
+  },
+  "template": "template",
+  "materials": {
+    "surfaceGradient": true,
+    "surfaceAngle": 150,
+    "activeGradient": true,
+    "activeAngle": 145
+  },
+  "keyFeedback": {
+    "enabled": true,
+    "element": "particle.diamond",
+    "colors": [
+      "#e4cf96",
+      "#d6def3"
+    ],
+    "count": 9,
+    "sizePx": 12,
+    "durationMs": 720,
+    "risePx": 58,
+    "spreadPx": 48
+  }
+}

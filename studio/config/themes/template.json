@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "appearance": {
+    "surfaceStart": "#17372f",
+    "surfaceEnd": "#0d2826",
+    "controlStart": "#123a30",
+    "controlEnd": "#302729",
+    "button": "#193a31",
+    "hover": "#295044",
+    "border": "#456056",
+    "text": "#fff8eb",
+    "muted": "#b4c9bf",
+    "gridStart": "#254337",
+    "gridEnd": "#183229",
+    "rest": "#112b25",
+    "dot": "#476354",
+    "note": "#ddf1c4",
+    "chord": "#f2d09e",
+    "poly": "#f1a9a0",
+    "activeStart": "#624837",
+    "activeEnd": "#7b5840",
+    "accent": "#eac68a",
+    "stageStart": "#132e2c",
+    "stageEnd": "#193c38",
+    "backdrop": "#091e1b"
+  },
+  "materials": {
+    "surfaceGradient": true,
+    "surfaceAngle": 143,
+    "activeGradient": true,
+    "activeAngle": 160
+  },
+  "keyFeedback": {
+    "enabled": false,
+    "count": 8,
+    "durationMs": 760,
+    "spreadPx": 40,
+    "risePx": 54,
+    "sizePx": 12,
+    "colors": [
+      "#e8c88a",
+      "#fff5de"
+    ]
+  }
+}

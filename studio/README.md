@@ -1,35 +1,39 @@
-# Sky Music Studio v0.4 · 项目与交互修复版
+# Sky Music Studio · 当前开发工程
 
-基于 **v0.3 功能工程** 和 **v7 演奏布局**，本轮只修改页面逻辑、功能与控件排布，不替换原始的三栏界面、圣诞素材或《卡农圣诞夜》识谱事件。原始 v7 备份位于 `legacy/`。
+本工程从 v0.4 基线继续开发，原始版本记录保留在 `README_v0.4.md`，当前行为以本 README 和 `docs/PLAYER_TEMPLATE.md` 为准。未重标原始交付版本。
 
-## 直接使用
+## 运行与使用
 
-1. 双击 `SkyMusicStudio_独立版.html`，推荐 Chrome / Edge。也可以双击 `Start_Windows.cmd`。
-2. 首页展示三张完整曲卡。鼠标在曲卡上可收藏、重命名、制作副本与删除；下方继续滚动显示更多项目。
-3. 进入歌曲默认只读。点击「曲谱编辑」才会出现左下角撤销/重做/复原，以及右上方逐拍谱插入/删除按钮；右下角舞台临时换成「当前事件」编辑台。
-4. 有更改时右上角变为「保存」，点击后选择 **直接保存 / 另存为新曲谱 / 放弃更改**。取消时可继续编辑。返回首页时未保存更改也会提示。
-5. 试听参数：大调选择有 C、D♭、D、E♭、E、F、F♯、G、A♭、A、B♭、B；音色有离线钢琴和在线 Yamaha C5。在线源无法获取时自动回退为离线钢琴。延音同时改变音符释放包络和混响。
-6. 歌曲信息改为播放页右上角的圆角感叹号按钮。只有进入编辑模式后，歌曲信息才可以更改。
+双击 `SkyMusicStudio_Standalone.html`、中文独立版或 `Start_Windows.cmd`。模块化入口为 `app/index.html`，开发时用本机 HTTP 服务打开。
 
-## 身份逻辑
+- 首页使用独立“云海乐屿”插图、蓝青 UI 与缓慢呼吸光晕；桌面三列、两行卡片高度随窗口调整，更多曲目向下滚动。
+- 每次进入单曲从0开始，刷新回音乐库首页；已保存的曲谱、主题与试听参数保留。
+- 单曲默认只读。点击“曲谱编辑”打开独立控制台，即刻录制、精细修改、谱面生成共用同一工作副本。关闭必须选择保存、另存为或不保存。
+- 控制台与主播放器的进度、卷帘起点和窗口相互独立。单曲页8×4逐拍谱；控制台分A/B两个8×2段。
+- 内置曲目不能删除；副本、另存与导入曲目有独立身份，可删除。原曲库键和旧文件兼容路径保持不变。
+- 音域、音色、倍速等均使用共享控件。音域横向循环滚动；音量初始25%，按0–100%线性缩放，延音调节释放与混响。
 
-- **内置曲目**：身份是 `builtin`，原曲不能删除；可以重命名或编辑并保存本地副本覆盖。
-- **制作副本**：获得全新的项目 ID、`user` 身份以及来源信息，可以重命名、编辑、删除。
-- **导入曲目**：获得独立 ID、`imported` 身份，可以编辑与删除。
-- 另存为新曲谱：生成 `user` 身份的新项目，不覆盖原项目。
+## 六款主题
 
-## 其他保留功能
+圣诞雪夜、星光沙漠、霞谷落日、云野浮岛、雨林幽光、禁阁星图继承同一 [主题模板和参数规范](docs/THEMES.md)。主题配置包含颜色深浅、渐变、高亮、卷帘配色、场景/挂件与单曲点击粒子，不包含谱面或独立交互处理器。控制台不生成粒子。
 
- `.skymusic / .skytheme / JSON / CSV / MIDI / MusicXML` 导入与工程导出；三套场景；速度、力度、键位可视化与原有播放逻辑。视频点阵识别和音频识谱仍然是**需要人工校对的实验功能**，本轮未提升其准确率。
+`config/themes/template.json` 是主题共同起点，`config/themes/elements.json` 是素材/配色元素库。新增主题只改参数与引用，不复制播放器页面。图片的生成方式、路径和完整提示词见 [素材记录](docs/ASSET_PROMPTS.md)。
 
-## 测试情况
+歌曲数字谱、主题、交互规则分别存放在 [独立配置目录](config/README.md)。`.skymusic` 传播完整单曲，内嵌 `.skytrack` 全文并引用平台录入的 `.skytheme`；旧ZIP文件继续兼容。
 
-- `python scripts/verify.py` 静态资源与文件检查
-- `node tests/unit.cjs` MIDI / ZIP / CSV / MusicXML / 视频 ROI 算法的基础用例
-- `node tests/v04-interactions.cjs` 模拟 DOM 的项目身份、重命名、复制删除、保存直接/另存、撤销重做、12 调音高映射
-- `python tests/browser_v04.py` 真实 Chromium 内渲染与点击，覆盖只读/编辑态、32 格显示、15 键、重命名、复制删除与保存弹窗
-- `python tests/audio_v04.py` 20份离线采样解码、真实 Web Audio 触发、延音旋钮改变湿声增益、在线音源失败回退
+## 构建与验证
 
-**验证边界**：隔离测试中浏览器管理策略禁止导航 `file://` 与 `http://`，因此浏览器使用 `page.set_content()` 渲染独立 HTML；真实本地缓存的持久化由模拟 DOM 测试验证。最终 Windows 文件打开及跨次重启仍需要本机确认。
+在本目录运行：
 
-音源 Salamander/Yamaha C5 属联网选项，需要网络资源可用。项目不会向在线游戏发送自动按键。
+```powershell
+python -X utf8 scripts/build.py
+python -X utf8 scripts/configuration.py --check
+python -X utf8 scripts/verify.py
+python -X utf8 tests/validate_project.py
+node --check app/js/studio.js
+node tests/v04-interactions.cjs
+```
+
+浏览器回归需要 Playwright 和 Edge；`tests/theme_system.py`、`tests/layout_rhythm.py`、`tests/config_separation.py` 均通过 `--output <新的目录>` 保存结果，不覆盖历史截图。旧测试可能仍引用已删除的旧控件，不能把旧脚本断言当作当前行为。
+
+音频/视频自动识谱仍是需人工校对的实验功能；自动化验证不等于人工听感或 Gear Link 验收。

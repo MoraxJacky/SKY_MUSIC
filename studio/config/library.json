@@ -4,7 +4,10 @@
   "themeOrder": [
     "christmas",
     "starlight",
-    "citylights"
+    "citylights",
+    "prairie",
+    "rainforest",
+    "vault"
   ],
   "entries": [
     "songs/canon-christmas.json",

@@ -156,4 +156,4 @@ with sync_playwright() as pw:
     'independentScoreMutation': True, 'independentThemeMutation': True,
     'independentInteractionMutation': True, 'additionalThemeNeedsNoHandlerChange': True,
     'combinations': combinations, 'pageErrors': errors}, ensure_ascii=False, indent=2), encoding='utf-8')
-print('PASS independent configurations, 9 score/theme combinations, shared interactions and new-theme discovery')
+print('PASS independent configurations, 18 score/theme combinations, shared interactions and new-theme discovery')
