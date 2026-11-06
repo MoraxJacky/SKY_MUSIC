@@ -98,7 +98,7 @@ with sync_playwright() as pw:
         for theme in themes:
             if not page.locator('#scoreConsole').is_visible(): page.locator('#reopenConsole').click()
             page.locator('#consoleFineTab').click()
-            page.locator('#consoleInspectorSlot').evaluate('e=>e.open=true')
+            page.locator('#consoleInspectorSlot').wait_for(state='visible')
             page.locator('#sceneEditorBtn').click()
             page.locator(f'[data-scene="{theme}"]').click()
             page.locator('[data-close="sceneDialog"]').click()
@@ -130,7 +130,7 @@ with sync_playwright() as pw:
         page.locator('.card-play').first.click()
         page.locator('#scoreEditorBtn').click()
         page.locator('#consoleFineTab').click()
-        page.locator('#consoleInspectorSlot').evaluate('e=>e.open=true')
+        page.locator('#consoleInspectorSlot').wait_for(state='visible')
         page.locator('#sceneEditorBtn').click()
         page.locator('[data-scene="moonlight-test"]').click()
         page.locator('[data-close="sceneDialog"]').click()

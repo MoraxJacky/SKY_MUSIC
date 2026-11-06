@@ -422,3 +422,37 @@ body:has(dialog[open]){overflow:hidden}
 /* Shared editing actions sit between transport and mode-specific controls. */
 .console-edit-actions>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .console-edit-actions button{width:100%;min-height:38px;padding:7px 3px;font-size:12px}
+
+/* A full control surface: no internal scrolling in the right editor column. */
+.player-view .score-console{padding:16px;height:min(900px,96dvh);max-height:96dvh;gap:12px}
+.console-head h2{font-size:21px;margin-top:2px}.console-tabs button{min-height:38px}
+.console-layout{grid-template-columns:minmax(0,1fr) 420px;gap:14px}
+.console-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:min-content;align-content:start;gap:10px;overflow:visible;padding:0}
+.console-side>.console-transport,.console-side>.console-edit-actions,#consoleRecordControls,#consoleGenerateControls{grid-column:1 / -1}
+.console-side>section,.console-side>.console-transport,.console-side #consoleInspectorSlot{padding:10px}
+.console-side h3{font-size:13px;margin:0 0 8px}.console-side label{gap:3px;margin-bottom:6px;font-size:12px}
+.console-side input,.console-side select,.console-side textarea{padding:5px 6px;font-size:12px;min-height:28px}
+.console-transport{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:7px 10px}
+.console-transport time{font-size:21px;margin:0}.console-transport>div{margin:0;gap:5px}.console-transport button{min-width:32px;min-height:30px;padding:4px 7px}
+.console-transport>label{grid-column:1 / -1;display:grid;grid-template-columns:36px minmax(0,1fr);align-items:center;margin:0;gap:8px}
+.console-edit-actions{display:grid;grid-template-columns:65px minmax(0,1fr);align-items:center;gap:8px}.console-side .console-edit-actions h3{margin:0}.console-edit-actions>div{gap:6px}.console-edit-actions button{min-height:30px;padding:4px;font-size:12px}
+.console-side #consoleInspectorSlot{grid-column:1}.console-side #consoleBatchControls{grid-column:2}
+.console-side #inspectorPane .pane-top{margin-bottom:6px;min-height:22px;gap:5px}.console-side #inspectorPane h2{font-size:13px}.console-side #inspectorPane .pane-top button{font-size:10px;padding:3px 5px}
+.console-side .edit-summary{padding:5px;margin-bottom:7px;font-size:11px;gap:4px}.console-side .fields-grid{gap:6px}.console-side .fields-grid label{margin:0;font-size:11px}
+.console-side .inspector-actions{gap:4px;margin-top:7px}.console-side .inspector-actions button{font-size:11px;padding:5px;min-height:28px}
+.console-note-keys{gap:3px;margin-top:8px}.console-note-keys button{padding:3px;min-height:26px;font-size:12px}
+.console-batch-grid{gap:6px}.console-batch-grid article{padding:6px}.console-batch-grid label{font-size:11px}.console-batch-grid button{min-height:28px;padding:4px 2px}
+.console-side .console-help{font-size:11px!important;line-height:1.5!important;margin-top:7px!important}
+.console-footer{padding-top:8px}.console-footer button{min-height:34px}
+@media(min-width:851px) and (max-width:1150px){.console-layout{grid-template-columns:minmax(0,1fr) 360px}.console-edit-actions{grid-template-columns:58px minmax(0,1fr)}.console-side #inspectorPane .pane-top{flex-wrap:wrap}}
+@media(max-width:850px){.console-layout{display:block}.console-side{overflow:visible;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px}.player-view .score-console{padding:12px;gap:10px}.console-head h2{font-size:18px}.console-transport time{font-size:19px}}
+
+.console-side .inspector-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.console-side .inspector-actions button{min-width:0;white-space:nowrap}
+@media(min-width:851px) and (max-height:720px){
+ .console-side{gap:8px}.console-side>section,.console-side>.console-transport,.console-side #consoleInspectorSlot{padding:6px}
+ .console-transport{gap:4px 8px}.console-transport time{font-size:20px}.console-transport button{min-height:28px}
+ .console-side input,.console-side select{min-height:26px;padding:4px 5px}.console-edit-actions button{min-height:28px}
+ .console-note-keys button{min-height:22px;padding:1px}.console-side .edit-summary{font-size:10px;padding:2px;margin-bottom:5px}
+ .console-side #inspectorPane .pane-top{margin-bottom:4px}.console-side .inspector-actions{margin-top:5px}.console-note-keys{margin-top:6px}
+}
