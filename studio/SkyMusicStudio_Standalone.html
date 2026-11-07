@@ -794,11 +794,14 @@ body:has(#homeView:not([hidden])) .key-feedback-layer{display:none}
 .home-view .cone-back{padding:24px 22px 42px;background:radial-gradient(ellipse at 12% 0%,color-mix(in srgb,var(--card-accent) 9%,transparent),transparent 70%),linear-gradient(145deg,#112333,#0a1c2a);justify-content:center}
 .home-view .cone-back-label{font-size:8px;letter-spacing:2.5px;opacity:.6}
 .home-view .cone-back h3{font-size:18px;margin:8px 0 20px;padding-right:5px;line-height:1.4}
-.home-view .cone-info{grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin-bottom:5px}
-.home-view .cone-info>div{padding:0 13px;border-left:1px solid #d2edf524}
+.home-view .cone-info{font-size:16px;grid-template-columns:calc(5ch + 10px) max-content minmax(0,1fr);gap:0;margin-bottom:5px;align-items:start}
+.home-view .cone-info>div{padding:0 10px;border-left:1px solid #d2edf524}
 .home-view .cone-info>div:first-child{padding-left:0;border:0}
 .home-view .cone-info dt{font-size:10px;margin-bottom:9px;color:#9db5c0;letter-spacing:1px}
 .home-view .cone-info dd{font-size:16px;color:#eaf6f4;line-height:1.4}
+.home-view .cone-info>div:first-child dd{font-variant-numeric:tabular-nums}
+.home-view .cone-info>div:last-child{padding-right:0}
+.home-view .cone-info>div:last-child dd{white-space:normal;overflow-wrap:anywhere;text-overflow:clip;overflow:visible}
 .home-view .cone-return{bottom:19px;left:22px;font-size:9px;color:#8eabb8}
 .home-view .light-cone .song-details{background:linear-gradient(180deg,#0f2236e8,#0c1c2bf7);border-color:#cde8f525}
 
@@ -1080,6 +1083,14 @@ body{--control-focus-accent:#d8eaf8;--control-focus-border:color-mix(in srgb,var
 @media(max-width:900px){.home-view{height:100dvh}}
 
 /* Shared elevation: a distant, diffuse backdrop and crisp foreground surfaces. */
+.home-view{--library-glass-paint:linear-gradient(135deg,#88b4d173,#507c9b8c);--library-glass-border:#deefff80;--library-glass-text:#f4faff}
+.home-view .library-tools #songSearch,.home-view .library-filter-toggle,.home-view #libraryCount{background:var(--library-glass-paint);border:1px solid var(--library-glass-border);color:var(--library-glass-text);box-shadow:inset 0 1px #ffffff26,0 3px 10px #12334c24;backdrop-filter:blur(10px);text-shadow:0 1px 3px #16375066}
+.home-view #songSearch::placeholder{color:#e0edf6;opacity:.85}
+.home-view .library-tools #songSearch:hover,.home-view .library-filter-toggle:hover,.home-view .library-filter-toggle[aria-expanded=true]{background:linear-gradient(135deg,#9dc7e18c,#628eaaa3);border-color:#ecf8ffb3}
+.home-view .library-tools #songSearch:focus,.home-view .library-filter-toggle:focus-visible{border-color:#effaff;box-shadow:inset 0 1px #ffffff30,0 0 12px #e4f6ff30}
+#libraryFilterMenu{background:linear-gradient(135deg,#4b738eee,#2f5672f5);border-color:#def2ff9c;color:#f4faff;box-shadow:inset 0 1px #ffffff26,0 10px 28px #12314940;backdrop-filter:blur(12px)}
+#libraryFilterMenu button:hover,#libraryFilterMenu button:focus-visible{background:#e1f4ff26;border-color:#effaff99}
+#libraryFilterMenu button[aria-selected=true]{background:#d6efff33;border-color:#e7f7ff99}
 .home-view .light-cone .song-card-actions button{color:#d5e9f5;transition:background-color .16s,border-color .16s,color .16s,box-shadow .16s}
 .home-view .light-cone .song-card-actions button:hover,.home-view .light-cone .song-card-actions button:focus-visible{color:#fff;background:#42677de8;border-color:#eefaff;box-shadow:inset 0 1px #ffffff40,0 0 0 1px #daefff38,0 0 13px #c1e6ff85;outline:0}
 .home-control-tooltip{position:fixed;inset:auto;margin:0;width:max-content;max-width:calc(100vw - 16px);padding:7px 11px;border:1px solid #b7d4e3a6;border-radius:9px;background:linear-gradient(135deg,#25465bee,#112b40f5);color:#f0f8ff;font-size:12px;line-height:1.4;box-shadow:0 5px 18px #05152566,inset 0 1px #ffffff20;backdrop-filter:blur(8px);pointer-events:none}
@@ -2156,7 +2167,7 @@ function renderLibrary(){
  for(const song of visible){
   const card=document.createElement('article'),definition=themeDefinition(song),palette=definition.appearance;card.className='song-card light-cone';card.dataset.songId=song.id;
   for(const key of ['stageStart','stageEnd','accent'])card.style.setProperty('--card-'+key.replace(/[A-Z]/g,c=>'-'+c.toLowerCase()),palette[key]);
-  card.innerHTML='<div class="cone-tilt"><div class="cone-flip"><div class="cone-face cone-front"><div class="song-cover"><span class="cover-tag"></span></div><div class="song-details"><div><h3></h3><p></p></div></div></div><div class="cone-face cone-back" aria-hidden="true"><span class="cone-back-label">SCORE ARCHIVE</span><h3></h3><dl class="cone-info"></dl><span class="cone-return">再次点击 · 返回封面</span></div></div><button class="cone-flip-trigger" type="button" aria-pressed="false"></button><div class="cone-foil" aria-hidden="true"></div><div class="cone-sheen" aria-hidden="true"></div><div class="cone-etch" aria-hidden="true"></div><div class="cone-edge" aria-hidden="true"></div><button class="card-play" type="button">'+appIcon('play')+'</button><div class="song-card-actions"></div></div>';
+  card.innerHTML='<div class="cone-tilt"><div class="cone-flip"><div class="cone-face cone-front"><div class="song-cover"><span class="cover-tag"></span></div><div class="song-details"><div><h3></h3><p></p></div></div></div><div class="cone-face cone-back" aria-hidden="true"><span class="cone-back-label">SCORE ARCHIVE</span><h3></h3><dl class="cone-info"></dl></div></div><button class="cone-flip-trigger" type="button" aria-pressed="false"></button><div class="cone-foil" aria-hidden="true"></div><div class="cone-sheen" aria-hidden="true"></div><div class="cone-etch" aria-hidden="true"></div><div class="cone-edge" aria-hidden="true"></div><button class="card-play" type="button">'+appIcon('play')+'</button><div class="song-card-actions"></div></div>';
   for(const decoration of card.querySelectorAll('.cone-foil,.cone-sheen,.cone-etch,.cone-edge')){card.querySelector('.cone-back').append(decoration.cloneNode(true));card.querySelector('.cone-front').append(decoration)}
   card.querySelector('.cone-front h3').textContent=song.card?.title||song.title;card.querySelector('.cone-back h3').textContent=song.title;
   card.querySelector('.song-details p').textContent=definition.displayName+' · '+durationFmt(song.durationMs);
