@@ -1533,7 +1533,7 @@ function scheduleDbBackup(){if(!dbInstance)return;clearTimeout(dbSaveTimer);dbSa
 const scoreConsole={mode:PLAYER_RULES.editor.initialMode,recording:false,start:0,at:0,raf:0,homes:[],fine:null,views:new Map(),returnView:null};
 function setConsoleMode(mode){
  closeConsoleRangePicker();stopConsoleRecording();scoreConsole.mode=mode;const fine=mode==='fine',generate=mode==='generate';
- $('scoreConsole').dataset.mode=mode;$('consoleEditActions').parentElement.scrollTop=0;$('rollCanvas').title=fine?'点击音符选中；横向拖动改时间，纵向拖动改音高，拖动右边缘改长度':'点击或拖动扫描条定位，松开后保持暂停';
+ $('scoreConsole').dataset.mode=mode;$('consoleEditActions').parentElement.scrollTop=0;$('rollCanvas').title=fine?'点击音符选中；横向拖动改时间，纵向拖动改音高，拖动右边缘改长度':mode==='record'?'点击已有音符选中，再使用音符移动按钮；点击空白处定位':'点击或拖动扫描条定位，松开后保持暂停';
  for(const button of document.querySelectorAll('[data-console-mode]')){const on=button.dataset.consoleMode===mode;button.setAttribute('aria-selected',String(on));button.tabIndex=on?0:-1}
  $('consoleLayout').setAttribute('aria-labelledby',mode==='fine'?'consoleFineTab':generate?'consoleGenerateTab':'consoleRecordTab');
  $('consoleKeysSlot').hidden=mode!=='record';$('consoleGridSlot').hidden=!generate;$('consoleRecordControls').hidden=mode!=='record';$('consoleGenerateControls').hidden=!generate;$('consoleBatchControls').hidden=!fine;$('consoleInspectorSlot').hidden=!fine;
@@ -1555,17 +1555,21 @@ function updateScoreConsole(){
  const event=scoreEvents(state.project)[state.selected];for(const button of $('consoleNoteKeys').children)button.setAttribute('aria-pressed',String(event?.notes.includes(Number(button.dataset.note))));
  const selection=editingNoteSelection();for(const button of document.querySelectorAll('[data-note-move]'))button.disabled=!selection||(button.dataset.noteMove==='up'&&selection.note===15)||(button.dataset.noteMove==='down'&&selection.note===1)||(button.dataset.noteMove==='left'&&selection.event.timeMs===0);
 }
-function stopConsoleRecording(){scoreConsole.recording=false;cancelAnimationFrame(scoreConsole.raf);if($('consoleRecordStart'))$('consoleRecordStart').textContent='开始输入'}
+const consoleHeldKeys=new Set();let consoleInputChord=null;
+function clearConsoleChord(){consoleHeldKeys.clear();consoleInputChord=null}
+function stopConsoleRecording(){clearConsoleChord();scoreConsole.recording=false;cancelAnimationFrame(scoreConsole.raf);if($('consoleRecordStart'))$('consoleRecordStart').textContent='开始输入'}
 function startConsoleRecording(){
  if(scoreConsole.recording){stopConsoleRecording();updateScoreConsole();toast('已结束输入');return}pauseSong();scoreConsole.recording=true;$('consoleRecordStart').textContent='结束输入';updateScoreConsole();toast('已开始输入旋律');
 }
 function consoleNumber(id,min,max){const value=Number($(id).value);if(!Number.isFinite(value)||value<min||value>max)throw Error('参数超出范围：'+$(id).parentElement.textContent);return value}
-function scoreConsoleCapture(note){
+function scoreConsoleCapture(note,keyboardChord=false){
  if(!$('scoreConsole')?.open||scoreConsole.mode!=='record'||!canEditScore()||$('consoleKeymapDialog').open)return false;
+ if(keyboardChord&&consoleInputChord?.project===state.project&&scoreEvents(state.project).includes(consoleInputChord.event)&&state.position===consoleInputChord.nextPosition){const event=consoleInputChord.event;if(!event.notes.includes(note)){event.notes.push(note);event.notes.sort((a,b)=>a-b);state.selected=scoreEvents(state.project).indexOf(event);state.lastSelected=state.selected;scoreConsole.selection={project:state.project,event,note};scoreConsole.selectedNote=note;saveLibrary();refreshWorkspace();preloadPiano().then(()=>triggerSample(note,state.audioCtx.currentTime+.01,event.durationMs)).catch(()=>{})}return true}
+ consoleInputChord=null;
  try{const step=consoleNumber('consoleInterval',20,5000),duration=consoleNumber('consoleNoteDuration',30,10000),time=Math.round(state.position),insert=$('consoleRecordMode').value==='insert',events=scoreEvents(state.project);
  if(events.length>=100000||Math.max(state.project.durationMs,time+duration)+step>36000000)throw Error('输入内容超出曲谱上限');pauseSong();rememberEdit();if(!scoreConsole.recording)startConsoleRecording();
  if(insert){for(const e of events)if(e.timeMs>=time)e.timeMs+=step;state.project.durationMs+=step}else{state.project.score.events=events.filter(e=>e.timeMs<time||e.timeMs>=time+step)}
- const event={timeMs:time,notes:[note],durationMs:duration,velocity:85,confidence:'recorded'},list=scoreEvents(state.project);list.push(event);list.sort((a,b)=>a.timeMs-b.timeMs);state.project.durationMs=Math.max(state.project.durationMs,time+step,time+duration);state.selected=list.indexOf(event);scoreConsole.selection={project:state.project,event,note};scoreConsole.selectedNote=note;state.position=time+step;state.lastSelected=state.selected;saveLibrary();refreshWorkspace();preloadPiano().then(()=>triggerSample(note,state.audioCtx.currentTime+.01,duration)).catch(()=>{});
+ const event={timeMs:time,notes:[note],durationMs:duration,velocity:85,confidence:'recorded'},list=scoreEvents(state.project);list.push(event);list.sort((a,b)=>a.timeMs-b.timeMs);state.project.durationMs=Math.max(state.project.durationMs,time+step,time+duration);state.selected=list.indexOf(event);scoreConsole.selection={project:state.project,event,note};scoreConsole.selectedNote=note;state.position=time+step;state.lastSelected=state.selected;if(keyboardChord)consoleInputChord={project:state.project,event,nextPosition:state.position};saveLibrary();refreshWorkspace();preloadPiano().then(()=>triggerSample(note,state.audioCtx.currentTime+.01,duration)).catch(()=>{});
  }catch(error){stopConsoleRecording();toast(error.message,5000)}return true;
 }
 function generateConsoleScore(){
@@ -1575,10 +1579,11 @@ function generateConsoleScore(){
  }catch(error){toast(error.message,6000)}
 }
 function beginFineNoteDrag(event,canvas){
- if(!$('scoreConsole')?.open||scoreConsole.mode!=='fine')return false;
+ if(!$('scoreConsole')?.open||!['fine','record'].includes(scoreConsole.mode))return false;
  const rect=canvas.getBoundingClientRect(),frame=rollFrame(),g=rollPlotGeometry(rect,frame),x=event.clientX-rect.left,y=event.clientY-rect.top,rowH=(rect.height-g.top-g.bottom)/15,note=15-Math.floor((y-g.top)/rowH);if(note<1||note>15)return false;
  const list=scoreEvents(state.project),time=frame.begin+(x-g.left)/g.plotW*frame.windowMs;
- const hit=[...list].reverse().find(e=>e.notes.includes(note)&&time>=e.timeMs&&time<=e.timeMs+Math.max(e.durationMs,frame.windowMs/g.plotW*4));if(!hit)return false;
+ const hit=[...list].reverse().find(e=>e.notes.includes(note)&&time>=e.timeMs&&time<=e.timeMs+(scoreConsole.mode==='record'?Math.min(22,Math.max(3,(e.durationMs||180)/frame.windowMs*g.plotW)):Math.max(4,e.durationMs/frame.windowMs*g.plotW))*frame.windowMs/g.plotW);if(!hit)return false;
+ if(scoreConsole.mode==='record'){event.preventDefault();stopConsoleRecording();pauseSong();scoreConsole.selectedNote=note;scoreConsole.selection={project:state.project,event:hit,note};state.selected=list.indexOf(hit);state.position=hit.timeMs;state.lastSelected=state.selected;renderBeatGrid(true);renderKeyBoard();updateVisual();syncEditorFields();return true}
  event.preventDefault();pauseSong();let chosen=hit,split=false;if(hit.notes.length>1){rememberEdit({index:list.indexOf(hit),note,position:hit.timeMs});chosen={...copy(hit),notes:[note]};hit.notes=hit.notes.filter(n=>n!==note);list.push(chosen);list.sort((a,b)=>a.timeMs-b.timeMs);saveLibrary();split=true}const endX=g.left+(hit.timeMs+hit.durationMs-frame.begin)/frame.windowMs*g.plotW;
  scoreConsole.fine={pointerId:event.pointerId,canvas,event:chosen,note,frame,g,rect,x,y,time:hit.timeMs,duration:hit.durationMs,resize:Math.abs(x-endX)<Math.min(5,Math.max(1,hit.durationMs/frame.windowMs*g.plotW*.25)),changed:split};
  scoreConsole.selectedNote=note;scoreConsole.selection={project:state.project,event:chosen,note};state.selected=list.indexOf(chosen);state.position=hit.timeMs;state.lastSelected=state.selected;renderBeatGrid(true);renderKeyBoard();updateVisual();syncEditorFields();canvas.setPointerCapture(event.pointerId);return true;
@@ -1592,7 +1597,8 @@ function bindScoreConsole(){
  for(let n=1;n<=15;n++){const button=document.createElement('button');button.textContent=n;button.dataset.note=n;button.setAttribute('aria-label','当前事件音符 '+n);button.onclick=()=>toggleNote(n);$('consoleNoteKeys').append(button)}
  bindConsoleKeymap();for(const button of document.querySelectorAll('[data-write-mode]'))button.onclick=()=>{stopConsoleRecording();$('consoleRecordMode').value=button.dataset.writeMode;for(const b of document.querySelectorAll('[data-write-mode]'))b.setAttribute('aria-pressed',String(b===button));toast(button.dataset.writeMode==='insert'?'插入模式：后续序列整体后移':'覆写模式：替换当前一步内的事件')};
  for(const button of document.querySelectorAll('[data-note-move]'))button.onclick=()=>moveConsoleNote(button.dataset.noteMove);
- $('scoreConsole').addEventListener('keydown',event=>{if(event.ctrlKey||event.metaKey){if(event.code==='KeyS'){event.preventDefault();stopConsoleRecording();requestFinishEdit('exit')}if(event.code==='KeyZ'){event.preventDefault();event.shiftKey?redo():undo()}if(event.code==='KeyY'){event.preventDefault();redo()}return}if(event.altKey||event.isComposing||event.target.closest('input,select,textarea,[contenteditable]'))return;const note=consoleKeymap.indexOf(event.code)+1;if(note&&scoreConsole.mode==='record'){event.preventDefault();event.stopPropagation();if(!event.repeat)scoreConsoleCapture(note)}else if(event.code==='Space'&&!event.target.closest('button')){event.preventDefault();$('consolePlay').click()}});
+ $('scoreConsole').addEventListener('keydown',event=>{if(event.ctrlKey||event.metaKey){if(event.code==='KeyS'){event.preventDefault();stopConsoleRecording();requestFinishEdit('exit')}if(event.code==='KeyZ'){event.preventDefault();event.shiftKey?redo():undo()}if(event.code==='KeyY'){event.preventDefault();redo()}return}if(event.altKey||event.isComposing||event.target.closest('input,select,textarea,[contenteditable]'))return;const note=consoleKeymap.indexOf(event.code)+1;if(note&&scoreConsole.mode==='record'){event.preventDefault();event.stopPropagation();if(!event.repeat&&!consoleHeldKeys.has(event.code)){consoleHeldKeys.add(event.code);scoreConsoleCapture(note,true)}}else if(event.code==='Space'&&!event.target.closest('button')){event.preventDefault();$('consolePlay').click()}});
+ document.addEventListener('keyup',event=>{consoleHeldKeys.delete(event.code);if(!consoleHeldKeys.size)consoleInputChord=null});window.addEventListener('blur',clearConsoleChord);document.addEventListener('visibilitychange',()=>{if(document.hidden)clearConsoleChord()});
  const canvas=$('rollCanvas');canvas.addEventListener('pointermove',event=>{const drag=scoreConsole.fine;if(!drag||drag.pointerId!==event.pointerId)return;const dx=event.clientX-drag.rect.left-drag.x,dy=event.clientY-drag.rect.top-drag.y;if(!drag.changed&&Math.abs(dx)+Math.abs(dy)<3)return;
  if(!drag.changed){rememberEdit();if(drag.event.notes.length>1){drag.event.notes=drag.event.notes.filter(n=>n!==drag.note);drag.event={...copy(drag.event),notes:[drag.note]};scoreEvents(state.project).push(drag.event)}drag.changed=true}
  const step=state.project.score.gridIntervalMs,delta=dx/drag.g.plotW*drag.frame.windowMs;
