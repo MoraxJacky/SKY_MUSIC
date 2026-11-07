@@ -1049,3 +1049,7 @@ body{--control-focus-accent:#d8eaf8;--control-focus-border:color-mix(in srgb,var
 .player-view>.play-controls,.player-view .workspace-left>.pane,.player-view .workspace-right>.grid-pane,.player-view .workspace-right>#stagePane{
  box-shadow:0 3px 7px color-mix(in srgb,var(--player-backdrop) 65%,transparent),0 18px 38px color-mix(in srgb,#000 var(--player-panel-shadow-opacity,30%),transparent),inset 0 1px color-mix(in srgb,var(--player-text) var(--player-panel-edge-opacity,16%),transparent),inset 0 -1px color-mix(in srgb,var(--player-backdrop) 45%,transparent);
 }
+
+/* Give the platform wordmark more breathing room above the banner. */
+.home-view .home-body{padding-top:28px}
+@media(min-width:901px){.home-view{--home-card-height:max(160px,calc((100dvh - var(--home-top-space) - 64px - var(--home-hero-height) - 182px)/2))}}
