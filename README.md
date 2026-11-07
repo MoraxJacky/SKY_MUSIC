@@ -2,7 +2,7 @@
 
 [打开音乐馆](https://moraxjacky.github.io/SKY_MUSIC/)
 
-完整半音、多音轨乐理工作台，包含只读钢琴播放页与全屏编曲页，支持音乐时间、变速/拍号、三种录制、多轨混音及MIDI导入导出。旧15键谱继续可读，光遇适配生成独立副本。详见[工作台说明](studio/docs/MUSICAL_WORKBENCH.md)。
+完整半音、多音轨乐理工作台，保留原15键主题播放页，点击曲谱编辑进入全屏编曲页，支持音乐时间、变速/拍号、三种录制、多轨混音及MIDI导入导出。旧15键谱继续可读，光遇适配生成独立副本。详见[工作台说明](studio/docs/MUSICAL_WORKBENCH.md)。
 
 六款光遇意象预设（圣诞雪夜、星光沙漠、霞谷落日、云野浮岛、雨林幽光、禁阁星图）及自定义主题共用一份播放器模板，更换主题不会复制布局与交互代码。首页使用独立的云海插图、蓝青 UI、呼吸光晕与两行自适应卡片。详细说明见 [模板与主题配置](studio/docs/PLAYER_TEMPLATE.md)，可导入 [海边月夜主题示例](studio/samples/moonlight-template.skytheme)。
 

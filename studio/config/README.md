@@ -101,4 +101,4 @@ python -X utf8 scripts/configuration.py --check
 内置曲库现有六首，覆盖六种主题；新增 prairie-demo、rainforest-demo、vault-demo 为原创32拍试听，分别使用离线长笛、竖琴、八音盒。每首仅通过 songs/ 引用纯数字 scores/ 与已注册的 themes/，不复制播放器代码。历史 samples/ 文件与验证记录保留。
 
 
-乐理升级：默认播放与编辑入口已统一到完整半音、多音轨工作台。六主题继续只提供外观令牌；旧15键控制台保留为兼容实现。详见 ../docs/MUSICAL_WORKBENCH.md。
+乐理升级：仅“曲谱编辑”入口使用完整半音、多音轨工作台，默认播放页保留原布局。六主题继续只提供外观令牌；旧15键控制台保留为兼容实现。详见 ../docs/MUSICAL_WORKBENCH.md。

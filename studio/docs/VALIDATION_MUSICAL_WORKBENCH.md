@@ -15,3 +15,8 @@
 复现浏览器测试：python -X utf8 tests/对应脚本.py --output 新的绝对输出目录。需要Playwright及Edge。每次使用新目录。
 
 尚需人工：扬声器/耳机长音音质、节拍器听感同步、多音色平衡、真实键盘录制延迟、触屏真机与Gear Link。自动测试记录了声音调度和清音，但不能证明听感、设备延迟或光遇游戏实际表现。复杂XML重复/装饰不自动演奏展开；详情见MUSICAL_WORKBENCH.md。
+
+
+## 播放页与编辑台边界修正
+
+2026-11-07：原单曲播放布局恢复，完整工作台仅从曲谱编辑打开。测试脚本已按此入口修正，不再将全屏工作台当成默认播放页。新增player_editor_boundary.py覆盖六主题、进入/退出、原始谱不被放弃操作改写、编辑与播放位置隔离、保存/另存为、完整音符调度与停止清音。证据player-editor-boundary-001；编曲回归player-restored-model-001、player-restored-gestures-001、player-restored-recording-001、player-restored-adaptation-001。原播放页的15键图样为完整谱的显示投影，未改写或量化权威谱面。
