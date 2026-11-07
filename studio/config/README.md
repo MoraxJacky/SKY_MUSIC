@@ -99,3 +99,6 @@ python -X utf8 scripts/configuration.py --check
 `scoreEntrance` 的音高动画使用快速放大、高光停留、缓慢落位三个阶段，`stampScale=1.28`，没有回弹；逐拍谱仅当前拍子发出高光，不逐行扫描。延音 `sustain.default=0`、`resetOnSongEntry=true`；聚焦外观由共用模板提供当前主题色和白光，不写歌曲数据。
 
 内置曲库现有六首，覆盖六种主题；新增 prairie-demo、rainforest-demo、vault-demo 为原创32拍试听，分别使用离线长笛、竖琴、八音盒。每首仅通过 songs/ 引用纯数字 scores/ 与已注册的 themes/，不复制播放器代码。历史 samples/ 文件与验证记录保留。
+
+
+乐理升级：默认播放与编辑入口已统一到完整半音、多音轨工作台。六主题继续只提供外观令牌；旧15键控制台保留为兼容实现。详见 ../docs/MUSICAL_WORKBENCH.md。

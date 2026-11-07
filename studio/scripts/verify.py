@@ -11,8 +11,10 @@ for f in ['SkyMusicStudio_独立版.html','app/index.html','app/js/studio.js','a
 h=(root/'app/index.html').read_text(encoding='utf-8');js=(root/'app/js/studio.js').read_text(encoding='utf-8');ids=re.findall(r'\bid="([^"]+)"',h)
 for k,n in Counter(ids).items():
  if n>1:errors.append('Duplicate DOM id '+k)
+# Some dialogs and the musical shell are constructed once at installation.
+generated_ids=set(re.findall(r'''(?:\bid=|\.id\s*=)["']([A-Za-z][\w-]*)["']''',js))
 for k in set(re.findall(r'''\$\(['\"]([^'\"]+)['\"]\)''',js)):
- if k not in ids and k!='sceneCanvas':errors.append('Missing DOM control '+k)
+ if k not in ids and k not in generated_ids and k!='sceneCanvas':errors.append('Missing DOM control '+k)
 rules=json.loads((root/'config/player-interactions.json').read_text(encoding='utf-8'))
 for kind in ['volume','sustain']:
  control=rules[kind]['controlId']

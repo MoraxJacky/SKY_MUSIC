@@ -29,5 +29,5 @@ function bindStartupNavigation(){
 // Avoid editing the user-provided v7 backup: all transforms occur on copied score objects.
 
 window.__SKY_STUDIO_TEST__={state,scoreConsole,refreshWorkspace,openSong,goHome,normalize,makeZip,readZip,unpackProject,parseMIDI,parseCSV,parseMusicXML,exportProject,exportMIDI,exportCSV,importFile,createProject,renameSong,renameConfirmed,duplicateSong,deleteSong,deleteConfirmed,completeEdit,openEditor,requestFinishEdit,KEY_ROOTS,noteMidi,noteName,rollFrame,rollTimeLabels,rollPlotGeometry,platformController,importFiles,importPlatformFile,readMusicResource,exportPlatformEntry,projectEntry,PLAYER_RULES,THEME_DEFINITIONS,bindPlayerInteractions,INSTRUMENTS,loadInstrumentBank,preloadPiano,triggerSample,chooseInstrument,undo,redo,eventInsert,eventRemove,applyThemeFields,analyseSkyGrid,applyPlayerTemplate,PLAYER_TEMPLATE_ID};
-install();bindStartupNavigation();startDbBackup();
+install();installMusicWorkbench();bindStartupNavigation();startDbBackup();
 })();

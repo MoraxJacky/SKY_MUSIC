@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sky Track v2 musical composition",
+  "type": "object",
+  "required": [
+    "format",
+    "schemaVersion",
+    "ppq",
+    "timeUnit",
+    "tempoMap",
+    "meterMap",
+    "tracks",
+    "notes"
+  ],
+  "properties": {
+    "format": {
+      "const": "skytrack"
+    },
+    "schemaVersion": {
+      "const": 2
+    },
+    "ppq": {
+      "const": 960
+    },
+    "timeUnit": {
+      "const": "tick"
+    },
+    "calibrated": {
+      "type": "boolean"
+    },
+    "lengthTicks": {
+      "type": "number",
+      "minimum": 0
+    },
+    "key": {
+      "type": "string"
+    },
+    "tempoMap": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "tick",
+          "bpm"
+        ],
+        "properties": {
+          "tick": {
+            "type": "number",
+            "minimum": 0
+          },
+          "bpm": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 999
+          }
+        }
+      }
+    },
+    "meterMap": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "tick",
+          "numerator",
+          "denominator"
+        ],
+        "properties": {
+          "tick": {
+            "type": "number",
+            "minimum": 0
+          },
+          "numerator": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 32
+          },
+          "denominator": {
+            "enum": [
+              1,
+              2,
+              4,
+              8,
+              16,
+              32
+            ]
+          }
+        }
+      }
+    },
+    "tracks": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "instrument",
+          "volume",
+          "mute",
+          "solo"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "instrument": {
+            "type": "string"
+          },
+          "volume": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2
+          },
+          "mute": {
+            "type": "boolean"
+          },
+          "solo": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "trackId",
+          "pitch",
+          "startTick",
+          "durationTicks",
+          "soundTicks",
+          "velocity"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "trackId": {
+            "type": "string"
+          },
+          "pitch": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 127
+          },
+          "startTick": {
+            "type": "number",
+            "minimum": 0
+          },
+          "durationTicks": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "soundTicks": {
+            "type": "number",
+            "minimum": 0
+          },
+          "gate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2
+          },
+          "velocity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 127
+          },
+          "tieNext": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "rests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "trackId",
+          "startTick",
+          "durationTicks"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "trackId": {
+            "type": "string"
+          },
+          "startTick": {
+            "type": "number",
+            "minimum": 0
+          },
+          "durationTicks": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object"
+    },
+    "scale": {
+      "enum": [
+        "major",
+        "minor"
+      ]
+    }
+  }
+}

@@ -214,7 +214,7 @@ function cancelSongEntry(completed=false){
  for(const animation of entry.animations)animation.cancel();
  $('songEntryTransition').hidden=true;$('songEntryTransition').dataset.phase='idle';
  document.querySelector('.site-wrap').classList.remove('song-entry-reveal');
- $('homeView').inert=false;$('playerView').inert=false;$('playerView').removeAttribute('aria-busy');
+ $('homeView').inert=false;$('playerView').inert=false;if($('musicWorkbench')){$('musicWorkbench').inert=false;$('musicWorkbench').removeAttribute('aria-busy')}$('playerView').removeAttribute('aria-busy');
  if(state.mode==='home'&&!document.hidden)resumeHomePresentation();
 }
 async function enterSongFromCard(id,card){
@@ -233,12 +233,12 @@ async function enterSongFromCard(id,card){
   await animate(overlay,[{clipPath:`inset(${Math.max(0,rect.top)}px ${Math.max(0,innerWidth-rect.right)}px ${Math.max(0,innerHeight-rect.bottom)}px ${Math.max(0,rect.left)}px round 16px)`,opacity:.7},{clipPath:'inset(0px 0px 0px 0px round 0px)',opacity:1}],rules.expandMs);
   if(!active())return;
   overlay.dataset.phase='loading';entry.mounting=true;openSong(id);entry.mounting=false;
-  const player=$('playerView');player.inert=true;player.setAttribute('aria-busy','true');
+  const player=activePlayerSurface();player.inert=true;player.setAttribute('aria-busy','true');
   // Paint the assembled roll and grid under the cover before revealing the real player.
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(!active())return;
   overlay.dataset.phase='reveal';document.querySelector('.site-wrap').classList.add('song-entry-reveal');
   await animate(player,songRevealFrames(player),rules.revealMs);
-  if(!active())return;cancelSongEntry(true);startScoreEntrance();$('songTitle').focus({preventScroll:true});
+  if(!active())return;cancelSongEntry(true);if(!MusicWorkbench.active)startScoreEntrance();(MusicWorkbench.active?$('musicTitle'):$('songTitle')).focus({preventScroll:true});
  }catch(error){if(active()){cancelSongEntry();toast('打开单曲失败：'+error.message,5000)}}
 }
 
@@ -259,10 +259,10 @@ async function returnHomeFromPlayer(){
  for(const [name,value]of [['start',colors.surfaceStart],['end',colors.backdrop],['accent',colors.accent]])overlay.style.setProperty('--entry-'+name,value);
  $('songEntryTitle').textContent='星光音乐馆';$('songEntryMessage').textContent='正在返回音乐馆';$('songEntryArt').hidden=true;overlay.setAttribute('aria-label','正在返回音乐馆');
  pauseSong();cancelRollDrag();cancelRollFinish();cancelPlayerValueScroll();closeRangePicker();closeInstrumentPicker();closeSpeedPicker();
- $('homeView').inert=true;$('playerView').inert=true;overlay.hidden=false;overlay.dataset.phase='return-cover';
+ $('homeView').inert=true;activePlayerSurface().inert=true;overlay.hidden=false;overlay.dataset.phase='return-cover';
  document.querySelector('.site-wrap').classList.add('song-entry-reveal');
  try{
-  await animateSongTransition(entry,$('playerView'),songRevealFrames($('playerView'),false),rules.coverMs);if(!active())return;
+  await animateSongTransition(entry,activePlayerSurface(),songRevealFrames(activePlayerSurface(),false),rules.coverMs);if(!active())return;
   document.querySelector('.site-wrap').classList.remove('song-entry-reveal');
   overlay.dataset.phase='return-loading';entry.mounting=true;goHome();entry.mounting=false;$('homeView').inert=true;
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(!active())return;

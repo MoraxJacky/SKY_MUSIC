@@ -9,6 +9,11 @@ def render(root):
     folder = root / 'config'
     load = lambda name: json.loads((folder / name).read_text(encoding='utf-8'))
     player = load('player-interactions.json')
+    workbench = player['workbench']
+    assert isinstance(workbench['enabled'],bool) and workbench['ppq'] == 960
+    assert 1 <= workbench['defaults']['bpm'] <= 999 and workbench['defaults']['meter'] == [4,4]
+    assert workbench['defaults']['grid'] in [1,2,4,8,16,32] and workbench['defaults']['value'] in [1,2,4,8,16,32]
+    assert 0 <= workbench['defaults']['gate'] <= 2
     home = load('home-interactions.json')
     assert home['cardPhysics']['mass'] > 0 and home['cardPhysics']['stiffness'] > 0 and home['cardPhysics']['damping'] > 0
     assert 0 < home['cardPhysics']['maxTiltDeg'] <= 8 and home['carousel']['intervalMs'] >= 3000

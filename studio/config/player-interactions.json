@@ -128,5 +128,19 @@
   "loop": {
     "controlId": "loopOneBtn",
     "default": false
+  },
+  "workbench": {
+    "enabled": true,
+    "ppq": 960,
+    "defaults": {
+      "bpm": 120,
+      "meter": [
+        4,
+        4
+      ],
+      "grid": 8,
+      "value": 8,
+      "gate": 0.9
+    }
   }
 }

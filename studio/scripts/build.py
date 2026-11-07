@@ -6,7 +6,7 @@ from configuration import generate
 ROOT=Path(__file__).resolve().parents[1]
 APP=ROOT/'app'
 generate(ROOT)
-FILES=['00-core.js','10-zip.js','18-instruments.js','20-audio.js','30-import.js','35-video.js','36-platform-controller.js','37-theme-scenes.js','38-player-template.js','39-player-interactions.js','40-ui.js','41-home-experience.js','45-workspace.js','46-score-console.js','47-edit-session.js','99-bootstrap.js']
+FILES=['00-core.js','10-zip.js','18-instruments.js','20-audio.js','30-import.js','35-video.js','36-platform-controller.js','37-theme-scenes.js','38-player-template.js','39-player-interactions.js','40-ui.js','41-home-experience.js','45-workspace.js','46-score-console.js','47-edit-session.js','50-music-model.js','51-music-formats.js','52-music-audio.js','53-music-workbench.js','54-music-commands.js','55-music-input.js','56-music-integration.js','99-bootstrap.js']
 compiled='\n'.join('/* '+f+' */\n'+(ROOT/'src'/f).read_text(encoding='utf-8') for f in FILES)
 (APP/'js/studio.js').write_text(compiled,encoding='utf-8')
 html_source=(APP/'index.html').read_text(encoding='utf-8')
