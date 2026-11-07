@@ -22,16 +22,19 @@ function updateScoreConsole(){
  $('consoleUndo').disabled=!historyItems(state.history,state.project.id).length;$('consoleRedo').disabled=!historyItems(state.future,state.project.id).length;
  $('consoleStatus').textContent=scoreConsole.recording?'录制中 · 所有改动可撤销':state.editDirty?'工作副本已修改 · 尚未保存':'编辑工作副本，保存后生效';
  const event=scoreEvents(state.project)[state.selected];for(const button of $('consoleNoteKeys').children)button.setAttribute('aria-pressed',String(event?.notes.includes(Number(button.dataset.note))));
+ const selection=editingNoteSelection();for(const button of document.querySelectorAll('[data-note-move]'))button.disabled=!selection||(button.dataset.noteMove==='up'&&selection.note===15)||(button.dataset.noteMove==='down'&&selection.note===1)||(button.dataset.noteMove==='left'&&selection.event.timeMs===0);
 }
-function stopConsoleRecording(){scoreConsole.recording=false;cancelAnimationFrame(scoreConsole.raf);if($('consoleRecordStart'))$('consoleRecordStart').textContent='开始录制'}
+function stopConsoleRecording(){scoreConsole.recording=false;cancelAnimationFrame(scoreConsole.raf);if($('consoleRecordStart'))$('consoleRecordStart').textContent='开始输入'}
 function startConsoleRecording(){
- if(scoreConsole.recording){stopConsoleRecording();updateScoreConsole();toast('已停止录制');return}pauseSong();rememberEdit();scoreConsole.recording=true;scoreConsole.start=performance.now();scoreConsole.at=state.position;$('consoleRecordStart').textContent='停止录制';if($('consoleRecordMode').value==='live'){const tick=()=>{if(!scoreConsole.recording)return;state.position=Math.min(state.project.durationMs,scoreConsole.at+performance.now()-scoreConsole.start);updateVisual();scoreConsole.raf=requestAnimationFrame(tick)};tick()}updateScoreConsole();toast('已开始录制');
+ if(scoreConsole.recording){stopConsoleRecording();updateScoreConsole();toast('已结束输入');return}pauseSong();scoreConsole.recording=true;$('consoleRecordStart').textContent='结束输入';updateScoreConsole();toast('已开始输入旋律');
 }
 function consoleNumber(id,min,max){const value=Number($(id).value);if(!Number.isFinite(value)||value<min||value>max)throw Error('参数超出范围：'+$(id).parentElement.textContent);return value}
 function scoreConsoleCapture(note){
- if(!scoreConsole.recording||!$('scoreConsole')?.open||scoreConsole.mode!=='record')return false;
- try{const step=consoleNumber('consoleInterval',20,5000),duration=consoleNumber('consoleNoteDuration',30,10000),live=$('consoleRecordMode').value==='live';let time=live?Math.round((scoreConsole.at+performance.now()-scoreConsole.start)/step)*step:state.position;time=clamp(time,0,35990000);
- const events=scoreEvents(state.project);if(events.length>=100000)throw Error('事件数量已达上限');let event=events.find(e=>e.timeMs===time);if(!event){event={timeMs:time,notes:[],durationMs:duration,velocity:85,confidence:'recorded'};events.push(event)}if(!event.notes.includes(note))event.notes.push(note);event.durationMs=duration;events.sort((a,b)=>a.timeMs-b.timeMs);state.project.durationMs=Math.max(state.project.durationMs,time+duration);state.position=live?time:Math.min(36000000,time+step);saveLibrary();refreshWorkspace();preloadPiano().then(()=>triggerSample(note,state.audioCtx.currentTime+.01,duration)).catch(()=>{});
+ if(!$('scoreConsole')?.open||scoreConsole.mode!=='record'||!canEditScore()||$('consoleKeymapDialog').open)return false;
+ try{const step=consoleNumber('consoleInterval',20,5000),duration=consoleNumber('consoleNoteDuration',30,10000),time=Math.round(state.position),insert=$('consoleRecordMode').value==='insert',events=scoreEvents(state.project);
+ if(events.length>=100000||Math.max(state.project.durationMs,time+duration)+step>36000000)throw Error('输入内容超出曲谱上限');pauseSong();rememberEdit();if(!scoreConsole.recording)startConsoleRecording();
+ if(insert){for(const e of events)if(e.timeMs>=time)e.timeMs+=step;state.project.durationMs+=step}else{state.project.score.events=events.filter(e=>e.timeMs<time||e.timeMs>=time+step)}
+ const event={timeMs:time,notes:[note],durationMs:duration,velocity:85,confidence:'recorded'},list=scoreEvents(state.project);list.push(event);list.sort((a,b)=>a.timeMs-b.timeMs);state.project.durationMs=Math.max(state.project.durationMs,time+step,time+duration);state.selected=list.indexOf(event);scoreConsole.selection={project:state.project,event,note};scoreConsole.selectedNote=note;state.position=time+step;state.lastSelected=state.selected;saveLibrary();refreshWorkspace();preloadPiano().then(()=>triggerSample(note,state.audioCtx.currentTime+.01,duration)).catch(()=>{});
  }catch(error){stopConsoleRecording();toast(error.message,5000)}return true;
 }
 function generateConsoleScore(){
@@ -56,8 +59,9 @@ function bindScoreConsole(){
  $('consoleSave').onclick=()=>{stopConsoleRecording();requestFinishEdit('exit')};$('consoleUndo').onclick=undo;$('consoleRedo').onclick=redo;$('consolePrev').onclick=()=>stepConsoleEvent(-1);$('consoleNext').onclick=()=>stepConsoleEvent(1);$('consolePlay').onclick=()=>{stopConsoleRecording();playPause()};$('consoleRecordStart').onclick=startConsoleRecording;$('consoleGenerate').onclick=generateConsoleScore;
  $('consoleTuning').innerHTML=$('keySelect').innerHTML;$('consoleTuning').onchange=event=>{$('keySelect').value=event.target.value;$('keySelect').onchange({target:$('keySelect')})};bindConsoleRangePicker();
  for(let n=1;n<=15;n++){const button=document.createElement('button');button.textContent=n;button.dataset.note=n;button.setAttribute('aria-label','当前事件音符 '+n);button.onclick=()=>toggleNote(n);$('consoleNoteKeys').append(button)}
- const codes=['KeyQ','KeyW','KeyE','KeyR','KeyT','KeyA','KeyS','KeyD','KeyF','KeyG','KeyZ','KeyX','KeyC','KeyV','KeyB'];
- $('scoreConsole').addEventListener('keydown',event=>{if(event.ctrlKey||event.metaKey){if(event.code==='KeyS'){event.preventDefault();stopConsoleRecording();requestFinishEdit('exit')}if(event.code==='KeyZ'){event.preventDefault();event.shiftKey?redo():undo()}if(event.code==='KeyY'){event.preventDefault();redo()}return}if(event.target.closest('input,select,textarea'))return;const note=codes.indexOf(event.code)+1;if(note&&scoreConsole.recording){event.preventDefault();if(!event.repeat)scoreConsoleCapture(note)}if(event.code==='Space'&&!event.target.closest('button')){event.preventDefault();$('consolePlay').click()}});
+ bindConsoleKeymap();for(const button of document.querySelectorAll('[data-write-mode]'))button.onclick=()=>{stopConsoleRecording();$('consoleRecordMode').value=button.dataset.writeMode;for(const b of document.querySelectorAll('[data-write-mode]'))b.setAttribute('aria-pressed',String(b===button));toast(button.dataset.writeMode==='insert'?'插入模式：后续序列整体后移':'覆写模式：替换当前一步内的事件')};
+ for(const button of document.querySelectorAll('[data-note-move]'))button.onclick=()=>moveConsoleNote(button.dataset.noteMove);
+ $('scoreConsole').addEventListener('keydown',event=>{if(event.ctrlKey||event.metaKey){if(event.code==='KeyS'){event.preventDefault();stopConsoleRecording();requestFinishEdit('exit')}if(event.code==='KeyZ'){event.preventDefault();event.shiftKey?redo():undo()}if(event.code==='KeyY'){event.preventDefault();redo()}return}if(event.altKey||event.isComposing||event.target.closest('input,select,textarea,[contenteditable]'))return;const note=consoleKeymap.indexOf(event.code)+1;if(note&&scoreConsole.mode==='record'){event.preventDefault();event.stopPropagation();if(!event.repeat)scoreConsoleCapture(note)}else if(event.code==='Space'&&!event.target.closest('button')){event.preventDefault();$('consolePlay').click()}});
  const canvas=$('rollCanvas');canvas.addEventListener('pointermove',event=>{const drag=scoreConsole.fine;if(!drag||drag.pointerId!==event.pointerId)return;const dx=event.clientX-drag.rect.left-drag.x,dy=event.clientY-drag.rect.top-drag.y;if(!drag.changed&&Math.abs(dx)+Math.abs(dy)<3)return;
  if(!drag.changed){rememberEdit();if(drag.event.notes.length>1){drag.event.notes=drag.event.notes.filter(n=>n!==drag.note);drag.event={...copy(drag.event),notes:[drag.note]};scoreEvents(state.project).push(drag.event)}drag.changed=true}
  const step=state.project.score.gridIntervalMs,delta=dx/drag.g.plotW*drag.frame.windowMs;
@@ -78,6 +82,27 @@ function settleFineRollView(view,event){
  if(inside){state.rollPageStart=view.begin;return}
  const lastStart=Math.floor(Math.max(0,duration-.001)/windowMs)*windowMs;
  state.rollPageStart=time<windowMs?0:time>=lastStart?lastStart:clamp(time-windowMs*PLAYER_RULES.editor.crossPageFocusFraction,0,lastStart);
+}
+
+function moveConsoleNote(direction){
+ if(!canEditScore())return;const selection=editingNoteSelection();if(!selection)return;const {event,note}=selection,step=state.project.score.gridIntervalMs,vertical=direction==='up'||direction==='down',nextNote=vertical?clamp(note+(direction==='up'?1:-1),1,15):note,nextTime=vertical?event.timeMs:clamp(event.timeMs+(direction==='right'?step:-step),0,35990000);
+ if(nextNote===note&&nextTime===event.timeMs)return;pauseSong();stopConsoleRecording();const view=rollFrame();rememberEdit({index:scoreEvents(state.project).indexOf(event),note,position:state.position});let target=event;
+ if(event.notes.length>1){target={...copy(event),notes:[note]};event.notes=event.notes.filter(n=>n!==note);scoreEvents(state.project).push(target)}target.notes=[nextNote];target.timeMs=nextTime;target.confidence='user-corrected';const list=scoreEvents(state.project);list.sort((a,b)=>a.timeMs-b.timeMs);state.selected=list.indexOf(target);state.lastSelected=state.selected;state.position=nextTime;scoreConsole.selection={project:state.project,event:target,note:nextNote};scoreConsole.selectedNote=nextNote;state.project.durationMs=Math.max(state.project.durationMs,nextTime+target.durationMs);settleFineRollView(view,target);saveLibrary();refreshWorkspace();toast(vertical?'音高已移动一键':'音符已移动一个网格');
+}
+
+const CONSOLE_KEYMAP_STORAGE='sky-studio-keymap-v1';
+const validConsoleCode=code=>typeof code==='string'&&/^(Key[A-Z]|Digit[0-9]|Numpad[0-9])$/.test(code);
+let consoleKeymap=[...PLAYER_RULES.editor.keyboardCodes],consoleKeymapDraft=null,consoleKeymapPending=-1;
+function keymapLabel(code){return code.replace('Key','').replace('Digit','').replace('Numpad','数字键盘 ')}
+function renderConsoleKeymap(){
+ const grid=$('consoleKeymapGrid');grid.innerHTML='';for(let n=0;n<15;n++){const b=document.createElement('button');b.type='button';b.textContent=String(n+1).padStart(2,'0')+' · '+keymapLabel(consoleKeymapDraft[n]);b.setAttribute('aria-label','音键 '+(n+1)+'，当前按键 '+keymapLabel(consoleKeymapDraft[n]));b.setAttribute('aria-pressed',String(n===consoleKeymapPending));b.onclick=()=>{consoleKeymapPending=n;renderConsoleKeymap();$('consoleKeymapHelp').textContent='请按下音键 '+(n+1)+' 对应的字母或数字键（Escape取消此次绑定）';grid.children[n].focus()};grid.append(b)}
+}
+function bindConsoleKeymap(){
+ try{const saved=JSON.parse(localStorage.getItem(CONSOLE_KEYMAP_STORAGE)||'null');if(Array.isArray(saved)&&saved.length===15&&saved.every(validConsoleCode)&&new Set(saved).size===15)consoleKeymap=saved}catch(error){console.warn('按键映射读取失败',error)}
+ $('consoleKeymapOpen').onclick=()=>{stopConsoleRecording();consoleKeymapDraft=[...consoleKeymap];consoleKeymapPending=-1;renderConsoleKeymap();$('consoleKeymapHelp').textContent='点击音键，再按字母或数字键。重复按键会交换位置。';syncDialogAppearance();$('consoleKeymapDialog').showModal()};
+ $('consoleKeymapReset').onclick=()=>{consoleKeymapDraft=[...PLAYER_RULES.editor.keyboardCodes];consoleKeymapPending=-1;renderConsoleKeymap();$('consoleKeymapHelp').textContent='已恢复默认，点击保存映射后生效。'};
+ $('consoleKeymapSave').onclick=()=>{try{localStorage.setItem(CONSOLE_KEYMAP_STORAGE,JSON.stringify(consoleKeymapDraft));consoleKeymap=[...consoleKeymapDraft];$('consoleKeymapDialog').close();toast('已保存15键映射')}catch(error){$('consoleKeymapHelp').textContent='保存失败，请检查浏览器存储设置。'}};
+ $('consoleKeymapDialog').addEventListener('keydown',e=>{if(consoleKeymapPending<0)return;if(e.code==='Escape'){e.preventDefault();e.stopPropagation();consoleKeymapPending=-1;renderConsoleKeymap();$('consoleKeymapHelp').textContent='已取消此次绑定。';return}if(e.code==='Tab')return;e.preventDefault();e.stopPropagation();if(e.repeat)return;if(e.ctrlKey||e.metaKey||e.altKey||e.isComposing||!validConsoleCode(e.code)){$('consoleKeymapHelp').textContent='请选择单独的字母或数字键，保留空格、方向键及组合快捷键。';return}const index=consoleKeymapPending,other=consoleKeymapDraft.indexOf(e.code);if(other>=0)consoleKeymapDraft[other]=consoleKeymapDraft[index];consoleKeymapDraft[index]=e.code;consoleKeymapPending=-1;renderConsoleKeymap();$('consoleKeymapHelp').textContent='音键 '+(index+1)+' 已设为 '+keymapLabel(e.code)+'，保存后生效。'});
 }
 
 // Each surface owns its own navigation state; score data is the only shared result.

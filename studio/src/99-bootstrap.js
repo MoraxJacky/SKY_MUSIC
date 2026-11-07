@@ -16,7 +16,7 @@ function resetStartupNavigation(home=true){
  state.position=0;state.rollPageStart=0;state.windowSec=PLAYER_RULES.roll.initialSeconds;state.selected=0;state.lastSelected=-1;state.page=-1;state.beatLayoutCache=null;
  for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();
  for(const id of ['consoleInterval','consoleNoteDuration','consoleGenerateInterval','consoleNumberScore','quantizeMs','offsetMs','batchDuration','stretchFactor']){const input=$(id);input.value=input.defaultValue}
- $('consoleRecordMode').value='step';$('rollWindow').value=String(state.windowSec);$('timeClock').textContent=positionFmt(0);$('consoleClock').textContent=positionFmt(0);$('seekSlider').value='0';$('rollSeekSlider').value='0';setControlContent($('playBtn'),'play','播放');
+ $('consoleRecordMode').value='insert';for(const b of document.querySelectorAll('[data-write-mode]'))b.setAttribute('aria-pressed',String(b.dataset.writeMode==='insert'));$('rollWindow').value=String(state.windowSec);$('timeClock').textContent=positionFmt(0);$('consoleClock').textContent=positionFmt(0);$('seekSlider').value='0';$('rollSeekSlider').value='0';setControlContent($('playBtn'),'play','播放');
  updateEditButton();
  if(home){state.mode='home';state.project=null;resetHomePresentation();$('playerView').hidden=true;$('homeView').hidden=false;$('songSearch').value='';$('libraryFilter').value='all';$('homeView').scrollTop=0;try{history.replaceState(null,'',location.pathname+location.search)}catch(error){}renderLibrary()}
  else if(state.project){refreshWorkspace()}
@@ -28,6 +28,6 @@ function bindStartupNavigation(){
 }
 // Avoid editing the user-provided v7 backup: all transforms occur on copied score objects.
 
-window.__SKY_STUDIO_TEST__={state,openSong,goHome,normalize,makeZip,readZip,unpackProject,parseMIDI,parseCSV,parseMusicXML,exportProject,exportMIDI,exportCSV,importFile,createProject,renameSong,renameConfirmed,duplicateSong,deleteSong,deleteConfirmed,completeEdit,openEditor,requestFinishEdit,KEY_ROOTS,noteMidi,noteName,rollFrame,rollTimeLabels,rollPlotGeometry,platformController,importFiles,importPlatformFile,readMusicResource,exportPlatformEntry,projectEntry,PLAYER_RULES,THEME_DEFINITIONS,bindPlayerInteractions,INSTRUMENTS,loadInstrumentBank,preloadPiano,triggerSample,chooseInstrument,undo,redo,eventInsert,eventRemove,applyThemeFields,analyseSkyGrid,applyPlayerTemplate,PLAYER_TEMPLATE_ID};
+window.__SKY_STUDIO_TEST__={state,scoreConsole,refreshWorkspace,openSong,goHome,normalize,makeZip,readZip,unpackProject,parseMIDI,parseCSV,parseMusicXML,exportProject,exportMIDI,exportCSV,importFile,createProject,renameSong,renameConfirmed,duplicateSong,deleteSong,deleteConfirmed,completeEdit,openEditor,requestFinishEdit,KEY_ROOTS,noteMidi,noteName,rollFrame,rollTimeLabels,rollPlotGeometry,platformController,importFiles,importPlatformFile,readMusicResource,exportPlatformEntry,projectEntry,PLAYER_RULES,THEME_DEFINITIONS,bindPlayerInteractions,INSTRUMENTS,loadInstrumentBank,preloadPiano,triggerSample,chooseInstrument,undo,redo,eventInsert,eventRemove,applyThemeFields,analyseSkyGrid,applyPlayerTemplate,PLAYER_TEMPLATE_ID};
 install();bindStartupNavigation();startDbBackup();
 })();

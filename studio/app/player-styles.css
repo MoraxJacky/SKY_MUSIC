@@ -1093,5 +1093,19 @@ body{--control-focus-accent:#d8eaf8;--control-focus-border:color-mix(in srgb,var
 }
 
 /* Give the platform wordmark more breathing room above the banner. */
+.field-error{font-size:12px;color:#e6f5ff;padding:7px 9px;border:1px solid #d5ecff80;border-radius:8px;background:#33546d;box-shadow:0 3px 12px #071a3033}
+.score-console .console-side input,.score-console .console-side select,.score-console .console-side textarea{background:var(--player-button);border-color:var(--player-border);color:var(--player-text);color-scheme:dark}
+.score-console .console-side input:disabled{background:var(--player-rest);color:var(--player-muted);opacity:1}
+.console-write-mode,.console-record-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.console-write-mode button[aria-pressed=true]{background:var(--player-active-paint);border-color:var(--player-accent)}
+#consoleRecordMode[hidden]{display:none!important}
+.console-edit-actions>.console-note-move{grid-template-columns:repeat(4,minmax(0,1fr))}
+.console-note-move button{display:grid;place-items:center}
+.console-note-move .app-icon{width:17px;height:17px}
+.console-keymap-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.console-keymap-grid button{margin:0;min-height:44px;padding:6px}
+.console-keymap-grid button[aria-pressed=true]{border-color:var(--player-accent);box-shadow:0 0 12px color-mix(in srgb,var(--player-accent) 40%,transparent)}
+.console-side #consoleRecordControls .console-help{margin:4px 0!important;font-size:11px!important;line-height:1.5!important}
+@media(min-width:851px){.score-console .console-transport{gap:6px;padding:10px}.score-console .console-transport time{margin:0;font-size:24px}.score-console .console-transport>div{margin-bottom:0}.score-console .console-side .console-edit-actions{padding:10px}.score-console .console-edit-actions button{min-height:32px}.score-console[data-mode=fine] .console-note-keys button{min-height:28px}.score-console[data-mode=fine] .console-side .console-batch-grid button{min-height:30px}}
 .home-view .home-body{padding-top:28px}
 @media(min-width:901px){.home-view{--home-card-height:max(160px,calc((100dvh - var(--home-top-space) - 64px - var(--home-hero-height) - 182px)/2))}}

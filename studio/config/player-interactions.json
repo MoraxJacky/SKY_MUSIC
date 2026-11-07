@@ -69,7 +69,28 @@
     ],
     "beatRowsPerSection": 2,
     "selectionOutline": "#ff5964",
-    "crossPageFocusFraction": 0.25
+    "crossPageFocusFraction": 0.25,
+    "keyboardCodes": [
+      "KeyQ",
+      "KeyW",
+      "KeyE",
+      "KeyR",
+      "KeyT",
+      "KeyA",
+      "KeyS",
+      "KeyD",
+      "KeyF",
+      "KeyG",
+      "KeyZ",
+      "KeyX",
+      "KeyC",
+      "KeyV",
+      "KeyB"
+    ],
+    "inputModes": [
+      "insert",
+      "overwrite"
+    ]
   },
   "sustain": {
     "controlId": "sustainPicker",
